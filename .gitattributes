@@ -1,0 +1,17 @@
+# Normalize repository text files to LF; checkouts may use platform defaults.
+* text=auto
+
+# Keep script line endings explicit.
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+gradlew      text eol=lf
+*.geojson    text eol=lf
+src/main/resources/static/data/geodata/manifest.json text eol=lf
+
+# Binary assets.
+*.jar        binary
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary

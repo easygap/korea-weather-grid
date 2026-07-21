@@ -1,0 +1,15 @@
+{
+    "name": "bora-weather-cloudflare",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "node build.mjs",
+        "dev": "npm run build && wrangler dev",
+        "upload:rc": "npm run build && wrangler versions upload --preview-alias rc",
+        "deploy": "node scripts/deploy-version.mjs",
+        "test": "node --test test/*.test.js"
+    },
+    "devDependencies": {
+        "wrangler": "^4.112.0"
+    }
+}

@@ -1,0 +1,74 @@
+server:
+  port: 80
+  max-http-request-header-size: 16KB
+  # 임의 X-Forwarded-* 값으로 요청자 주소를 위조하지 못하게 기본 비활성화한다.
+  # 환경자료 rate limit은 아래 trusted-proxy-cidrs에 명시된 peer의
+  # CF-Connecting-IP만 별도로 신뢰한다.
+  forward-headers-strategy: none
+  error:
+    include-message: never
+    include-stacktrace: never
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json,application/geo+json,text/html,text/css,text/javascript,application/javascript,image/svg+xml
+  tomcat:
+    max-swallow-size: 1MB
+    max-http-form-post-size: 16KB
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+    codecs:
+      preferred-json-mapper: jackson2
+  mvc:
+    view:
+      prefix: /WEB-INF/jsp/
+      suffix: .jsp
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+# 기상청 API Hub 설정
+kma:
+  api:
+    base-url: https://apihub.kma.go.kr
+    auth-key: ${KMA_API_AUTH_KEY:}     # 발급: https://apihub.kma.go.kr
+
+# 공공데이터포털 전용 키. API Hub 키와 인증 체계가 다르므로 절대 공유하지 않는다.
+data-go:
+  base-url: https://apis.data.go.kr
+  service-key: ${DATA_GO_KR_SERVICE_KEY:}
+
+# 국가교통정보센터 CCTV API 키. 운영 환경변수로만 주입한다.
+its:
+  api-key: ${ITS_API_KEY:}
+
+# 애플리케이션 런타임 설정
+weather-grid:
+  cache:
+    path: ${WEATHER_GRID_CACHE_PATH:${java.io.tmpdir}/korea-weather-grid}  # 격자자료는 {path}/grid 아래에 캐시
+    retention-days: ${WEATHER_GRID_CACHE_RETENTION_DAYS:14}  # 격자 디스크 캐시 보존일수 — 지나면 발표시각 폴더째 삭제
+  grid:
+    step: 1        # 표출 다운샘플 간격 (1=5km 원해상도, 렌더 부하 시 2·4)
+  environmental-rate-limit:
+    requests-per-minute: ${WEATHER_GRID_ENV_REQUESTS_PER_MINUTE:60}
+    max-clients: ${WEATHER_GRID_ENV_RATE_LIMIT_MAX_CLIENTS:10000}
+    forecast-refreshes-per-minute: ${WEATHER_GRID_FORECAST_REFRESHES_PER_MINUTE:20}
+    air-refreshes-per-hour: ${WEATHER_GRID_AIR_REFRESHES_PER_HOUR:2}
+    cctv-refreshes-per-minute: ${WEATHER_GRID_CCTV_REFRESHES_PER_MINUTE:30}
+    # 직접 연결 peer가 이 CIDR 안일 때만 CF-Connecting-IP를 사용한다.
+    # 프록시는 외부에서 들어온 동일 이름 헤더를 반드시 제거/덮어써야 한다.
+    trusted-proxy-cidrs: ${WEATHER_GRID_TRUSTED_PROXY_CIDRS:}
+  demo-mode: ${WEATHER_GRID_DEMO_MODE:false}  # 운영 기본값 false; 합성 자료는 로컬 데모에서만 명시 허용
+
+logging:
+  level:
+    io.github.easygap.weathergrid: INFO
+    root: INFO

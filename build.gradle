@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'io.github.easygap'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JSP 지원
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // WebClient (기상청 API 호출)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// 개인 로컬 키 파일은 소스 트리에 존재하더라도 JAR/WAR에 절대 포함하지 않는다.
+tasks.named('processResources') {
+    exclude 'application-local.yml'
+}
+
+// 로컬 개발 실행에서만 gitignored 설정을 외부 파일로 읽는다.
+tasks.named('bootRun') {
+    systemProperty 'spring.profiles.active', 'local'
+    systemProperty 'weather-grid.demo-mode', System.getProperty('weather-grid.demo-mode', 'true')
+    systemProperty 'spring.config.additional-location',
+            "optional:file:${projectDir}/src/main/resources/application-local.yml"
+}

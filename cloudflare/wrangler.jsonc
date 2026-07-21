@@ -1,0 +1,92 @@
+{
+    "$schema": "./node_modules/wrangler/config-schema.json",
+    "name": "bora-weather",
+    "main": "src/worker.js",
+    "compatibility_date": "2026-07-20",
+
+    // KMA·공공데이터·ITS 원점이 모두 국내에 있다. 특히 ITS의 9443 API는
+    // 장거리 경로에서 연결이 지연될 수 있어 L4 원점 근처에서 Worker를 실행한다.
+    "placement": { "host": "openapi.its.go.kr:9443" },
+
+    // 정적 자산: public/ (index.html 커밋 + build.mjs가 ../src/main/resources/static을 public/static으로 복사)
+    // 공개 API는 항상 워커가 처리하고, 나머지는 정적 자산을 우선한다.
+    "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "run_worker_first": ["/api/*"]
+    },
+
+    // 위험기상은 브라우저 요청과 무관하게 5분마다 한 번만 수집한다. 공개 API는
+    // 아래 KV의 마지막 정상 스냅샷만 읽어 방문자 수가 KMA 호출량에 영향을 주지 않는다.
+    "triggers": {
+        "crons": ["*/5 * * * *"]
+    },
+    "kv_namespaces": [
+        {
+            "binding": "HAZARD_SNAPSHOTS",
+            "id": "5f4fbe76c92c487aa6a1728b7ab383dd"
+        }
+    ],
+
+    "observability": {
+        "enabled": true,
+        "logs": {
+            "enabled": true,
+            "head_sampling_rate": 0.05,
+            "invocation_logs": true
+        },
+        // data.go 인증은 query string만 지원한다. 자동 fetch trace의 url.query에
+        // serviceKey/authKey가 저장되지 않도록 trace를 명시적으로 끈다.
+        "traces": {
+            "enabled": false
+        }
+    },
+
+    "secrets": {
+        "required": ["KMA_API_AUTH_KEY", "DATA_GO_KR_SERVICE_KEY", "ITS_API_KEY"]
+    },
+
+    // 공개 환경자료 프록시와 cache miss 상류 갱신을 각각 제한한다. Workers Rate
+    // Limiting은 PoP 로컬·eventually consistent이므로 정확한 일일 quota 장부가 아니라
+    // 버스트 억제 계층이다. namespace_id는 계정 내 다른 limiter와 겹치지 않게 유지한다.
+    "ratelimits": [
+        {
+            "name": "PUBLIC_ENVIRONMENTAL_LIMITER",
+            "namespace_id": "3847001",
+            "simple": { "limit": 60, "period": 60 }
+        },
+        {
+            "name": "FORECAST_REFRESH_LIMITER",
+            "namespace_id": "3847002",
+            "simple": { "limit": 20, "period": 60 }
+        },
+        {
+            "name": "AIR_REFRESH_LIMITER",
+            "namespace_id": "3847003",
+            // 측정소/측정값은 서로 다른 고정 key를 사용해 각각 분당 1회만 허용한다.
+            "simple": { "limit": 1, "period": 60 }
+        },
+        {
+            "name": "CCTV_REFRESH_LIMITER",
+            "namespace_id": "3847004",
+            // 모든 0.5° 슈퍼타일 갱신이 같은 key를 사용해 각 PoP에서 단일 버킷으로 제한된다.
+            "simple": { "limit": 30, "period": 60 }
+        },
+        {
+            "name": "STATION_REFRESH_LIMITER",
+            "namespace_id": "3847005",
+            // 지점 캐시 miss만 하나의 PoP 공유 key로 집계한다. 캐시 hit은 소비하지 않는다.
+            "simple": { "limit": 6, "period": 60 }
+        },
+        {
+            "name": "GRID_REFRESH_LIMITER",
+            "namespace_id": "3847006",
+            // 유효 조합 열거로 KMA 격자 cache miss를 대량 생성하는 공격을 억제한다.
+            // 한 요청의 WSD/UUU/VVV 병렬 조회도 공유 Promise로 한 번만 소비한다.
+            "simple": { "limit": 12, "period": 60 }
+        }
+    ]
+
+    // 시크릿: KMA_API_AUTH_KEY, DATA_GO_KR_SERVICE_KEY(Decoding 키), ITS_API_KEY
+    // 로컬은 커밋되지 않는 .dev.vars. ALLOW_MOCK_DATA는 로컬 UI 데모에서만 true.
+}

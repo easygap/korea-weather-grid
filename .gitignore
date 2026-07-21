@@ -1,0 +1,53 @@
+# Local secrets and overrides (never commit).
+application-local.yml
+src/main/resources/application-local.yml
+application-*.local.yml
+.env*
+!.env.example
+
+# Gradle
+.gradle/
+build/
+
+# Java
+*.class
+*.log
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+nbproject/
+bin/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Playwright
+node_modules/
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+e2e/tests/screenshots/
+.playwright-cli/
+output/
+
+# Cloudflare Workers
+cloudflare/node_modules/
+cloudflare/.wrangler/
+cloudflare/.dev.vars*
+!cloudflare/.dev.vars.example
+cloudflare/public/static/
+cloudflare/worker-configuration.d.ts

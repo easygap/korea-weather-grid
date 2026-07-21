@@ -1,0 +1,21 @@
+@charset "UTF-8";
+
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; font-size: 62.5%; text-size-adjust: 100%; }
+body { min-height: 100%; margin: 0; color: #1a1a1a; font-family: system-ui, "Malgun Gothic", sans-serif; font-size: 1rem; }
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img, picture, svg, canvas, video { display: block; max-width: 100%; }
+button, input, select, textarea { margin: 0; color: inherit; font: inherit; }
+button { padding: 0; border: 0; background: transparent; cursor: pointer; }
+input, select, textarea { border: 1px solid #ccc; border-radius: 0; }
+input, select { min-height: 3rem; }
+input[type="checkbox"], input[type="radio"] { min-height: auto; border: 0; }
+input[type="button"], input[type="submit"], input[type="image"] { cursor: pointer; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+table { width: 100%; border-collapse: collapse; border-spacing: 0; }
+th, td { overflow-wrap: anywhere; }
+a { color: inherit; text-decoration: none; }
+address, cite, dfn, em, var { font-style: normal; }
+pre { white-space: pre-wrap; overflow-wrap: normal; }
+textarea { resize: vertical; }

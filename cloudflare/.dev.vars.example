@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local development. Never commit real values.
+KMA_API_AUTH_KEY=replace-with-kma-api-hub-key
+DATA_GO_KR_SERVICE_KEY=replace-with-data-go-decoding-key
+ITS_API_KEY=replace-with-its-opendata-key
+ALLOW_MOCK_DATA=false
