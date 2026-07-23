@@ -1,0 +1,89 @@
+<%@ page pageEncoding="UTF-8" %>
+    <!-- Forecast time navigation -->
+    <section class="timeline" aria-labelledby="timeline_title">
+        <h2 class="sr-only" id="timeline_title">예보 시간 탐색</h2>
+        <div class="forecast_run_list">
+            <button type="button" id="btn_play" title="3시간 간격 자동 재생 (Space)" aria-label="예보 3시간 간격 자동 재생" aria-pressed="false">
+                <svg class="ic-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
+                <svg class="ic-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:none" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+            </button>
+            <button type="button" data-forecast="ini" title="처음 (+1h)" aria-label="첫 예보 시간으로 이동">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg>
+            </button>
+            <button type="button" data-forecast="sub" title="1시간 이전 (←)" aria-label="1시간 이전 예보">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 17-5-5 5-5"/></svg>
+            </button>
+            <button type="button" data-forecast="add" title="1시간 이후 (→)" aria-label="1시간 이후 예보">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 7 5 5-5 5"/></svg>
+            </button>
+            <button type="button" data-forecast="fnl" title="마지막 (+48h)" aria-label="마지막 예보 시간으로 이동">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 7 5 5-5 5M13 7l5 5-5 5"/></svg>
+            </button>
+        </div>
+        <div class="timeline_content">
+            <div class="timeline_caption"><strong id="timeline_scope">기상 예보</strong><span id="timeline_range">향후 48시간</span></div>
+            <div class="forecast_timeline" id="forecast_timeline">
+                <input type="range" class="forecast_scrubber" id="forecast_scrubber" name="forecast_hour" min="1" max="48" step="1" value="1" aria-label="예보 시간 선택" aria-valuetext="+1시간 예보">
+                <ul aria-hidden="true"></ul>
+                <div class="forecast_timeline_ticks" id="forecast_timeline_ticks" aria-hidden="true"><span>+1h</span><span>+12h</span><span>+24h</span><span>+36h</span><span>+48h</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Point forecast details -->
+    <section class="station_modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="station_chart_title" aria-hidden="true" tabindex="-1">
+        <div class="popup">
+            <div class="station_modal_header">
+                <h2 id="station_chart_title">위도: 경도: </h2>
+                <button type="button" class="station_modal_close" aria-label="시계열 모달 닫기">&times;</button>
+            </div>
+            <div class="station_modal_body">
+                <section class="station_chart_panel" aria-labelledby="station_chart_heading">
+                    <header class="station_chart_header">
+                        <div>
+                            <span id="station_chart_source">기상청 단기예보 · DFS 5 km</span>
+                            <h3 id="station_chart_heading">기상 시계열</h3>
+                        </div>
+                        <span id="station_chart_period">KST</span>
+                    </header>
+                    <div class="station_chart_summary" id="station_chart_summary" aria-live="polite"></div>
+                    <div class="chart" id="chart" role="img" aria-label="선택 지점의 향후 48시간 기상 시계열" aria-describedby="station_chart_description"></div>
+                    <p class="sr-only" id="station_chart_description"></p>
+                    <details class="station_data_details" id="station_data_details">
+                        <summary>48시간 수치 데이터 보기</summary>
+                        <div class="station_data_table" id="station_data_table"></div>
+                    </details>
+                </section>
+                <section class="forecast_strip_section" id="forecast_strip_section" aria-labelledby="forecast_strip_title" aria-busy="false">
+                    <div class="forecast_strip_header">
+                        <h3 id="forecast_strip_title">시간대별 상세예보</h3>
+                        <span id="forecast_strip_source">기상청 단기예보 · DFS 5 km · KST · +1~48h</span>
+                    </div>
+                    <div class="forecast_strip_state" id="forecast_strip_state" role="status" aria-live="polite" hidden>
+                        <span class="forecast_state_spinner" aria-hidden="true"></span>
+                        <span id="forecast_strip_state_text"></span>
+                        <button type="button" id="forecast_strip_retry" hidden>다시 시도</button>
+                    </div>
+                    <ul class="forecast_strip" id="forecast_strip" aria-label="1시간부터 48시간까지 시간대별 상세예보" tabindex="0" hidden></ul>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <!-- Optional three-dimensional data view -->
+    <section id="view3d" role="dialog" aria-modal="true" aria-labelledby="view3d_dialog_title" aria-hidden="true">
+        <h2 class="sr-only" id="view3d_dialog_title">3D 기상 지도</h2>
+        <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">풍속 격자 지형</span></div>
+        <button type="button" class="view3d_close" id="view3d_close" title="닫기 (Esc)" aria-label="3D 지도 닫기">✕</button>
+        <div class="view3d_tip" id="view3d_tip"></div>
+        <div class="view3d_scale" id="view3d_scale" role="group" aria-label="3D 데이터 색상 범례">
+            <span id="view3d_scale_min">낮음</span><i id="view3d_scale_bar"></i><span id="view3d_scale_max">높음</span>
+            <small id="view3d_scale_unit"></small>
+        </div>
+        <div class="view3d_legendtip">드래그 회전 · 휠 줌 · 우클릭 이동 · 표면에 마우스를 올리면 좌표·값 표시</div>
+    </section>
+
+    <!-- Non-blocking loading feedback -->
+    <div class="loading-overlay" id="loading-overlay" aria-hidden="true"></div>
+    <div class="loading" id="loading" role="status" aria-live="polite" aria-label="기상 데이터를 불러오는 중"></div>
+</div>

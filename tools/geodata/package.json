@@ -1,0 +1,15 @@
+{
+  "name": "weather-grid-geodata-builder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check"
+  },
+  "dependencies": {
+    "@turf/bbox-clip": "7.3.5",
+    "@turf/simplify": "7.3.5",
+    "adm-zip": "0.6.0",
+    "shapefile": "0.6.6"
+  }
+}

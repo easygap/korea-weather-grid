@@ -1,0 +1,4 @@
+# Copy this file to .publication-denylist.local.
+# Keep the local file untracked and replace these comments with one literal term per line.
+# Prefer distinctive former company, project, domain, package, endpoint, or asset identifiers.
+# Lines beginning with # and blank lines are ignored.

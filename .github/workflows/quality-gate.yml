@@ -40,6 +40,13 @@ jobs:
           cache-dependency-path: |
             cloudflare/package-lock.json
             e2e/package-lock.json
+            tools/geodata/package-lock.json
+
+      - name: 공개 감사 규칙 테스트
+        run: node --test scripts/publication-rules.test.mjs
+
+      - name: 공개 저장소 개발 게이트
+        run: node scripts/audit-publication.mjs --ref="${{ github.sha }}"
 
       - name: Spring 테스트
         run: ./gradlew test --no-daemon
@@ -48,12 +55,17 @@ jobs:
         run: |
           npm ci --prefix cloudflare
           npm ci --prefix e2e
+          npm ci --prefix tools/geodata
+
+      - name: 지도 자료 재현성 확인
+        run: npm run check --prefix tools/geodata
 
       - name: Worker 테스트와 의존성 감사
         run: |
           npm test --prefix cloudflare
           npm audit --prefix cloudflare --audit-level=high
           npm audit --prefix e2e --audit-level=high
+          npm audit --prefix tools/geodata --audit-level=high
 
       - name: Cloudflare 빌드 및 dry-run
         working-directory: cloudflare
@@ -96,6 +108,8 @@ jobs:
         env:
           WEATHER_GRID_DEMO_MODE: 'true'
           WEATHER_GRID_CACHE_PATH: ${{ runner.temp }}/korea-weather-grid
+          # 병렬 브라우저는 모두 같은 runner IP를 사용하므로 운영용 60회 예산과 분리한다.
+          WEATHER_GRID_REQUEST_BUDGET_PUBLIC_PER_MINUTE: '1000'
         run: |
           set -euo pipefail
           mkdir -p build

@@ -1,0 +1,19 @@
+{
+  "version": "Natural Earth 5.1.1",
+  "license": "public-domain",
+  "terms": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "archives": {
+    "land": {
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip",
+      "bytes": 3269070,
+      "sha256": "e547d749445eaa0964aba76738090ec88f5e63c4585122170f98c67a7ea922dc",
+      "stem": "ne_10m_land"
+    },
+    "admin1": {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip",
+      "bytes": 14909524,
+      "sha256": "efc59726337323058f9446210adc96673179cd344e053666ee3d28cb58ba2b05",
+      "stem": "ne_10m_admin_1_states_provinces"
+    }
+  }
+}

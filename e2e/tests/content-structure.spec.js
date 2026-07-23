@@ -8,6 +8,10 @@ test.describe('콘텐츠 구조와 모바일 설정', () => {
     await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('BORA 한국 기상 격자지도');
+    await expect(page.getByRole('main')).toHaveAttribute('aria-labelledby', 'map_workspace_title');
+    await expect(page.getByRole('search', { name: '대표 지역 검색' })).toHaveCount(1);
+    await expect(page.getByRole('region', { name: '예보 시간 탐색' })).toHaveCount(1);
+    await expect(page.getByRole('complementary', { name: '지도 범례' })).toHaveCount(1);
     await expect(page.locator('#data_domain_nav [data-data-domain]')).toHaveCount(3);
     await expect(page.locator('#data_domain_nav')).toHaveAttribute('aria-label', '데이터 영역');
     await expect(page.locator('#explore_modes [data-explore-mode]')).toHaveCount(5);
@@ -228,6 +232,8 @@ test.describe('콘텐츠 구조와 모바일 설정', () => {
     const dock = page.locator('#dock');
     await expect(dock).toHaveAttribute('role', 'dialog');
     await expect(dock).toHaveAttribute('aria-modal', 'true');
+    await expect(dock.getByRole('group', { name: '날씨 정보' })).toHaveCount(1);
+    await expect(dock.getByRole('group', { name: '지도 표현' })).toHaveCount(1);
     expect(await page.locator('main').evaluate((element) => element.inert)).toBe(true);
     await expect(page.locator('#dock_collapse')).toBeFocused();
     await page.waitForFunction(() => {

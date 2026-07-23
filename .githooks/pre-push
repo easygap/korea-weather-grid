@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+set -eu
+
+approved_root="47f4b7a2cadc4771ff6827a41e876e2a3e3ec529"
+zero="0000000000000000000000000000000000000000"
+repository=$(git rev-parse --show-toplevel)
+
+if ! node --test "$repository/scripts/publication-rules.test.mjs"; then
+    echo "push rejected: publication rule tests failed" >&2
+    exit 1
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue
+    roots=$(git rev-list --max-parents=0 "$local_sha")
+    if [ "$roots" != "$approved_root" ]; then
+        echo "push rejected: $local_ref is not based on the approved public root" >&2
+        exit 1
+    fi
+    if ! node "$repository/scripts/audit-publication.mjs" "--ref=$local_sha"; then
+        echo "push rejected: $local_ref failed the committed-tree publication audit" >&2
+        exit 1
+    fi
+done
