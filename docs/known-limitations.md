@@ -27,13 +27,17 @@ Kakao 도로 배경지도는 공식 JavaScript SDK를 동적으로 불러오는 
 ## 운영 검증 대기
 
 아래 항목은 구현 누락이 아니라 실제 자격 증명과 상류 자료가 있는 RC 환경에서 확인해야 하는
-운영 조건이다.
+운영 조건이다. 2026년 7월 23일 비운영 Cloudflare 프리뷰에서 기상청 격자 8종과 지점예보,
+AirKorea 측정소, 태풍·낙뢰 실데이터 응답을 확인했다.
 
-- 기상청·공공데이터포털·ITS Secret을 새 RC 버전에 안전하게 연결한 실제 자료 응답
-- Kakao Developers의 `카카오맵 → 사용 설정`을 승인 후 ON으로 전환하고, 이미 등록된
-  서비스·localhost 도메인에서 공식 SDK·타일·OpenLayers 오버레이 동기화를 실제 확인
-- 서로 다른 CCTV HLS manifest와 첫 segment의 실제 재생
-- 위험기상 snapshot, Cron, KV binding과 fresh/stale 전환
+- ITS Secret은 프리뷰에 연결됐지만 Cloudflare에서 ITS 9443 원점 연결이 시간 초과된다.
+  원점의 서버별 접근 조건을 확인한 뒤 서로 다른 CCTV HLS manifest와 첫 segment를 검증
+- Kakao JavaScript 키는 프리뷰에 연결됐지만 Kakao Maps 제품 사용 설정이 비활성 상태다.
+  Kakao Developers에서 과금 조건을 확인하고 사용 설정을 승인한 뒤 공식 SDK·타일과
+  OpenLayers 오버레이 동기화를 실제 확인
+- 위험기상 태풍·낙뢰 응답은 확인했다. 기상특보는 프리뷰 KV에서 unavailable 상태이므로
+  snapshot Cron과 KV binding의 fresh/stale 전환을 추가 확인
+- KIM 하향단파복사 실데이터는 현재 키의 별도 자료 이용승인을 확인
 - 운영 전환 뒤 15분간 오류율·429·503·예외 로그와 화면 성능 관찰
 - private 요금제에서 사용할 수 없는 GitHub `main` branch protection·ruleset을 public 전환
   승인 직후 required status checks와 force-push 금지로 설정
