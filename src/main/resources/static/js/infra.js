@@ -1,5 +1,5 @@
 /**
- * 바람 민감 인프라 레이어 데이터 (weather-grid-ui.js가 소비)
+ * 바람 민감 인프라 레이어 데이터 (weather-grid-infrastructure.js가 소비)
  *
  * - 교량: 해상 장대교량 — 강풍 시 통행 제한 대상이라 풍속 예보와 직접 연관
  * - 공항: 이착륙 풍속·풍향 참고
@@ -76,3 +76,9 @@ const infraPortData = {
         { "type": "Feature", "properties": { "name": "제주항" },      "geometry": { "type": "Point", "coordinates": [126.527, 33.520] } }
     ]
 };
+
+window.WeatherGridInfrastructureData = Object.freeze({
+    bridge: infraBridgeData,
+    airport: infraAirportData,
+    port: infraPortData
+});

@@ -131,7 +131,9 @@
     }
     document.querySelectorAll('[data-forecast]').forEach(function (button) {
         button.addEventListener('click', function () {
-            forecast(button.dataset.forecast);
+            document.dispatchEvent(new CustomEvent('weather-grid:forecast-control', {
+                detail: { action: button.dataset.forecast }
+            }));
             setTimeout(syncTimelineA11y, 0);
         });
     });

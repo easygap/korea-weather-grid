@@ -202,6 +202,32 @@ function cctvPayload(items, dataCount = items.length) {
 
 const CCTV_CIRCUIT_KEY = 'https://bora-cache.internal/its/cctv/v2/live-circuit';
 
+test('runtime map config exposes only a validated optional VWorld API key', async () => {
+    const key = '12345678-1234-1234-1234-123456789abc';
+    const enabled = await worker.fetch(
+        request('/api/runtime/map-config'), { VWORLD_API_KEY: key }, {});
+    assert.equal(enabled.status, 200);
+    assert.equal(enabled.headers.get('Cache-Control'), 'no-store');
+    assert.deepEqual(await enabled.json(), {
+        vworldEnabled: true,
+        vworldApiKey: key
+    });
+
+    for (const env of [{}, { VWORLD_API_KEY: 'malformed' }]) {
+        const disabled = await worker.fetch(request('/api/runtime/map-config'), env, {});
+        assert.deepEqual(await disabled.json(), {
+            vworldEnabled: false,
+            vworldApiKey: ''
+        });
+    }
+
+    assert.equal((await worker.fetch(
+        request('/api/runtime/map-config?callback=attacker'), {}, {})).status, 400);
+    assert.equal((await worker.fetch(new Request('https://bora.test/api/runtime/map-config', {
+        method: 'POST'
+    }), {}, {})).status, 405);
+});
+
 test('gridData returns the structured 10m wind field contract', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;

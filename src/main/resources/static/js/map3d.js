@@ -12,9 +12,9 @@
  * 내장 강수 팔레트로 안전하게 대체한다.
  */
 import * as THREE from './three/three.module.js';
-import { OrbitControls } from './three/addons/controls/OrbitControls.js?v=20260710.2';
+import { OrbitControls } from './three/addons/controls/OrbitControls.js?v=20260722.1';
 
-/* ---------- 기상청 DFS 격자 → 위경도 역변환 (서버 CoordinateConverter.gridToLatLon 이식) ---------- */
+/* 기상청 공개 DFS 투영 사양을 사용해 3D 정점의 셀 중심을 역투영한다. */
 function kmaGridToLatLon(nx, ny) {
     const RE = 6371.00877, GRID = 5.0, DEGRAD = Math.PI / 180.0, RADDEG = 180.0 / Math.PI;
     const SLAT1 = 30.0 * DEGRAD, SLAT2 = 60.0 * DEGRAD;

@@ -9,7 +9,7 @@
  *     — 히트맵과 같은 변환 사슬이라 도법 3종 모두에서 좌표 정합이 유지된다
  *   · 유효성: 모든 요소에서 유한한 v>-900 (실제 0 포함, 통계·범례와 동일 규칙)
  *
- * weather-grid.js 전역(monthlySolarThresholds, weatherMap)과 weather-grid-ui.js의 표시 모드 세그먼트가 사용한다.
+ * weather-grid.js의 렌더링 계약과 weather-grid-layers.js의 표현 상태가 이 오버레이를 공유한다.
  */
 (function () {
     'use strict';
@@ -19,7 +19,7 @@
     var renderedElement = null;
     var renderedMonth = null;
 
-    /* ---------- 기상청 DFS 격자 → 위경도 역변환 (map3d.js와 동일 이식) ---------- */
+    /* 기상청 공개 DFS 투영 사양에 따른 등치선 정점 역투영. */
     var RE = 6371.00877, GRID = 5.0, DEGRAD = Math.PI / 180.0, RADDEG = 180.0 / Math.PI;
     var SLAT1 = 30.0 * DEGRAD, SLAT2 = 60.0 * DEGRAD;
     var OLON = 126.0 * DEGRAD, OLAT = 38.0 * DEGRAD, XO = 43, YO = 136;

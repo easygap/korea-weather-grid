@@ -7,13 +7,11 @@
 <meta name="theme-color" content="#0b1220">
 <title>BORA · 한국 기상 격자지도</title>
 
-<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="apple-touch-icon" href="/favicon-180.png">
-<link rel="stylesheet" type="text/css" href="/static/css/reset.css?v=20260721.1">
+<link rel="stylesheet" type="text/css" href="/static/css/reset.css?v=20260723.1">
 <link rel="stylesheet" type="text/css" href="/static/vendor/openlayers-10.9.0.css">
 
-<link rel="stylesheet" type="text/css" href="/static/css/style.css?v=20260721.8">
+<link rel="stylesheet" type="text/css" href="/static/css/style.css?v=20260723.2">
 
 
 <script defer src="/static/js/jquery-4.0.0.min.js"></script>
@@ -23,10 +21,9 @@
 <body>
 <a class="skip-link" href="#map">지도 본문으로 건너뛰기</a>
 
-
 <div class="app" data-context-path="" data-data-domain="weather">
 
-    <!-- ============ 상단 바 ============ -->
+    <!-- Primary navigation and search surface -->
     <header class="topbar">
         <div class="brand" title="BORA · Korea Weather Grid">
             <h1 class="sr-only">BORA 한국 기상 격자지도</h1>
@@ -59,14 +56,16 @@
         </div>
 
         <!-- 지점 검색 -->
-        <div class="search-container" role="search">
-            <label class="sr-only" for="station_query">지점별 예보 검색</label>
-            <input type="search" class="station_query" id="station_query" name="station" autocomplete="off" spellcheck="false" placeholder="지역·지점 검색…" role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-describedby="station_search_status" aria-expanded="false">
-            <div class="suggestions" id="suggestions" role="listbox" aria-label="검색 제안"></div>
-            <p class="sr-only" id="station_search_status" role="status" aria-live="polite"></p>
-            <button type="button" class="coordinate_search_button" id="coordinate_search_toggle" title="위경도 검색" aria-label="위경도 검색 열기" aria-controls="coordinate_search_dialog" aria-expanded="false" aria-haspopup="dialog"></button>
-            <button type="button" class="station_search_button" id="station_search_button" title="지점별 예보 검색" aria-label="지점별 예보 검색"></button>
-            <div class="coordinate_panel" id="coordinate_search_dialog" role="dialog" aria-labelledby="coordinate_search_title" style="display:none;">
+        <div class="search-container">
+            <form id="station_search_form" role="search" aria-label="대표 지역 검색">
+                <label class="sr-only" for="station_query">지점별 예보 검색</label>
+                <input type="search" class="station_query" id="station_query" name="station" autocomplete="off" spellcheck="false" placeholder="지역·지점 검색…" role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-describedby="station_search_status" aria-expanded="false">
+                <div class="suggestions" id="suggestions" role="listbox" aria-label="검색 제안"></div>
+                <p class="sr-only" id="station_search_status" role="status" aria-live="polite"></p>
+                <button type="button" class="coordinate_search_button" id="coordinate_search_toggle" title="위경도 검색" aria-label="위경도 검색 열기" aria-controls="coordinate_search_dialog" aria-expanded="false" aria-haspopup="dialog"></button>
+                <button type="submit" class="station_search_button" id="station_search_button" title="지점별 예보 검색" aria-label="지점별 예보 검색"></button>
+            </form>
+            <section class="coordinate_panel" id="coordinate_search_dialog" role="dialog" aria-labelledby="coordinate_search_title" style="display:none;">
                 <h2 id="coordinate_search_title">위경도 검색</h2>
                 <form id="coordinate_search_form">
                     <p><label for="coordinate_latitude">위도</label> <input type="number" class="coordinate_input" id="coordinate_latitude" name="latitude" inputmode="decimal" min="32" max="44" step="any" required autocomplete="off" placeholder="예: 37.5665"></p>
@@ -74,7 +73,7 @@
                     <button type="button" class="coordinate_panel_close" aria-label="위경도 검색 닫기">✕</button>
                     <button type="submit" class="coordinate_lookup">검색</button>
                 </form>
-            </div>
+            </section>
         </div>
 
         <div class="top-actions">
@@ -89,18 +88,20 @@
         </div>
     </header>
 
-    <!-- ============ 지도 (풀블리드) ============ -->
-    <main class="map_workspace" aria-label="한국 기상 격자 지도">
+<!-- Forecast map and contextual overlays -->
+    <main class="map_workspace" aria-labelledby="map_workspace_title">
+        <h2 class="sr-only" id="map_workspace_title">한국 기상 격자 지도</h2>
 
-        <div class="map_status_panel" role="status" aria-label="현재 지도 정보">
+        <div class="map_status_panel" role="status" aria-label="현재 지도 정보" aria-live="polite">
             <strong class="info_metric">바람 · 지상 10m</strong>
-            <span class="info_time">... :00 예보</span>
+            <span class="info_time">최신 예보 시각을 확인 중입니다.</span>
             <span class="info_hint">색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)</span>
         </div>
-        <div id="map" class="map map-weather" role="region" tabindex="0" aria-label="한국 기상 격자 지도" aria-describedby="map_keyboard_help distance_measure_help" aria-keyshortcuts="Enter Shift+Enter Backspace Escape"></div>
+        <div id="map" class="map map-weather" role="region" tabindex="0" aria-labelledby="map_workspace_title" aria-describedby="map_keyboard_help distance_measure_help road_basemap_status" aria-keyshortcuts="Enter Shift+Enter Backspace Escape"></div>
+        <p class="sr-only" id="road_basemap_status" role="status" aria-live="polite">도로 배경지도를 선택할 수 있습니다.</p>
         <div class="measure_crosshair" aria-hidden="true"></div>
         <div class="map_utility_stack" id="map_utility_stack">
-            <section class="distance_measure_panel" id="distance_measure_panel" role="region" aria-labelledby="distance_measure_title" hidden>
+            <section class="distance_measure_panel" id="distance_measure_panel" aria-labelledby="distance_measure_title" hidden>
                 <header class="distance_measure_header">
                     <div>
                         <h2 id="distance_measure_title">직선거리 측정</h2>
@@ -130,11 +131,11 @@
                 </div>
             </div>
         </div>
-        <p class="sr-only" id="map_keyboard_help">방향키로 지도를 이동하고 확대·축소할 수 있습니다. 대기질, 도로 CCTV 또는 위험기상 레이어가 켜진 상태에서 Enter 키를 누르면 화면 중앙에서 가장 가까운 정보를 엽니다.</p>
+        <p class="sr-only" id="map_keyboard_help">방향키로 지도를 이동하고 확대·축소할 수 있습니다. 표시한 주요 지점, 대기질, 도로 CCTV 또는 위험기상 레이어가 켜진 상태에서 Enter 키를 누르면 화면 중앙에서 가장 가까운 정보를 엽니다.</p>
         <p class="sr-only" id="distance_measure_help">거리 측정 중에는 Enter 키로 화면 중심에 지점을 추가하고, Shift와 Enter 키로 완료하며, Backspace 키로 이전 지점을 취소하고, Escape 키로 측정을 종료할 수 있습니다.</p>
 
         <!-- 지점 클릭 팝업 -->
-        <section class="coordinate_popup" role="region" aria-labelledby="coordinate_popup_title">
+        <aside class="coordinate_popup" aria-labelledby="coordinate_popup_title">
             <h2 class="sr-only" id="coordinate_popup_title">선택 지점</h2>
             <div class="coordinate_popup_actions">
                 <button type="button" class="coordinate_popup_close" aria-label="지점 정보 닫기">×</button>
@@ -152,10 +153,10 @@
             <div class="station_chart_shell">
                 <button type="button" class="station_timeline_button">이 위치 48시간 예보</button>
             </div>
-        </section>
+        </aside>
 
         <!-- AirKorea 측정소 상세 — API 문자열은 air-quality.js에서 textContent로만 주입 -->
-        <section class="air_popup" id="air_popup" role="region" aria-labelledby="air_popup_title" aria-live="polite" tabindex="-1" hidden>
+        <aside class="air_popup" id="air_popup" aria-labelledby="air_popup_title" aria-live="polite" tabindex="-1" hidden>
             <div class="air_popup_header">
                 <div>
                     <span class="air_popup_eyebrow" id="air_popup_eyebrow">AIRKOREA · 최신 관측</span>
@@ -186,10 +187,10 @@
                 <div id="air_popup_flag_row" hidden><dt>자료 상태</dt><dd id="air_popup_flag">—</dd></div>
             </dl>
             <p class="air_popup_source">출처 AirKorea · 실시간 측정값은 미확정 자료이며 통신·장비 상태에 따라 오류가 있을 수 있습니다.</p>
-        </section>
+        </aside>
 
         <!-- ITS 도로 CCTV 상세 — 스트림 주소는 명시적인 재생 동작 이후에만 video에 연결한다. -->
-        <section class="cctv_popup" id="cctv_popup" role="region" aria-labelledby="cctv_popup_title" aria-live="polite" tabindex="-1" hidden>
+        <aside class="cctv_popup" id="cctv_popup" aria-labelledby="cctv_popup_title" aria-live="polite" tabindex="-1" hidden>
             <div class="cctv_popup_header">
                 <div>
                     <span class="cctv_popup_eyebrow" id="cctv_popup_eyebrow">ITS · 실시간 교통</span>
@@ -216,10 +217,10 @@
                 <div><dt>갱신시각</dt><dd id="cctv_popup_time">—</dd></div>
             </dl>
             <p class="cctv_popup_source" id="cctv_popup_source">출처 국가교통정보센터</p>
-        </section>
+        </aside>
 
         <!-- 위험기상 피처 상세 — 외부 문자열은 severe-weather.js에서 textContent로만 주입한다. -->
-        <section class="hazard_popup" id="hazard_popup" role="region" aria-labelledby="hazard_popup_title" tabindex="-1" hidden>
+        <aside class="hazard_popup" id="hazard_popup" aria-labelledby="hazard_popup_title" tabindex="-1" hidden>
             <header class="hazard_popup_header">
                 <div>
                     <span class="hazard_popup_eyebrow" id="hazard_popup_eyebrow">기상청 · 최근 관측</span>
@@ -230,10 +231,10 @@
             <p class="hazard_popup_summary" id="hazard_popup_summary"></p>
             <dl class="hazard_popup_meta" id="hazard_popup_meta"></dl>
             <p class="hazard_popup_source" id="hazard_popup_source">출처 기상청</p>
-        </section>
+        </aside>
 
         <!-- API 미연결 데모 데이터 배지 -->
-        <div id="mock_badge" role="status" aria-live="polite" style="display:none;">⚠ 데모 데이터 — 기상청 API 미연결 (application-local.yml 확인)</div>
+        <div id="mock_badge" role="status" aria-live="polite" style="display:none;"><span class="mock_badge_mark" aria-hidden="true"></span>데모 데이터 · 기상청 API 연결 필요</div>
         <div id="data_error" role="alert" aria-live="assertive" hidden>
             <span>기상 데이터를 불러오지 못했습니다.</span>
             <button type="button" id="retry_data">다시 시도</button>
@@ -245,7 +246,7 @@
             <span id="warning_banner_summary"></span>
             <span class="warning_banner_chevron" aria-hidden="true"></span>
         </button>
-        <section class="warning_panel" id="warning_panel" role="region" aria-labelledby="warning_panel_title" aria-describedby="warning_panel_status warning_panel_source" tabindex="-1" hidden>
+        <aside class="warning_panel" id="warning_panel" aria-labelledby="warning_panel_title" aria-describedby="warning_panel_status warning_panel_source" tabindex="-1" hidden>
             <header class="warning_panel_header">
                 <div>
                     <span>기상청 발표</span>
@@ -256,12 +257,13 @@
             <p class="warning_panel_status" id="warning_panel_status">최신 특보를 확인하고 있습니다…</p>
             <ul class="warning_list" id="warning_list"></ul>
             <p class="warning_panel_source" id="warning_panel_source">출처 기상청 · 발표 내용은 현지 상황에 따라 변경될 수 있습니다.</p>
-        </section>
+        </aside>
         <p class="sr-only" id="warning_live" role="status" aria-live="polite" aria-atomic="true"></p>
 
         <!-- 기상·대기질 범례는 동시에 켤 수 있으므로 독립 카드로 쌓는다. -->
-        <div class="legend_stack">
-            <div class="legend weather_legend" id="weather_legend" role="region" aria-labelledby="weather_legend_title">
+        <aside class="legend_stack" aria-labelledby="legend_stack_title">
+            <h2 class="sr-only" id="legend_stack_title">지도 범례</h2>
+            <section class="legend weather_legend" id="weather_legend" aria-labelledby="weather_legend_title">
                 <h2 class="legend_title" id="weather_legend_title">풍속 분포</h2>
                 <button type="button" class="legend_toggle" aria-label="풍속 분포 접기" aria-expanded="true" aria-controls="weather_legend_content">풍속 분포</button>
                 <div id="weather_legend_content">
@@ -275,8 +277,8 @@
                         </dl>
                     </section>
                 </div>
-            </div>
-            <div class="legend air_legend" id="air_legend" role="region" aria-label="미세먼지 등급 범례" hidden>
+            </section>
+            <section class="legend air_legend" id="air_legend" aria-labelledby="air_legend_title" hidden>
                 <h2 class="legend_title" id="air_legend_title">PM10 등급</h2>
                 <button type="button" class="legend_toggle air_legend_toggle" aria-label="PM10 범례 접기" aria-expanded="true" aria-controls="air_legend_body">PM10 범례</button>
                 <div class="air_legend_body" id="air_legend_body">
@@ -288,8 +290,8 @@
                     </div>
                     <p class="air_legend_notice">실시간 측정값은 미확정 자료이며 통신·장비 상태에 따라 오류가 있을 수 있습니다.</p>
                 </div>
-            </div>
-            <div class="legend hazard_legend" id="hazard_legend" role="region" aria-labelledby="hazard_legend_title" hidden>
+            </section>
+            <section class="legend hazard_legend" id="hazard_legend" aria-labelledby="hazard_legend_title" hidden>
                 <h2 class="legend_title" id="hazard_legend_title">위험기상</h2>
                 <button type="button" class="legend_toggle hazard_legend_toggle" aria-label="위험기상 범례 접기" aria-expanded="true" aria-controls="hazard_legend_body">위험기상</button>
                 <div class="hazard_legend_body" id="hazard_legend_body">
@@ -304,23 +306,23 @@
                         <span id="hazard_legend_count"></span>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </aside>
     </main>
 
-    <!-- 모바일에서는 데이터 영역을 먼저 고르고 세부 요소는 설정 시트에서 조정한다. -->
-    <div class="mobile_primary_controls" id="mobile_primary_controls" role="group" aria-label="데이터 영역">
+<!-- Compact domain controls and the detailed settings panel -->
+    <nav class="mobile_primary_controls" id="mobile_primary_controls" aria-label="모바일 데이터 영역">
         <button type="button" data-data-domain="weather" class="on" aria-pressed="true">기상</button>
         <button type="button" data-data-domain="air" aria-pressed="false">대기질</button>
         <button type="button" data-data-domain="traffic" aria-pressed="false">교통</button>
-    </div>
+    </nav>
     <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         <span class="dock_toggle_label">설정</span>
     </button>
     <div class="dock_scrim" id="dock_scrim" aria-hidden="true" hidden></div>
 
-    <!-- ============ 좌측 컨트롤 독 ============ -->
+    <!-- Layer, release-time, and map presentation controls -->
     <aside class="dock collapsed" id="dock" aria-labelledby="dock_title" aria-hidden="true" inert>
         <div class="dock_scroll">
             <div class="dock_header">
@@ -355,22 +357,22 @@
             <details class="dock_disclosure" id="layer_settings" open>
                 <summary><span>레이어</span></summary>
                 <div class="dock_disclosure_body">
-                    <div class="field metric_field" data-domain-control="weather">
-                        <div class="flabel" id="field_element_label">날씨 정보</div>
-                        <div class="seg metric_segment" id="seg_element" role="group" aria-labelledby="field_element_label">
+                    <fieldset class="field metric_field" data-domain-control="weather">
+                        <legend class="flabel" id="field_element_label">날씨 정보</legend>
+                        <div class="seg metric_segment" id="seg_element">
                             <button type="button" data-val="wdws" class="on" aria-pressed="true"><strong>바람</strong><small>m/s</small></button>
                             <button type="button" data-val="tmp" aria-pressed="false"><strong>기온</strong><small>°C</small></button>
                             <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·눈</strong><small>비 · 눈</small></button>
                             <button type="button" data-val="swdn" aria-pressed="false"><strong>일사강도</strong><small>W/㎡</small></button>
                         </div>
-                        <div class="metric_context" id="precipitation_elements" hidden>
-                            <div class="flabel" id="precipitation_element_label">강수·눈 보기</div>
-                            <div class="seg seg-3 metric_context_segment" id="seg_precipitation" role="group" aria-labelledby="precipitation_element_label">
+                        <fieldset class="metric_context" id="precipitation_elements" hidden>
+                            <legend class="flabel" id="precipitation_element_label">강수·눈 보기</legend>
+                            <div class="seg seg-3 metric_context_segment" id="seg_precipitation">
                                 <button type="button" data-val="pcp" class="on" aria-pressed="true"><strong>강수량</strong><small>1시간 · mm</small></button>
                                 <button type="button" data-val="pty" aria-pressed="false"><strong>형태</strong><small>비 · 눈</small></button>
                                 <button type="button" data-val="sno" aria-pressed="false"><strong>신적설</strong><small>1시간 · cm</small></button>
                             </div>
-                        </div>
+                        </fieldset>
                         <details class="metric_disclosure" id="additional_weather_elements">
                             <summary><span>추가 기상 요소</span><small>습도 · 하늘상태</small></summary>
                             <div class="metric_disclosure_body">
@@ -389,20 +391,20 @@
                                 <p class="metric_context_note">육지는 값이 없는 영역으로 표시합니다.</p>
                             </div>
                         </details>
-                    </div>
+                    </fieldset>
 
-                    <div class="field" id="field_weather_render" data-domain-control="weather">
-                        <div class="flabel" id="layer_toggle_label">지도 표현</div>
-                        <div class="chiprow" id="layer_toggles" role="group" aria-labelledby="layer_toggle_label">
+                    <fieldset class="field" id="field_weather_render" data-domain-control="weather">
+                        <legend class="flabel" id="layer_toggle_label">지도 표현</legend>
+                        <div class="chiprow" id="layer_toggles">
                             <button type="button" class="chip on" data-layer="heat" title="값을 색상으로 표시" aria-pressed="true"><span class="dot"></span>색상</button>
                             <button type="button" class="chip on" data-layer="stream" title="바람 흐름을 선으로 표시" aria-pressed="true"><span class="dot"></span>흐름선</button>
                             <button type="button" class="chip" data-layer="iso" title="같은 값을 선으로 연결" aria-pressed="false"><span class="dot"></span>등치선</button>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="field field_compact" id="field_weather_stations" data-domain-control="weather">
-                        <div class="flabel" id="overlay_label">예보 지점</div>
-                        <div class="layer_list" role="group" aria-labelledby="overlay_label">
+                    <fieldset class="field field_compact" id="field_weather_stations" data-domain-control="weather">
+                        <legend class="flabel" id="overlay_label">예보 지점</legend>
+                        <div class="layer_list">
                             <button type="button" class="lswitch weather_stations clicked" id="weather_stations" aria-pressed="true"><span class="dot"></span>대표 지역 표시</button>
                             <div class="province_boundary_controls" id="province_boundary_controls" style="display:none;">
                                 <button type="button" class="lswitch province_boundary_toggle" id="province_boundary_toggle" aria-pressed="false"><span class="dot"></span>시·도 경계</button>
@@ -411,11 +413,11 @@
                                 <button type="button" class="lswitch region_label_toggle clicked" id="region_label_toggle" aria-pressed="true"><span class="dot"></span>시·도명</button>
                             </div>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="field field_compact" id="field_hazards" data-domain-control="weather">
-                        <div class="flabel" id="hazard_layer_label">위험기상 <span class="sub">최근 관측·발표</span></div>
-                        <div class="layer_list hazard_layer_list" role="group" aria-labelledby="hazard_layer_label">
+                    <fieldset class="field field_compact" id="field_hazards" data-domain-control="weather">
+                        <legend class="flabel" id="hazard_layer_label">위험기상 <span class="sub">최근 관측·발표</span></legend>
+                        <div class="layer_list hazard_layer_list">
                             <button type="button" class="lswitch hazard_layer_button" id="typhoon_toggle" aria-pressed="false">
                                 <span class="hazard_control_mark hazard_control_typhoon" aria-hidden="true"></span>태풍 경로<span class="sub" id="typhoon_toggle_meta">꺼짐</span>
                             </button>
@@ -426,24 +428,24 @@
                                 <span class="hazard_control_mark hazard_control_warning" aria-hidden="true"></span>기상특보<span class="sub" id="warning_count">확인 중</span>
                             </button>
                         </div>
-                        <div class="hazard_window" id="lightning_window_wrap" hidden>
-                            <div class="flabel" id="lightning_window_label">낙뢰 조회 범위</div>
-                            <div class="seg seg-3" id="lightning_window" role="group" aria-labelledby="lightning_window_label">
+                        <fieldset class="hazard_window" id="lightning_window_wrap" hidden>
+                            <legend class="flabel" id="lightning_window_label">낙뢰 조회 범위</legend>
+                            <div class="seg seg-3" id="lightning_window">
                                 <button type="button" data-lightning-minutes="15" aria-pressed="false">15분</button>
                                 <button type="button" data-lightning-minutes="30" class="on" aria-pressed="true">30분</button>
                                 <button type="button" data-lightning-minutes="60" aria-pressed="false">60분</button>
                             </div>
-                        </div>
+                        </fieldset>
                         <div class="severe_weather_status" id="severe_weather_status" role="status" aria-live="polite" hidden>
                             <span class="severe_weather_status_icon" aria-hidden="true"></span>
                             <span id="severe_weather_status_text"></span>
                             <button type="button" id="severe_weather_retry" hidden>다시 시도</button>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="field field_compact" id="field_air_quality">
-                        <div class="flabel" id="air_quality_label">최신 대기질 <span class="sub">AirKorea</span></div>
-                        <div class="seg seg-3 air_quality_control" id="seg_air_quality" role="group" aria-labelledby="air_quality_label">
+                    <fieldset class="field field_compact" id="field_air_quality">
+                        <legend class="flabel" id="air_quality_label">최신 대기질 <span class="sub">AirKorea</span></legend>
+                        <div class="seg seg-3 air_quality_control" id="seg_air_quality">
                             <button type="button" data-air="off" class="on" aria-pressed="true">끄기</button>
                             <button type="button" data-air="pm10" aria-pressed="false">PM10</button>
                             <button type="button" data-air="pm25" aria-pressed="false">PM2.5</button>
@@ -453,10 +455,10 @@
                             <span id="air_quality_status_text"></span>
                             <button type="button" id="air_quality_retry" hidden>다시 시도</button>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="field field_compact" id="field_cctv">
-                        <div class="flabel" id="cctv_label">교통 CCTV <span class="sub">ITS</span></div>
+                    <fieldset class="field field_compact" id="field_cctv">
+                        <legend class="flabel" id="cctv_label">교통 CCTV <span class="sub">ITS</span></legend>
                         <div class="layer_list">
                             <button type="button" class="lswitch" id="cctv_toggle" aria-pressed="false" aria-describedby="cctv_privacy_note">
                                 <span class="dot"></span>CCTV 위치<span class="sub">확대 시 표시</span>
@@ -468,7 +470,7 @@
                             <span id="cctv_status_text"></span>
                             <button type="button" id="cctv_retry" hidden>다시 시도</button>
                         </div>
-                    </div>
+                    </fieldset>
                 </div>
             </details>
 
@@ -483,16 +485,18 @@
                         <button type="button" class="latest_run_button" aria-label="가장 최근 발표 선택">최신</button>
                         <button type="button" id="base_run_next" aria-label="다음 발표로 이동">다음 발표</button>
                     </div>
-                    <div class="field">
-                        <div class="flabel" id="forecast_time_label">발표 날짜 <span class="sub">KST</span></div>
+                    <fieldset class="field">
+                        <legend class="flabel" id="forecast_time_label">발표 날짜 <span class="sub">KST</span></legend>
                         <div class="date_row">
                             <div class="forecast_date_control">
                                 <label class="sr-only" for="forecast_date">발표 날짜</label>
                                 <input type="date" id="forecast_date" name="forecast_date" class="forecast_date_input" value="" autocomplete="off" aria-label="발표 날짜">
                             </div>
                         </div>
-                        <div class="flabel forecast_base_time_label">발표시각</div>
-                        <ul class="forecast_run_buttons">
+                    </fieldset>
+                    <fieldset class="field forecast_time_field">
+                        <legend class="flabel forecast_base_time_label" id="forecast_base_time_label">발표시각</legend>
+                        <ul class="forecast_run_buttons" aria-labelledby="forecast_base_time_label">
                             <li class="on"><button type="button" class="forecast_run_button on" aria-pressed="true" aria-label="02시 발표">02</button></li>
                             <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="05시 발표">05</button></li>
                             <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="08시 발표">08</button></li>
@@ -503,44 +507,44 @@
                             <li class="latest_run_marker"><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="23시 발표">23</button></li>
                             <li>KST</li>
                         </ul>
-                    </div>
+                    </fieldset>
                 </div>
             </details>
 
             <details class="dock_disclosure" id="map_display_settings">
                 <summary><span>지도 설정</span></summary>
                 <div class="dock_disclosure_body">
-                    <div class="field">
-                        <div class="flabel" id="map_background_label">배경 지도</div>
-                        <div id="basemap_picker" class="basemap_picker" role="group" aria-labelledby="map_background_label">
+                    <fieldset class="field">
+                        <legend class="flabel" id="map_background_label">배경 지도</legend>
+                        <div id="basemap_picker" class="basemap_picker">
                             <ul id="basemap_choices">
-                                <li><button type="button" class="is-selected-basemap" id="basemap_weather" aria-pressed="true"><img src="/static/image/map-weather.webp?v=20260710.4" width="210" height="164" loading="lazy" alt="기상 정보가 잘 보이는 기본 지도 미리보기"><span>기상 중심</span></button></li>
-                                <li><button type="button" id="basemap_boundaries" aria-pressed="false"><img src="/static/image/icon_vectormap.webp?v=20260710.4" width="210" height="164" loading="lazy" alt="행정 경계를 함께 보여주는 지도 미리보기"><span>행정 경계</span></button></li>
-                                <li><button type="button" id="basemap_streets" aria-pressed="false"><img src="/static/image/icon_streetmap.webp?v=20260710.4" width="210" height="164" loading="lazy" alt="도로와 지역 정보를 함께 보여주는 지도 미리보기"><span>도로</span></button></li>
+                                <li><button type="button" class="is-selected-basemap" id="basemap_weather" aria-pressed="true"><img src="/static/image/basemap-weather.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="기상 정보가 잘 보이는 기본 지도 미리보기"><span>기상 중심</span></button></li>
+                                <li><button type="button" id="basemap_boundaries" aria-pressed="false"><img src="/static/image/basemap-boundaries.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="행정 경계를 함께 보여주는 지도 미리보기"><span>행정 경계</span></button></li>
+                                <li><button type="button" id="basemap_streets" aria-label="도로 배경지도" aria-pressed="false"><img src="/static/image/basemap-streets.svg?v=20260722.1" width="210" height="164" loading="lazy" alt=""><span>도로</span></button></li>
                             </ul>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="field">
-                        <div class="flabel" id="infra_label">주요 지점 <span class="sub">클릭 시 예보</span></div>
-                        <div class="layer_list" role="group" aria-labelledby="infra_label">
-                            <button type="button" class="lswitch" id="infra_bridge" aria-pressed="false"><span class="dot"></span>주요 대교<span class="sub">강풍 민감</span></button>
-                            <button type="button" class="lswitch" id="infra_airport" aria-pressed="false"><span class="dot"></span>공항<span class="sub">이착륙</span></button>
-                            <button type="button" class="lswitch" id="infra_port" aria-pressed="false"><span class="dot"></span>무역항<span class="sub">해상풍</span></button>
+                    <fieldset class="field">
+                        <legend class="flabel" id="infra_label">주요 지점 <span class="sub">클릭 시 예보</span></legend>
+                        <div class="layer_list">
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_bridge" data-infrastructure="bridge" aria-pressed="false"><span class="dot" aria-hidden="true"></span>주요 대교<span class="sub">강풍 민감</span></button>
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_airport" data-infrastructure="airport" aria-pressed="false"><span class="dot" aria-hidden="true"></span>공항<span class="sub">이착륙</span></button>
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_port" data-infrastructure="port" aria-pressed="false"><span class="dot" aria-hidden="true"></span>무역항<span class="sub">해상풍</span></button>
                         </div>
-                    </div>
+                    </fieldset>
 
                     <details class="advanced_disclosure">
                         <summary>고급 설정</summary>
                         <div class="advanced_disclosure_body">
-                            <div class="field">
-                                <div class="flabel" id="projection_label">투영 방식</div>
-                                <div class="seg seg-3" id="seg_proj" role="group" aria-labelledby="projection_label">
+                            <fieldset class="field">
+                                <legend class="flabel" id="projection_label">투영 방식</legend>
+                                <div class="seg seg-3" id="seg_proj">
                                     <button type="button" data-proj="KMA_GRID_LCC" class="on" aria-pressed="true" title="기상청 격자와 동일한 람베르트 정형원추도법">기상 격자</button>
                                     <button type="button" data-proj="EPSG:3857" aria-pressed="false" title="웹 메르카토르">메르카토르</button>
                                     <button type="button" data-proj="EPSG:4326" aria-pressed="false" title="위경도 등장방형">위경도</button>
                                 </div>
-                            </div>
+                            </fieldset>
                         </div>
                     </details>
 
@@ -553,8 +557,9 @@
         </div>
     </aside>
 
-    <!-- ============ 하단 타임라인 ============ -->
-    <div class="timeline" role="region" aria-label="예보 시간 탐색">
+<!-- Forecast time navigation -->
+    <section class="timeline" aria-labelledby="timeline_title">
+        <h2 class="sr-only" id="timeline_title">예보 시간 탐색</h2>
         <div class="forecast_run_list">
             <button type="button" id="btn_play" title="3시간 간격 자동 재생 (Space)" aria-label="예보 3시간 간격 자동 재생" aria-pressed="false">
                 <svg class="ic-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
@@ -577,18 +582,14 @@
             <div class="timeline_caption"><strong id="timeline_scope">기상 예보</strong><span id="timeline_range">향후 48시간</span></div>
             <div class="forecast_timeline" id="forecast_timeline">
                 <input type="range" class="forecast_scrubber" id="forecast_scrubber" name="forecast_hour" min="1" max="48" step="1" value="1" aria-label="예보 시간 선택" aria-valuetext="+1시간 예보">
-                <ul aria-hidden="true">
-
-                <li value=""><button type="button" tabindex="-1"></button><span></span></li>
-
-                </ul>
+                <ul aria-hidden="true"></ul>
                 <div class="forecast_timeline_ticks" id="forecast_timeline_ticks" aria-hidden="true"><span>+1h</span><span>+12h</span><span>+24h</span><span>+36h</span><span>+48h</span></div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- ============ 시계열 모달 ============ -->
-    <div class="station_modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="station_chart_title" aria-hidden="true" tabindex="-1">
+    <!-- Point forecast details -->
+    <section class="station_modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="station_chart_title" aria-hidden="true" tabindex="-1">
         <div class="popup">
             <div class="station_modal_header">
                 <h2 id="station_chart_title">위도: 경도: </h2>
@@ -625,10 +626,11 @@
                 </section>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- ============ 3D 뷰 오버레이 ============ -->
-    <div id="view3d" role="dialog" aria-modal="true" aria-label="3D 기상 지도" aria-hidden="true">
+    <!-- Optional three-dimensional data view -->
+    <section id="view3d" role="dialog" aria-modal="true" aria-labelledby="view3d_dialog_title" aria-hidden="true">
+        <h2 class="sr-only" id="view3d_dialog_title">3D 기상 지도</h2>
         <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">풍속 격자 지형</span></div>
         <button type="button" class="view3d_close" id="view3d_close" title="닫기 (Esc)" aria-label="3D 지도 닫기">✕</button>
         <div class="view3d_tip" id="view3d_tip"></div>
@@ -637,19 +639,25 @@
             <small id="view3d_scale_unit"></small>
         </div>
         <div class="view3d_legendtip">드래그 회전 · 휠 줌 · 우클릭 이동 · 표면에 마우스를 올리면 좌표·값 표시</div>
-    </div>
+    </section>
 
-    <!-- ============ 로딩 (CSS 스피너) ============ -->
+    <!-- Non-blocking loading feedback -->
     <div class="loading-overlay" id="loading-overlay" aria-hidden="true"></div>
     <div class="loading" id="loading" role="status" aria-live="polite" aria-label="기상 데이터를 불러오는 중"></div>
 </div>
-<script defer src="/static/js/app-bootstrap.js?v=20260720.1"></script>
+
+<script defer src="/static/js/app-bootstrap.js?v=20260722.2"></script>
 <script defer src="/static/js/geodata-loader.js?v=20260715.1"></script>
-<script defer src="/static/js/infra.js"></script>
+<script defer src="/static/js/infra.js?v=20260723.1"></script>
 <script defer src="/static/js/station-charts.js?v=20260721.3"></script>
 <script defer src="/static/js/wind-grid.js?v=20260720.1"></script>
 <script defer src="/static/js/windy.js?v=20260720.1"></script>
-<script defer src="/static/js/weather-grid.js?v=20260721.8"></script>
+<script defer src="/static/js/weather-grid-palette-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-basemap-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-vworld-state.js?v=20260724.1"></script>
+<script defer src="/static/js/weather-grid-vworld.js?v=20260724.1"></script>
+<script defer src="/static/js/weather-grid-map-bootstrap.js?v=20260723.2"></script>
+<script defer src="/static/js/weather-grid.js?v=20260723.9"></script>
 <script defer src="/static/js/isoline.js?v=20260721.2"></script>
 <script defer src="/static/js/station-forecast.js?v=20260721.3"></script>
 <script defer src="/static/js/map-overlay-router.js?v=20260721.3"></script>
@@ -657,6 +665,37 @@
 <script defer src="/static/js/severe-weather.js?v=20260721.3"></script>
 <script defer src="/static/js/air-quality.js?v=20260721.1"></script>
 <script defer src="/static/js/cctv.js?v=20260721.1"></script>
-<script defer src="/static/js/weather-grid-ui.js?v=20260721.12"></script>
+<script defer src="/static/js/weather-grid-interface-state.js?v=20260722.1"></script>
+<script defer src="/static/js/weather-grid-interface.js?v=20260722.1"></script>
+<script defer src="/static/js/weather-grid-control-state.js?v=20260722.2"></script>
+<script defer src="/static/js/weather-grid-controls.js?v=20260722.2"></script>
+<script defer src="/static/js/weather-grid-legend-model.js?v=20260722.3"></script>
+<script defer src="/static/js/weather-grid-legend.js?v=20260722.3"></script>
+<script defer src="/static/js/weather-grid-navigation-state.js?v=20260722.3"></script>
+<script defer src="/static/js/weather-grid-navigation.js?v=20260722.3"></script>
+<script defer src="/static/js/weather-grid-map-state.js?v=20260722.4"></script>
+<script defer src="/static/js/weather-grid-projection.js?v=20260722.4"></script>
+<script defer src="/static/js/weather-grid-readout.js?v=20260722.4"></script>
+<script defer src="/static/js/weather-grid-raster-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-raster.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-wind-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-wind.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-location-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-location.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-search-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-search.js?v=20260723.2"></script>
+<script defer src="/static/js/weather-grid-layer-state.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-layers.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-run-state.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-runs.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-data-state.js?v=20260723.4"></script>
+<script defer src="/static/js/weather-grid-data.js?v=20260723.4"></script>
+<script defer src="/static/js/weather-grid-explore-state.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-explore.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-view3d-state.js?v=20260723.2"></script>
+<script defer src="/static/js/weather-grid-view3d.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-infrastructure-state.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-infrastructure.js?v=20260723.1"></script>
+<script defer src="/static/js/weather-grid-session.js?v=20260723.3"></script>
 </body>
 </html>

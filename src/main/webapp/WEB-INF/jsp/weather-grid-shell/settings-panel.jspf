@@ -1,0 +1,247 @@
+<%@ page pageEncoding="UTF-8" %>
+    <!-- Compact domain controls and the detailed settings panel -->
+    <nav class="mobile_primary_controls" id="mobile_primary_controls" aria-label="모바일 데이터 영역">
+        <button type="button" data-data-domain="weather" class="on" aria-pressed="true">기상</button>
+        <button type="button" data-data-domain="air" aria-pressed="false">대기질</button>
+        <button type="button" data-data-domain="traffic" aria-pressed="false">교통</button>
+    </nav>
+    <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span class="dock_toggle_label">설정</span>
+    </button>
+    <div class="dock_scrim" id="dock_scrim" aria-hidden="true" hidden></div>
+
+    <!-- Layer, release-time, and map presentation controls -->
+    <aside class="dock collapsed" id="dock" aria-labelledby="dock_title" aria-hidden="true" inert>
+        <div class="dock_scroll">
+            <div class="dock_header">
+                <div class="dock_heading">
+                    <h2 id="dock_title">표시 설정</h2>
+                    <p id="dock_context" aria-live="polite">기상 · 바람</p>
+                </div>
+                <button type="button" class="dock_collapse" id="dock_collapse" title="설정 닫기" aria-label="표시 설정 닫기">×</button>
+            </div>
+
+            <!-- 화면 세그먼트와 동기화되는 네이티브 상태 컨트롤 -->
+            <div class="native-hooks" aria-hidden="true" inert style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);">
+                <input type="hidden" id="baseTime" name="baseTime" value="02"/>
+                <label class="label_element" for="element">요소</label>
+                <select class="element" id="element" tabindex="-1">
+                    <option value="wdws">풍향+풍속</option>
+                    <option value="tmp">기온</option>
+                    <option value="pcp">1시간 강수량</option>
+                    <option value="pty">강수형태</option>
+                    <option value="sno">1시간 신적설</option>
+                    <option value="reh">상대습도</option>
+                    <option value="sky">하늘상태</option>
+                    <option value="wav">파고</option>
+                    <option value="swdn">하향단파복사</option>
+                </select>
+                <label class="label_height" for="height">고도</label>
+                <select class="height" id="height" tabindex="-1">
+                    <option value="10m">10m</option>
+                </select>
+            </div>
+
+            <details class="dock_disclosure" id="layer_settings" open>
+                <summary><span>레이어</span></summary>
+                <div class="dock_disclosure_body">
+                    <fieldset class="field metric_field" data-domain-control="weather">
+                        <legend class="flabel" id="field_element_label">날씨 정보</legend>
+                        <div class="seg metric_segment" id="seg_element">
+                            <button type="button" data-val="wdws" class="on" aria-pressed="true"><strong>바람</strong><small>m/s</small></button>
+                            <button type="button" data-val="tmp" aria-pressed="false"><strong>기온</strong><small>°C</small></button>
+                            <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·눈</strong><small>비 · 눈</small></button>
+                            <button type="button" data-val="swdn" aria-pressed="false"><strong>일사강도</strong><small>W/㎡</small></button>
+                        </div>
+                        <fieldset class="metric_context" id="precipitation_elements" hidden>
+                            <legend class="flabel" id="precipitation_element_label">강수·눈 보기</legend>
+                            <div class="seg seg-3 metric_context_segment" id="seg_precipitation">
+                                <button type="button" data-val="pcp" class="on" aria-pressed="true"><strong>강수량</strong><small>1시간 · mm</small></button>
+                                <button type="button" data-val="pty" aria-pressed="false"><strong>형태</strong><small>비 · 눈</small></button>
+                                <button type="button" data-val="sno" aria-pressed="false"><strong>신적설</strong><small>1시간 · cm</small></button>
+                            </div>
+                        </fieldset>
+                        <details class="metric_disclosure" id="additional_weather_elements">
+                            <summary><span>추가 기상 요소</span><small>습도 · 하늘상태</small></summary>
+                            <div class="metric_disclosure_body">
+                                <div class="seg seg-2 metric_context_segment" id="seg_additional_weather" role="group" aria-label="추가 기상 요소 선택">
+                                    <button type="button" data-val="reh" aria-pressed="false"><strong>상대습도</strong><small>%</small></button>
+                                    <button type="button" data-val="sky" aria-pressed="false"><strong>하늘상태</strong><small>맑음 · 흐림</small></button>
+                                </div>
+                            </div>
+                        </details>
+                        <details class="metric_disclosure" id="marine_weather_elements">
+                            <summary><span>해상</span><small>바다 예보</small></summary>
+                            <div class="metric_disclosure_body">
+                                <div class="seg metric_context_segment metric_context_single" id="seg_marine_weather" role="group" aria-label="해상 기상 요소 선택">
+                                    <button type="button" data-val="wav" aria-pressed="false"><strong>파고</strong><small>해상 · m</small></button>
+                                </div>
+                                <p class="metric_context_note">육지는 값이 없는 영역으로 표시합니다.</p>
+                            </div>
+                        </details>
+                    </fieldset>
+
+                    <fieldset class="field" id="field_weather_render" data-domain-control="weather">
+                        <legend class="flabel" id="layer_toggle_label">지도 표현</legend>
+                        <div class="chiprow" id="layer_toggles">
+                            <button type="button" class="chip on" data-layer="heat" title="값을 색상으로 표시" aria-pressed="true"><span class="dot"></span>색상</button>
+                            <button type="button" class="chip on" data-layer="stream" title="바람 흐름을 선으로 표시" aria-pressed="true"><span class="dot"></span>흐름선</button>
+                            <button type="button" class="chip" data-layer="iso" title="같은 값을 선으로 연결" aria-pressed="false"><span class="dot"></span>등치선</button>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field field_compact" id="field_weather_stations" data-domain-control="weather">
+                        <legend class="flabel" id="overlay_label">예보 지점</legend>
+                        <div class="layer_list">
+                            <button type="button" class="lswitch weather_stations clicked" id="weather_stations" aria-pressed="true"><span class="dot"></span>대표 지역 표시</button>
+                            <div class="province_boundary_controls" id="province_boundary_controls" style="display:none;">
+                                <button type="button" class="lswitch province_boundary_toggle" id="province_boundary_toggle" aria-pressed="false"><span class="dot"></span>시·도 경계</button>
+                            </div>
+                            <div class="region_label_controls" id="region_label_controls" style="display:none;">
+                                <button type="button" class="lswitch region_label_toggle clicked" id="region_label_toggle" aria-pressed="true"><span class="dot"></span>시·도명</button>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field field_compact" id="field_hazards" data-domain-control="weather">
+                        <legend class="flabel" id="hazard_layer_label">위험기상 <span class="sub">최근 관측·발표</span></legend>
+                        <div class="layer_list hazard_layer_list">
+                            <button type="button" class="lswitch hazard_layer_button" id="typhoon_toggle" aria-pressed="false">
+                                <span class="hazard_control_mark hazard_control_typhoon" aria-hidden="true"></span>태풍 경로<span class="sub" id="typhoon_toggle_meta">꺼짐</span>
+                            </button>
+                            <button type="button" class="lswitch hazard_layer_button" id="lightning_toggle" aria-pressed="false">
+                                <span class="hazard_control_mark hazard_control_lightning" aria-hidden="true"></span>최근 낙뢰<span class="sub" id="lightning_toggle_meta">꺼짐</span>
+                            </button>
+                            <button type="button" class="lswitch hazard_warning_open" id="warning_open" aria-expanded="false" aria-controls="warning_panel">
+                                <span class="hazard_control_mark hazard_control_warning" aria-hidden="true"></span>기상특보<span class="sub" id="warning_count">확인 중</span>
+                            </button>
+                        </div>
+                        <fieldset class="hazard_window" id="lightning_window_wrap" hidden>
+                            <legend class="flabel" id="lightning_window_label">낙뢰 조회 범위</legend>
+                            <div class="seg seg-3" id="lightning_window">
+                                <button type="button" data-lightning-minutes="15" aria-pressed="false">15분</button>
+                                <button type="button" data-lightning-minutes="30" class="on" aria-pressed="true">30분</button>
+                                <button type="button" data-lightning-minutes="60" aria-pressed="false">60분</button>
+                            </div>
+                        </fieldset>
+                        <div class="severe_weather_status" id="severe_weather_status" role="status" aria-live="polite" hidden>
+                            <span class="severe_weather_status_icon" aria-hidden="true"></span>
+                            <span id="severe_weather_status_text"></span>
+                            <button type="button" id="severe_weather_retry" hidden>다시 시도</button>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field field_compact" id="field_air_quality">
+                        <legend class="flabel" id="air_quality_label">최신 대기질 <span class="sub">AirKorea</span></legend>
+                        <div class="seg seg-3 air_quality_control" id="seg_air_quality">
+                            <button type="button" data-air="off" class="on" aria-pressed="true">끄기</button>
+                            <button type="button" data-air="pm10" aria-pressed="false">PM10</button>
+                            <button type="button" data-air="pm25" aria-pressed="false">PM2.5</button>
+                        </div>
+                        <div class="air_quality_status" id="air_quality_status" role="status" aria-live="polite" hidden>
+                            <span class="air_quality_status_icon" aria-hidden="true"></span>
+                            <span id="air_quality_status_text"></span>
+                            <button type="button" id="air_quality_retry" hidden>다시 시도</button>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field field_compact" id="field_cctv">
+                        <legend class="flabel" id="cctv_label">교통 CCTV <span class="sub">ITS</span></legend>
+                        <div class="layer_list">
+                            <button type="button" class="lswitch" id="cctv_toggle" aria-pressed="false" aria-describedby="cctv_privacy_note">
+                                <span class="dot"></span>CCTV 위치<span class="sub">확대 시 표시</span>
+                            </button>
+                        </div>
+                        <p class="sr-only" id="cctv_privacy_note">영상은 CCTV 지점을 선택하고 재생 버튼을 누른 뒤에만 불러옵니다.</p>
+                        <div class="cctv_status" id="cctv_status" role="status" aria-live="polite" hidden>
+                            <span class="cctv_status_icon" aria-hidden="true"></span>
+                            <span id="cctv_status_text"></span>
+                            <button type="button" id="cctv_retry" hidden>다시 시도</button>
+                        </div>
+                    </fieldset>
+                </div>
+            </details>
+
+            <details class="dock_disclosure" id="forecast_source_settings">
+                <summary><span>발표 시각</span></summary>
+                <div class="dock_disclosure_body">
+                    <div class="base_run_current">
+                        <span>선택한 발표</span><strong id="base_run_label" aria-live="polite">최신 발표</strong>
+                    </div>
+                    <div class="base_run_actions" role="group" aria-label="예보 발표 이동">
+                        <button type="button" id="base_run_prev" aria-label="이전 발표로 이동">이전 발표</button>
+                        <button type="button" class="latest_run_button" aria-label="가장 최근 발표 선택">최신</button>
+                        <button type="button" id="base_run_next" aria-label="다음 발표로 이동">다음 발표</button>
+                    </div>
+                    <fieldset class="field">
+                        <legend class="flabel" id="forecast_time_label">발표 날짜 <span class="sub">KST</span></legend>
+                        <div class="date_row">
+                            <div class="forecast_date_control">
+                                <label class="sr-only" for="forecast_date">발표 날짜</label>
+                                <input type="date" id="forecast_date" name="forecast_date" class="forecast_date_input" value="" autocomplete="off" aria-label="발표 날짜">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="field forecast_time_field">
+                        <legend class="flabel forecast_base_time_label" id="forecast_base_time_label">발표시각</legend>
+                        <ul class="forecast_run_buttons" aria-labelledby="forecast_base_time_label">
+                            <li class="on"><button type="button" class="forecast_run_button on" aria-pressed="true" aria-label="02시 발표">02</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="05시 발표">05</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="08시 발표">08</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="11시 발표">11</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="14시 발표">14</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="17시 발표">17</button></li>
+                            <li><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="20시 발표">20</button></li>
+                            <li class="latest_run_marker"><button type="button" class="forecast_run_button" aria-pressed="false" aria-label="23시 발표">23</button></li>
+                            <li>KST</li>
+                        </ul>
+                    </fieldset>
+                </div>
+            </details>
+
+            <details class="dock_disclosure" id="map_display_settings">
+                <summary><span>지도 설정</span></summary>
+                <div class="dock_disclosure_body">
+                    <fieldset class="field">
+                        <legend class="flabel" id="map_background_label">배경 지도</legend>
+                        <div id="basemap_picker" class="basemap_picker">
+                            <ul id="basemap_choices">
+                                <li><button type="button" class="is-selected-basemap" id="basemap_weather" aria-pressed="true"><img src="${pageContext.request.contextPath}/static/image/basemap-weather.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="기상 정보가 잘 보이는 기본 지도 미리보기"><span>기상 중심</span></button></li>
+                                <li><button type="button" id="basemap_boundaries" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-boundaries.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="행정 경계를 함께 보여주는 지도 미리보기"><span>행정 경계</span></button></li>
+                                <li><button type="button" id="basemap_streets" aria-label="도로 배경지도" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-streets.svg?v=20260722.1" width="210" height="164" loading="lazy" alt=""><span>도로</span></button></li>
+                            </ul>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend class="flabel" id="infra_label">주요 지점 <span class="sub">클릭 시 예보</span></legend>
+                        <div class="layer_list">
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_bridge" data-infrastructure="bridge" aria-pressed="false"><span class="dot" aria-hidden="true"></span>주요 대교<span class="sub">강풍 민감</span></button>
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_airport" data-infrastructure="airport" aria-pressed="false"><span class="dot" aria-hidden="true"></span>공항<span class="sub">이착륙</span></button>
+                            <button type="button" class="lswitch infrastructure_toggle" id="infra_port" data-infrastructure="port" aria-pressed="false"><span class="dot" aria-hidden="true"></span>무역항<span class="sub">해상풍</span></button>
+                        </div>
+                    </fieldset>
+
+                    <details class="advanced_disclosure">
+                        <summary>고급 설정</summary>
+                        <div class="advanced_disclosure_body">
+                            <fieldset class="field">
+                                <legend class="flabel" id="projection_label">투영 방식</legend>
+                                <div class="seg seg-3" id="seg_proj">
+                                    <button type="button" data-proj="KMA_GRID_LCC" class="on" aria-pressed="true" title="기상청 격자와 동일한 람베르트 정형원추도법">기상 격자</button>
+                                    <button type="button" data-proj="EPSG:3857" aria-pressed="false" title="웹 메르카토르">메르카토르</button>
+                                    <button type="button" data-proj="EPSG:4326" aria-pressed="false" title="위경도 등장방형">위경도</button>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </details>
+
+                    <button type="button" class="lswitch view3d_dock_open" id="btn_3d_dock" aria-controls="view3d" aria-haspopup="dialog" aria-expanded="false">
+                        <span class="dot"></span>현재 분포를 3D로 보기<span class="sub">모바일</span>
+                    </button>
+                </div>
+            </details>
+
+        </div>
+    </aside>

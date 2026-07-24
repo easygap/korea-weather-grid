@@ -1,0 +1,23 @@
+<%@ page pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="한국의 기상 예보, 미세먼지 관측, 실시간 도로 CCTV를 시간·공간 기준으로 탐색하는 기상 격자지도 BORA">
+<meta name="theme-color" content="#0b1220">
+<title>BORA · 한국 기상 격자지도</title>
+
+<link rel="icon" type="image/svg+xml" href="${pageContext.request.contextPath}/favicon.svg">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/reset.css?v=20260723.1">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.css">
+
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260723.2">
+
+
+<script defer src="${pageContext.request.contextPath}/static/js/jquery-4.0.0.min.js"></script>
+<script defer src="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.min.js"></script>
+<script defer src="${pageContext.request.contextPath}/static/vendor/proj4-2.20.9.min.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#map">지도 본문으로 건너뛰기</a>

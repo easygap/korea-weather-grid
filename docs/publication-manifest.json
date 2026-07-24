@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "releaseStatus": "blocked",
+  "approvedHistoryRoot": "47f4b7a2cadc4771ff6827a41e876e2a3e3ec529",
+  "releaseBlockers": [
+    "project-license-awaits-rights-review"
+  ],
+  "chartRuntime": {
+    "implementation": "first-party-svg",
+    "entrypoint": "src/main/resources/static/js/station-charts.js",
+    "externalDependencies": []
+  },
+  "assets": [
+    {
+      "path": "src/main/resources/static/favicon.svg",
+      "bytes": 581,
+      "sha256": "74a802a0137bf66060cc4b3d359843434109b717b04126bc14cd2888bc58c36c",
+      "origin": "repository-authored",
+      "license": "project-license-pending"
+    },
+    {
+      "path": "src/main/resources/static/image/basemap-weather.svg",
+      "bytes": 1148,
+      "sha256": "a74974e1b38c765967cc3ef263110ac1f5b7d8d77bb4ff568cf2f3c7f21f9506",
+      "origin": "repository-authored",
+      "license": "project-license-pending"
+    },
+    {
+      "path": "src/main/resources/static/image/basemap-boundaries.svg",
+      "bytes": 780,
+      "sha256": "aea7879fb62c1f234f8576a5823d4df6a2d952de744a668cf6fe029c292560c2",
+      "origin": "repository-authored",
+      "license": "project-license-pending"
+    },
+    {
+      "path": "src/main/resources/static/image/basemap-streets.svg",
+      "bytes": 1005,
+      "sha256": "d4b1fc4f6426600f3331864471ea7eb51ca5d8ad423edbfe89422b05efae6cc2",
+      "origin": "repository-authored",
+      "license": "project-license-pending"
+    },
+    {
+      "path": "src/main/resources/static/data/geodata/east-asia-land.geojson",
+      "bytes": 112824,
+      "sha256": "8c2f48eb0bde331c9388d4292410858cfb1bab976e17f6a80ce949ea950eccf7",
+      "origin": "Natural Earth 5.1.1 processed data",
+      "license": "public-domain"
+    },
+    {
+      "path": "src/main/resources/static/data/geodata/korea-admin1.geojson",
+      "bytes": 73886,
+      "sha256": "48ce313ba5f708493f8b2f6e3a9ede38fd30a48e0451240dc89cb97666a77407",
+      "origin": "Natural Earth 5.1.1 processed data",
+      "license": "public-domain"
+    }
+  ]
+}

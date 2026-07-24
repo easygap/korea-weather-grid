@@ -1,5 +1,5 @@
-# Normalize repository text files to LF; checkouts may use platform defaults.
-* text=auto
+# Normalize repository text files to LF on every platform.
+* text=auto eol=lf
 
 # Keep script line endings explicit.
 *.bat        text eol=crlf
@@ -7,6 +7,9 @@
 gradlew      text eol=lf
 *.geojson    text eol=lf
 src/main/resources/static/data/geodata/manifest.json text eol=lf
+
+# Preserve upstream three.js formatting without rewriting the vendored source.
+src/main/resources/static/js/three/three.core.js whitespace=-space-before-tab
 
 # Binary assets.
 *.jar        binary

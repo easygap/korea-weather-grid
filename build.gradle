@@ -40,6 +40,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
 // 개인 로컬 키 파일은 소스 트리에 존재하더라도 JAR/WAR에 절대 포함하지 않는다.
 tasks.named('processResources') {
     exclude 'application-local.yml'
@@ -48,7 +52,13 @@ tasks.named('processResources') {
 // 로컬 개발 실행에서만 gitignored 설정을 외부 파일로 읽는다.
 tasks.named('bootRun') {
     systemProperty 'spring.profiles.active', 'local'
-    systemProperty 'weather-grid.demo-mode', System.getProperty('weather-grid.demo-mode', 'true')
+    def demoModeProperty = System.getProperty('weather-grid.demo-mode')
+    if (demoModeProperty != null) {
+        systemProperty 'weather-grid.demo-mode', demoModeProperty
+    } else {
+        environment 'WEATHER_GRID_DEMO_MODE',
+                System.getenv().getOrDefault('WEATHER_GRID_DEMO_MODE', 'true')
+    }
     systemProperty 'spring.config.additional-location',
             "optional:file:${projectDir}/src/main/resources/application-local.yml"
 }

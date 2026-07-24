@@ -1,0 +1,222 @@
+<%@ page pageEncoding="UTF-8" %>
+    <!-- Forecast map and contextual overlays -->
+    <main class="map_workspace" aria-labelledby="map_workspace_title">
+        <h2 class="sr-only" id="map_workspace_title">한국 기상 격자 지도</h2>
+
+        <div class="map_status_panel" role="status" aria-label="현재 지도 정보" aria-live="polite">
+            <strong class="info_metric">바람 · 지상 10m</strong>
+            <span class="info_time">최신 예보 시각을 확인 중입니다.</span>
+            <span class="info_hint">색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)</span>
+        </div>
+        <div id="map" class="map map-weather" role="region" tabindex="0" aria-labelledby="map_workspace_title" aria-describedby="map_keyboard_help distance_measure_help road_basemap_status" aria-keyshortcuts="Enter Shift+Enter Backspace Escape"></div>
+        <p class="sr-only" id="road_basemap_status" role="status" aria-live="polite">도로 배경지도를 선택할 수 있습니다.</p>
+        <div class="measure_crosshair" aria-hidden="true"></div>
+        <div class="map_utility_stack" id="map_utility_stack">
+            <section class="distance_measure_panel" id="distance_measure_panel" aria-labelledby="distance_measure_title" hidden>
+                <header class="distance_measure_header">
+                    <div>
+                        <h2 id="distance_measure_title">직선거리 측정</h2>
+                    </div>
+                    <button type="button" id="distance_measure_close" aria-label="거리 측정 종료 및 지우기">×</button>
+                </header>
+                <output class="distance_measure_readout" aria-labelledby="distance_measure_total_label">
+                    <span id="distance_measure_total_label">총 거리</span>
+                    <strong id="distance_measure_total">0 m</strong>
+                    <small id="distance_measure_segments">시작 전</small>
+                </output>
+                <p class="distance_measure_hint" id="distance_measure_hint">지점을 차례로 선택하세요. 지도상 직선거리의 구간 합계입니다.</p>
+                <div class="distance_measure_actions">
+                    <button type="button" id="distance_measure_undo" disabled>이전 점</button>
+                    <button type="button" id="distance_measure_finish" disabled>완료</button>
+                    <button type="button" id="distance_measure_clear" disabled>초기화</button>
+                </div>
+                <p class="sr-only" id="distance_measure_status" role="status" aria-live="polite" aria-atomic="true"></p>
+            </section>
+            <div class="map_utility_row">
+                <button type="button" class="map_measure_toggle" id="distance_measure_toggle" aria-label="거리 측정 시작" aria-pressed="false" aria-expanded="false" aria-controls="distance_measure_panel" aria-describedby="distance_measure_help">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 19 15-15 2 2L6 21H4v-2Z"/><path d="m14 7 3 3M11 10l2 2M8 13l3 3"/></svg>
+                    <span>거리</span>
+                </button>
+                <div class="map_scale" id="map_scale" role="group" aria-label="지도 축척. 확대 수준에 따라 미터 또는 킬로미터 단위로 표시됩니다.">
+                    <span class="map_scale_label">축척</span>
+                </div>
+            </div>
+        </div>
+        <p class="sr-only" id="map_keyboard_help">방향키로 지도를 이동하고 확대·축소할 수 있습니다. 표시한 주요 지점, 대기질, 도로 CCTV 또는 위험기상 레이어가 켜진 상태에서 Enter 키를 누르면 화면 중앙에서 가장 가까운 정보를 엽니다.</p>
+        <p class="sr-only" id="distance_measure_help">거리 측정 중에는 Enter 키로 화면 중심에 지점을 추가하고, Shift와 Enter 키로 완료하며, Backspace 키로 이전 지점을 취소하고, Escape 키로 측정을 종료할 수 있습니다.</p>
+
+        <!-- 지점 클릭 팝업 -->
+        <aside class="coordinate_popup" aria-labelledby="coordinate_popup_title">
+            <h2 class="sr-only" id="coordinate_popup_title">선택 지점</h2>
+            <div class="coordinate_popup_actions">
+                <button type="button" class="coordinate_popup_close" aria-label="지점 정보 닫기">×</button>
+            </div>
+            <div class="popup_content">
+                <div class="coordinate_latitude_field">
+                    <span class="label">위도</span>
+                    <span id="latitude" class="latitude"></span>
+                </div>
+                <div class="coordinate_longitude_field">
+                    <span class="label">경도</span>
+                    <span id="longitude" class="longitude"></span>
+                </div>
+            </div>
+            <div class="station_chart_shell">
+                <button type="button" class="station_timeline_button">이 위치 48시간 예보</button>
+            </div>
+        </aside>
+
+        <!-- AirKorea 측정소 상세 — API 문자열은 air-quality.js에서 textContent로만 주입 -->
+        <aside class="air_popup" id="air_popup" aria-labelledby="air_popup_title" aria-live="polite" tabindex="-1" hidden>
+            <div class="air_popup_header">
+                <div>
+                    <span class="air_popup_eyebrow" id="air_popup_eyebrow">AIRKOREA · 최신 관측</span>
+                    <h2 id="air_popup_title">대기질 측정소</h2>
+                </div>
+                <button type="button" class="air_popup_close" id="air_popup_close" aria-label="대기질 측정소 정보 닫기">×</button>
+            </div>
+            <div class="air_popup_measure">
+                <span id="air_popup_pollutant">PM10</span>
+                <strong id="air_popup_value">—</strong>
+                <span><span aria-hidden="true">㎍/㎥</span><span class="sr-only">마이크로그램 퍼 세제곱미터</span></span>
+                <span class="air_grade_badge" id="air_popup_grade">자료 없음</span>
+            </div>
+            <div class="air_popup_gauges" id="air_popup_gauges" role="group" aria-label="미세먼지 농도 비교">
+                <div class="air_popup_gauge_row" data-pollutant="pm10">
+                    <strong>PM10</strong>
+                    <div class="air_gauge air_popup_gauge" id="air_popup_gauge_pm10"></div>
+                </div>
+                <div class="air_popup_gauge_row" data-pollutant="pm25">
+                    <strong>PM2.5</strong>
+                    <div class="air_gauge air_popup_gauge" id="air_popup_gauge_pm25"></div>
+                </div>
+            </div>
+            <dl class="air_popup_meta">
+                <div><dt>관측시각</dt><dd id="air_popup_time">—</dd></div>
+                <div><dt>주소</dt><dd id="air_popup_address">—</dd></div>
+                <div><dt>망 구분</dt><dd id="air_popup_network">—</dd></div>
+                <div id="air_popup_flag_row" hidden><dt>자료 상태</dt><dd id="air_popup_flag">—</dd></div>
+            </dl>
+            <p class="air_popup_source">출처 AirKorea · 실시간 측정값은 미확정 자료이며 통신·장비 상태에 따라 오류가 있을 수 있습니다.</p>
+        </aside>
+
+        <!-- ITS 도로 CCTV 상세 — 스트림 주소는 명시적인 재생 동작 이후에만 video에 연결한다. -->
+        <aside class="cctv_popup" id="cctv_popup" aria-labelledby="cctv_popup_title" aria-live="polite" tabindex="-1" hidden>
+            <div class="cctv_popup_header">
+                <div>
+                    <span class="cctv_popup_eyebrow" id="cctv_popup_eyebrow">ITS · 실시간 교통</span>
+                    <h2 id="cctv_popup_title">도로 CCTV</h2>
+                </div>
+                <button type="button" class="cctv_popup_close" id="cctv_popup_close" aria-label="도로 CCTV 정보 닫기">×</button>
+            </div>
+            <div class="cctv_cluster_picker" id="cctv_cluster_picker" hidden>
+                <p id="cctv_cluster_hint">겹쳐 있는 CCTV를 선택해 주세요.</p>
+                <ul class="cctv_cluster_list" id="cctv_cluster_list"></ul>
+            </div>
+            <div class="cctv_media" id="cctv_media" data-state="idle">
+                <div class="cctv_media_placeholder" id="cctv_media_placeholder">
+                    <span class="cctv_camera_mark" aria-hidden="true"></span>
+                    <button type="button" class="cctv_play" id="cctv_play">실시간 영상 재생</button>
+                    <p>재생할 때만 영상을 불러옵니다.</p>
+                </div>
+                <video id="cctv_video" controls playsinline preload="none" crossorigin="anonymous" aria-labelledby="cctv_popup_title cctv_popup_road" hidden></video>
+                <p class="cctv_media_status" id="cctv_media_status" role="status" aria-live="polite" hidden></p>
+            </div>
+            <dl class="cctv_popup_meta" id="cctv_popup_meta">
+                <div><dt>도로 구간</dt><dd id="cctv_popup_road">—</dd></div>
+                <div><dt>영상 정보</dt><dd id="cctv_popup_format">—</dd></div>
+                <div><dt>갱신시각</dt><dd id="cctv_popup_time">—</dd></div>
+            </dl>
+            <p class="cctv_popup_source" id="cctv_popup_source">출처 국가교통정보센터</p>
+        </aside>
+
+        <!-- 위험기상 피처 상세 — 외부 문자열은 severe-weather.js에서 textContent로만 주입한다. -->
+        <aside class="hazard_popup" id="hazard_popup" aria-labelledby="hazard_popup_title" tabindex="-1" hidden>
+            <header class="hazard_popup_header">
+                <div>
+                    <span class="hazard_popup_eyebrow" id="hazard_popup_eyebrow">기상청 · 최근 관측</span>
+                    <h2 id="hazard_popup_title">위험기상</h2>
+                </div>
+                <button type="button" class="hazard_popup_close" id="hazard_popup_close" aria-label="위험기상 정보 닫기">×</button>
+            </header>
+            <p class="hazard_popup_summary" id="hazard_popup_summary"></p>
+            <dl class="hazard_popup_meta" id="hazard_popup_meta"></dl>
+            <p class="hazard_popup_source" id="hazard_popup_source">출처 기상청</p>
+        </aside>
+
+        <!-- API 미연결 데모 데이터 배지 -->
+        <div id="mock_badge" role="status" aria-live="polite" style="display:none;"><span class="mock_badge_mark" aria-hidden="true"></span>데모 데이터 · 기상청 API 연결 필요</div>
+        <div id="data_error" role="alert" aria-live="assertive" hidden>
+            <span>기상 데이터를 불러오지 못했습니다.</span>
+            <button type="button" id="retry_data">다시 시도</button>
+        </div>
+
+        <button type="button" class="warning_banner" id="warning_banner" aria-expanded="false" aria-controls="warning_panel" hidden>
+            <span class="warning_banner_mark" aria-hidden="true"></span>
+            <strong id="warning_banner_title">기상특보</strong>
+            <span id="warning_banner_summary"></span>
+            <span class="warning_banner_chevron" aria-hidden="true"></span>
+        </button>
+        <aside class="warning_panel" id="warning_panel" aria-labelledby="warning_panel_title" aria-describedby="warning_panel_status warning_panel_source" tabindex="-1" hidden>
+            <header class="warning_panel_header">
+                <div>
+                    <span>기상청 발표</span>
+                    <h2 id="warning_panel_title">발효 중인 기상특보</h2>
+                </div>
+                <button type="button" class="warning_panel_close" id="warning_panel_close" aria-label="기상특보 패널 닫기">×</button>
+            </header>
+            <p class="warning_panel_status" id="warning_panel_status">최신 특보를 확인하고 있습니다…</p>
+            <ul class="warning_list" id="warning_list"></ul>
+            <p class="warning_panel_source" id="warning_panel_source">출처 기상청 · 발표 내용은 현지 상황에 따라 변경될 수 있습니다.</p>
+        </aside>
+        <p class="sr-only" id="warning_live" role="status" aria-live="polite" aria-atomic="true"></p>
+
+        <!-- 기상·대기질 범례는 동시에 켤 수 있으므로 독립 카드로 쌓는다. -->
+        <aside class="legend_stack" aria-labelledby="legend_stack_title">
+            <h2 class="sr-only" id="legend_stack_title">지도 범례</h2>
+            <section class="legend weather_legend" id="weather_legend" aria-labelledby="weather_legend_title">
+                <h2 class="legend_title" id="weather_legend_title">풍속 분포</h2>
+                <button type="button" class="legend_toggle" aria-label="풍속 분포 접기" aria-expanded="true" aria-controls="weather_legend_content">풍속 분포</button>
+                <div id="weather_legend_content">
+                    <div id="legend_scale"></div>
+                    <section class="grid_stats" aria-labelledby="grid_stats_title">
+                        <h3 id="grid_stats_title">풍속 (m/s)</h3>
+                        <dl>
+                            <div><dt>낮은 값</dt><dd id="grid_stat_min">0</dd></div>
+                            <div><dt>평균값</dt><dd id="grid_stat_avg">0</dd></div>
+                            <div><dt>높은 값</dt><dd id="grid_stat_max">0</dd></div>
+                        </dl>
+                    </section>
+                </div>
+            </section>
+            <section class="legend air_legend" id="air_legend" aria-labelledby="air_legend_title" hidden>
+                <h2 class="legend_title" id="air_legend_title">PM10 등급</h2>
+                <button type="button" class="legend_toggle air_legend_toggle" aria-label="PM10 범례 접기" aria-expanded="true" aria-controls="air_legend_body">PM10 범례</button>
+                <div class="air_legend_body" id="air_legend_body">
+                    <div class="air_gauge air_legend_gauge" id="air_legend_gauge"></div>
+                    <div class="air_legend_rows" id="air_legend_rows" role="list"></div>
+                    <div class="air_legend_meta">
+                        <span id="air_legend_time">관측시각 확인 중…</span>
+                        <span>단위 ㎍/㎥ · AirKorea</span>
+                    </div>
+                    <p class="air_legend_notice">실시간 측정값은 미확정 자료이며 통신·장비 상태에 따라 오류가 있을 수 있습니다.</p>
+                </div>
+            </section>
+            <section class="legend hazard_legend" id="hazard_legend" aria-labelledby="hazard_legend_title" hidden>
+                <h2 class="legend_title" id="hazard_legend_title">위험기상</h2>
+                <button type="button" class="legend_toggle hazard_legend_toggle" aria-label="위험기상 범례 접기" aria-expanded="true" aria-controls="hazard_legend_body">위험기상</button>
+                <div class="hazard_legend_body" id="hazard_legend_body">
+                    <ul class="hazard_legend_rows">
+                        <li data-hazard-legend="typhoon-analysis"><i aria-hidden="true"></i><span>태풍 분석 경로</span></li>
+                        <li data-hazard-legend="typhoon-forecast"><i aria-hidden="true"></i><span>태풍 예측 경로</span></li>
+                        <li data-hazard-legend="lightning-ground"><i aria-hidden="true"></i><span>대지방전</span></li>
+                        <li data-hazard-legend="lightning-cloud"><i aria-hidden="true"></i><span>구름방전</span></li>
+                    </ul>
+                    <div class="hazard_legend_meta">
+                        <span id="hazard_legend_time">표시할 레이어를 선택해 주세요.</span>
+                        <span id="hazard_legend_count"></span>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </main>

@@ -50,4 +50,6 @@ cloudflare/.wrangler/
 cloudflare/.dev.vars*
 !cloudflare/.dev.vars.example
 cloudflare/public/static/
+cloudflare/public/internal/
+.publication-denylist.local
 cloudflare/worker-configuration.d.ts

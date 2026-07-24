@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-22",
+  "artifacts": [
+    {
+      "component": "jquery",
+      "version": "4.0.0",
+      "path": "src/main/resources/static/js/jquery-4.0.0.min.js",
+      "bytes": 78748,
+      "sha256": "39a546ea9ad97f8bfaf5d3e0e8f8556adb415e470e59007ada9759dce472adaa",
+      "upstream": "https://github.com/jquery/jquery/releases/tag/4.0.0"
+    },
+    {
+      "component": "openlayers-js",
+      "version": "10.9.0",
+      "path": "src/main/resources/static/vendor/openlayers-10.9.0.min.js",
+      "bytes": 898596,
+      "sha256": "c30af874edbd468011a883cbbdb51e8e986f17b440811392cd5aa375077427c7",
+      "upstream": "https://github.com/openlayers/openlayers/releases/tag/v10.9.0"
+    },
+    {
+      "component": "openlayers-css",
+      "version": "10.9.0",
+      "path": "src/main/resources/static/vendor/openlayers-10.9.0.css",
+      "bytes": 6343,
+      "sha256": "abc8afd72cc10bd29cc143f443bae4a6804bd3cb3fb262e6b6a6bc6c924ea34f",
+      "upstream": "https://github.com/openlayers/openlayers/releases/tag/v10.9.0"
+    },
+    {
+      "component": "proj4js",
+      "version": "2.20.9",
+      "path": "src/main/resources/static/vendor/proj4-2.20.9.min.js",
+      "bytes": 129066,
+      "sha256": "4c081b72f30222bc31f553923f8c8e543db337bbb4b0c478cf798c7a93b35ab6",
+      "upstream": "https://github.com/proj4js/proj4js/releases/tag/v2.20.9"
+    },
+    {
+      "component": "hls.js-light",
+      "version": "1.6.16",
+      "path": "src/main/resources/static/vendor/hls.light.min.js",
+      "bytes": 354437,
+      "sha256": "947b45be1392e39569d4aefc2cff9ff6ecbe6cc246cf67ab12ece0c41c24b793",
+      "upstream": "https://github.com/video-dev/hls.js/releases/tag/v1.6.16"
+    },
+    {
+      "component": "three-module",
+      "version": "r185",
+      "path": "src/main/resources/static/js/three/three.module.js",
+      "bytes": 650153,
+      "sha256": "bbf5ed13fe4373f5bd38b14ea8e62e9f157327da5638edc6d3863e08b167c9c7",
+      "upstream": "https://raw.githubusercontent.com/mrdoob/three.js/r185/build/three.module.js"
+    },
+    {
+      "component": "three-core",
+      "version": "r185",
+      "path": "src/main/resources/static/js/three/three.core.js",
+      "bytes": 1443056,
+      "sha256": "3718df126d69c125362a03340913204470d8c50238605150e57f808840fb7759",
+      "upstream": "https://raw.githubusercontent.com/mrdoob/three.js/r185/build/three.core.js"
+    },
+    {
+      "component": "three-orbit-controls",
+      "version": "r185",
+      "path": "src/main/resources/static/js/three/addons/controls/OrbitControls.js",
+      "bytes": 40520,
+      "sha256": "1e08bf297c9062aa5055a9d649d8a8458c3871aa31c7d600f535a06f567e7cad",
+      "upstream": "https://raw.githubusercontent.com/mrdoob/three.js/r185/examples/jsm/controls/OrbitControls.js",
+      "localChange": "bare three import changed to ../../three.module.js"
+    }
+  ]
+}

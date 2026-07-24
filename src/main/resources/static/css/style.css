@@ -13,6 +13,11 @@
     --hazard-cloud: #a8a1ff;
     --hazard-warning: #fb923c;
     --hazard-cluster-text: #352300;
+    --infrastructure-bridge: #f6c453;
+    --infrastructure-airport: #5fd3ff;
+    --infrastructure-port: #5ee6b8;
+    --infrastructure-marker-stroke: #07111f;
+    --infrastructure-label-halo: rgba(5, 10, 20, 0.92);
 
     /* 다크 테마 (기본) */
     --bg:            #0b1220;
@@ -43,6 +48,11 @@
     --hazard-cloud: #6554c0;
     --hazard-warning: #c2410c;
     --hazard-cluster-text: #ffffff;
+    --infrastructure-bridge: #9a5b00;
+    --infrastructure-airport: #006b8f;
+    --infrastructure-port: #087f5b;
+    --infrastructure-marker-stroke: #ffffff;
+    --infrastructure-label-halo: rgba(255, 255, 255, 0.94);
     --bg:            #eef3f9;
     --bg-map-weather:    #e8f1f8;    /* 바다 틴트 — 흰 랜드마스와 구분 */
     --bg-map-boundaries: #dcecf5;
@@ -95,7 +105,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .app { position: relative; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
 
 .map_workspace { position: absolute; inset: 0; z-index: 1; }
-.map { position: absolute; width: 100%; height: 100%; background: var(--bg-map-weather); transition: background .3s; }
+.map { position: absolute; z-index: 1; width: 100%; height: 100%; background: var(--bg-map-weather); transition: background .3s; }
 #map:focus-visible { outline: 0; box-shadow: inset 0 0 0 3px var(--accent); }
 .map-weather    { background: var(--bg-map-weather); }
 .map-boundaries { background: var(--bg-map-boundaries); }
@@ -294,6 +304,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     display: flex; align-items: center; gap: 6px;
     font-size: 1.2rem; font-weight: 680; letter-spacing: 0; color: var(--text-3); margin-bottom: 8px;
 }
+.field > legend.flabel { width: 100%; }
 .field > .flabel .sub { margin-left: auto; font-size: 1.05rem; font-weight: 650; letter-spacing: 0; }
 
 /* 세그먼트 컨트롤 (요소/고도/도법) */
@@ -319,7 +330,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .metric_context[hidden] { display: none; }
 .metric_context { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--stroke); }
 .metric_context > .flabel {
-    margin-bottom: 7px; color: var(--text-3); font-size: 1.05rem; font-weight: 680;
+    width: 100%; margin-bottom: 7px; color: var(--text-3); font-size: 1.05rem; font-weight: 680;
 }
 .metric_context_segment button {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
@@ -457,7 +468,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     box-shadow: inset 0 0 0 1px var(--stroke);
 }
 .hazard_window[hidden] { display: none; }
-.hazard_window > .flabel { margin-bottom: 7px; color: var(--text-3); font-size: 1.05rem; font-weight: 650; }
+.hazard_window > .flabel { width: 100%; margin-bottom: 7px; color: var(--text-3); font-size: 1.05rem; font-weight: 650; }
 .hazard_window .seg { background: var(--surface-solid); }
 .severe_weather_status {
     display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 7px;
@@ -545,6 +556,19 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .lswitch.clicked { color: var(--text); }
 .lswitch.clicked .dot { background: var(--accent); }
 .lswitch .sub { margin-left: auto; font-size: 1.1rem; color: var(--text-3); font-weight: 600; }
+.infrastructure_toggle { min-height: 44px; }
+.infrastructure_toggle .dot {
+    width: 10px; height: 10px; border-radius: 2px; background: currentColor; opacity: .62;
+    transition: background-color .15s, opacity .15s, transform .15s;
+}
+.infrastructure_toggle[data-infrastructure="bridge"] .dot { transform: rotate(45deg); }
+.infrastructure_toggle[data-infrastructure="airport"] .dot {
+    border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.infrastructure_toggle.clicked .dot { opacity: 1; box-shadow: 0 0 0 2px var(--infrastructure-marker-stroke); }
+.infrastructure_toggle.clicked[data-infrastructure="bridge"] .dot { background: var(--infrastructure-bridge); }
+.infrastructure_toggle.clicked[data-infrastructure="airport"] .dot { background: var(--infrastructure-airport); }
+.infrastructure_toggle.clicked[data-infrastructure="port"] .dot { background: var(--infrastructure-port); }
 .view3d_dock_open { display: none; margin-top: 4px; border: 1px solid var(--stroke); background: var(--chip); }
 #btn_3d:disabled, .view3d_dock_open:disabled { opacity: .4; cursor: not-allowed; }
 
@@ -1432,6 +1456,10 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     max-width: min(460px, calc(100vw - 24px)); box-sizing: border-box; text-align: center; text-wrap: balance;
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 }
+.mock_badge_mark {
+    display: inline-block; width: 9px; height: 9px; margin-right: 7px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 0 3px rgba(248, 113, 113, .18);
+}
 [data-theme="light"] #mock_badge { color: #7f1d1d; background: rgba(254, 202, 202, 0.9); }
 
 /* 커서 좌표·격자값 리드아웃 */
@@ -1564,11 +1592,25 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 }
 .ol-rotate { display: none; }
 /* OSM 거리지도 저작권 표기 — 작게 상시 노출 */
-.ol-attribution { bottom: 2px; right: 6px; background: transparent; font-size: 10px; max-width: none; }
-.ol-attribution ul { color: var(--text-3); text-shadow: none; font-size: 10px; background: transparent; }
-.ol-attribution a { color: var(--text-2); }
+.ol-attribution {
+    bottom: 84px;
+    right: 76px;
+    max-width: calc(100% - 160px);
+    padding: 3px 7px;
+    border: 1px solid rgba(247, 250, 252, .16);
+    border-radius: 4px;
+    background: rgba(7, 25, 46, .88);
+    font-size: 10px;
+}
+.ol-attribution ul { color: #d8e4f0; text-shadow: none; font-size: 10px; background: transparent; }
+.ol-attribution a { color: #f7fafc; }
 .ol-attribution button { display: none; }
 .ol-attribution.ol-collapsed ul { display: block; }
+.ol-attribution.ol-uncollapsible {
+    bottom: 84px;
+    right: 76px;
+    background: rgba(7, 25, 46, .88);
+}
 
 /* ===================== 앱 알림 대화상자 ===================== */
 
@@ -1614,7 +1656,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .icon-btn { padding: 0 10px; font-size: 1.2rem; }
     .icon-btn .lbl { display: none; }
 }
-/* 모바일 — 독은 기본 접힘(weather-grid-ui), 컨트롤은 오버레이 시트로 */
+/* 모바일 — 설정 독은 기본 접힘이며 컨트롤은 오버레이 시트로 표시 */
 @media (max-width: 640px) {
     .coordinate_search_button { display: none; }
     .top-actions #btn_3d { display: none; }

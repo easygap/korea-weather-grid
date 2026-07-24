@@ -2129,6 +2129,12 @@ const text = (s, options = {}) => new Response(s, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8', ...SEC_HEADERS, ...(options.headers || {}) }
 });
 const hasKmaKey = (env) => typeof env.KMA_API_AUTH_KEY === 'string' && env.KMA_API_AUTH_KEY.trim().length > 0;
+const vworldApiKey = (env) => {
+    const candidate = typeof env.VWORLD_API_KEY === 'string'
+        ? env.VWORLD_API_KEY.trim() : '';
+    return /^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(candidate)
+        ? candidate : '';
+};
 
 function parseLeadHours(value, defaultValue = 0) {
     if (value === undefined || value === null) return defaultValue;
@@ -2343,6 +2349,16 @@ export default {
                     if (request.method !== 'GET' && request.method !== 'HEAD') return methodNotAllowed('GET, HEAD');
                     // Assets는 /index.html을 /로 정규화(307)하므로 루트 경로로 요청한다
                     return env.ASSETS.fetch(new Request(new URL('/', url), request));
+
+                case '/api/runtime/map-config': {
+                    if (request.method !== 'GET') return methodNotAllowed('GET');
+                    if ([...q.keys()].length !== 0) return badRequest('허용되지 않은 파라미터');
+                    const key = vworldApiKey(env);
+                    return json({
+                        vworldEnabled: key.length > 0,
+                        vworldApiKey: key
+                    }, { headers: { 'Cache-Control': 'no-store' } });
+                }
 
                 case '/api/weather/grid':
                 case '/api/weather/grid/stats': {

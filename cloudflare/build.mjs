@@ -1,7 +1,8 @@
 // 프론트 정적 자산을 Spring 리소스에서 복사 (단일 소스 유지 — public/static은 커밋하지 않음)
-import { copyFileSync, cpSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { renderStaticShell } from './jsp-shell.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, '..', 'src', 'main', 'resources', 'static');
@@ -16,25 +17,22 @@ if (!existsSync(src) || !existsSync(jspSource)) {
 
 // 운영 정적 셸도 JSP에서 생성해 DOM·접근성 속성·자산 버전이 갈라지지 않게 한다.
 // 서버에서만 필요한 JSP 지시문과 초기 발표시각 속성은 브라우저 부트스트랩이 채운다.
-const staticShell = readFileSync(jspSource, 'utf8')
-    .replace(/^<%@[^%]*%>\s*/u, '')
-    .replace(/<%--[\s\S]*?--%>/gu, '')
-    .replace(/<%[\s\S]*?%>/gu, '')
-    .replaceAll('${pageContext.request.contextPath}', '')
-    .replaceAll('${fileName}', '')
-    .replace(/\sdata-(?:base-date|base-time|file-name)=""/gu, '')
-    .replace(/[ \t]+$/gmu, '');
+const staticShell = renderStaticShell(jspSource);
 writeFileSync(shellTarget, staticShell);
 console.log('정적 셸 생성 완료:', jspSource, '→', shellTarget);
 
 rmSync(dst, { recursive: true, force: true });
 cpSync(src, dst, { recursive: true });
-const rootFavicons = ['favicon.ico', 'favicon.svg', 'favicon-180.png'];
+const rootFavicons = ['favicon.svg'];
 for (const favicon of rootFavicons) {
     copyFileSync(join(src, favicon), join(here, 'public', favicon));
 }
-for (const favicon of [...rootFavicons, 'favicon-512.png']) {
+for (const favicon of rootFavicons) {
     rmSync(join(dst, favicon), { force: true });
+}
+for (const staleFavicon of ['favicon.ico', 'favicon-180.png', 'favicon-512.png']) {
+    rmSync(join(here, 'public', staleFavicon), { force: true });
+    rmSync(join(dst, staleFavicon), { force: true });
 }
 console.log('복사 완료:', src, '→', dst);
 
