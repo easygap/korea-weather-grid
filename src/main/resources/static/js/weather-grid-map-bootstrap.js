@@ -6,17 +6,23 @@
 
     var State = window.WeatherGridBasemapState;
     var VWorldBasemap = window.WeatherGridVWorldBasemap;
-    if (!State || !window.ol || !window.proj4 || !window.WeatherGridWindGrid
+    var DfsProjection = window.WeatherGridDfsProjection;
+    if (!State || !DfsProjection || !window.ol || !window.proj4
             || !window.WeatherGridGeodata) {
-        throw new Error('Basemap state, OpenLayers, proj4, wind grid and geodata must load first');
+        throw new Error('Basemap state, DFS projection, OpenLayers, proj4 and geodata must load first');
     }
 
-    var PROJECTION_CODE = 'KMA_GRID_LCC';
-    var PROJECTION_DEFINITION = '+proj=lcc +lat_1=30 +lat_2=60 +lat_0=0 +lon_0=126 +datum=WGS84 +units=m +no_defs';
-    proj4.defs(PROJECTION_CODE, PROJECTION_DEFINITION);
+    var PROJECTION_CODE = DfsProjection.code;
+    proj4.defs(PROJECTION_CODE, DfsProjection.proj4Definition);
     ol.proj.proj4.register(proj4);
 
-    var lccToGeographic = proj4(PROJECTION_CODE, 'EPSG:4326');
+    // 표시 좌표도 실제 DFS 기준을 쓰도록 투영 범위와 지리 범위를 함께 등록한다.
+    var lccProjection = ol.proj.get(PROJECTION_CODE);
+    var lccExtent = ol.proj.transformExtent(
+        State.geographicLimit, 'EPSG:4326', PROJECTION_CODE, 16);
+    lccProjection.setWorldExtent(State.geographicLimit.slice());
+    lccProjection.setExtent(lccExtent.slice());
+
     var compactQuery = window.matchMedia('(max-width: 900px)');
     var finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
     var basemapState = State.initialState(compactQuery.matches);
@@ -46,8 +52,7 @@
 
     var initialView = new ol.View({
         projection: PROJECTION_CODE,
-        extent: ol.proj.transformExtent(
-            State.geographicLimit, 'EPSG:4326', PROJECTION_CODE, 16),
+        extent: lccExtent.slice(),
         constrainOnlyCenter: true,
         showFullExtent: true,
         center: ol.proj.transform([127.8, 38], 'EPSG:4326', PROJECTION_CODE),
@@ -617,12 +622,10 @@
 
     window.WeatherGridMapRuntime = Object.freeze({
         map: map,
-        gridCoordinate: window.WeatherGridWindGrid.latLonToGridFraction,
+        gridCoordinate: DfsProjection.latLonToGridFraction,
         toGeographic: function (coordinate, projectionCode) {
             var code = projectionCode || window.WEATHER_GRID_VIEW_PROJ || PROJECTION_CODE;
-            return code === PROJECTION_CODE
-                ? lccToGeographic.forward(coordinate)
-                : ol.proj.getTransform(code, 'EPSG:4326')(coordinate);
+            return ol.proj.getTransform(code, 'EPSG:4326')(coordinate);
         },
         coreLayers: function () {
             return Object.freeze({

@@ -35,9 +35,11 @@ class StaticShellParityTest {
 
         List<String> versionedAssets = List.of(
                 "css/style.css", "js/app-bootstrap.js", "js/geodata-loader.js", "js/infra.js",
-                "js/station-charts.js", "js/wind-grid.js", "js/windy.js",
+                "js/station-charts.js", "js/weather-grid-dfs-projection.js",
+                "js/wind-grid.js", "js/windy.js",
                 "js/weather-grid-vworld-state.js", "js/weather-grid-vworld.js",
-                "js/weather-grid.js", "js/air-quality.js",
+                "js/weather-grid-map-bootstrap.js", "js/weather-grid.js",
+                "js/weather-grid-isoline-state.js", "js/isoline.js", "js/air-quality.js",
                 "js/weather-grid-interface-state.js", "js/weather-grid-interface.js",
                 "js/weather-grid-control-state.js", "js/weather-grid-controls.js",
                 "js/weather-grid-legend-model.js", "js/weather-grid-legend.js",
