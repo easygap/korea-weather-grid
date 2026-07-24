@@ -1,151 +1,130 @@
 <p align="center">
-  <img src="src/main/resources/static/favicon.svg" width="72" alt="BORA 로고">
+  <img src="src/main/resources/static/favicon.svg" width="68" alt="BORA 심볼">
 </p>
 
 <h1 align="center">BORA · Korea Weather Grid</h1>
 
 <p align="center">
-  전국의 기상 격자 예보를 지도와 시간축으로 탐색하는 웹 애플리케이션입니다.<br>
-  바람의 흐름부터 기온·강수·습도·하늘상태·파고까지 한 화면에서 비교할 수 있습니다.
+  전국 기상 격자와 주변 환경 정보를 지도 위에서 탐색하는 웹 애플리케이션입니다.<br>
+  바람의 흐름, 시간에 따른 예보 변화, 지역별 상세 정보를 한 화면에서 확인할 수 있습니다.
 </p>
 
 <p align="center">
-  <a href="https://bora-weather.dlwnstndlwld.workers.dev"><strong>웹에서 BORA 열기</strong></a>
+  <a href="https://bora-weather.dlwnstndlwld.workers.dev/"><strong>웹에서 BORA 열기</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#로컬에서-실행하기">로컬 실행</a>
+  &nbsp;·&nbsp;
+  <a href="docs/known-limitations.md">제공 범위</a>
 </p>
 
-![전국 바람 분포와 48시간 예보 시간축](docs/images/weather-overview.png)
+![바람 흐름, 기상 격자와 등치선을 추상화한 BORA 커버](docs/images/readme-cover.webp)
 
-## BORA로 할 수 있는 일
-
-- 전국 기상 분포를 색상, 흐름선, 등치선으로 비교
-- 현재 발표 자료를 기준으로 향후 48시간 예보 탐색
-- 지역 검색 또는 지도 선택으로 지점별 풍향·풍속 시계열 확인
-- 범례에서 값의 범위와 전국 격자 분포 비율 확인
-- 현재 기상장을 3D 지형 또는 지구본으로 탐색
-- 대기질, 도로 CCTV, 위험기상 자료를 별도 레이어로 확인
-- 거리 측정, 대표 지점 표시, 어두운 테마와 밝은 테마 전환
-
-## 사용 방법
-
-1. 상단에서 `기상`, `대기질`, `교통` 중 확인할 영역을 선택합니다.
-2. 기상 화면에서는 `바람`, `기온`, `강수·눈`, `일사`, `위험기상`을 전환합니다.
-3. 화면 아래 시간축을 움직여 같은 요소의 예보 변화를 비교합니다.
-4. 지역 이름을 검색하면 해당 지점의 48시간 시계열을 열 수 있습니다.
-5. `3D` 버튼으로 현재 분포를 입체 지형에서 확인합니다.
+<table>
+  <tr>
+    <td width="25%" align="center"><strong>9개 기상 요소</strong><br><sub>바람 · 기온 · 강수량 · 강수형태 · 적설 · 습도 · 하늘 · 파고 · 일사</sub></td>
+    <td width="25%" align="center"><strong>48시간 탐색</strong><br><sub>시간축과 발표 시각 이동</sub></td>
+    <td width="25%" align="center"><strong>3가지 지도 투영</strong><br><sub>기상청 LCC · 메르카토르 · 위경도</sub></td>
+    <td width="25%" align="center"><strong>2D · 3D 보기</strong><br><sub>지도 · 지형 · 지구본</sub></td>
+  </tr>
+</table>
 
 ## 실제 동작 화면
 
-아래 이미지는 저장소의 애플리케이션을 브라우저에서 직접 실행해 캡처했습니다.
-별도로 데모라고 표시한 일사 화면을 제외하면 2026년 7월 23~24일 실데이터 응답으로
-확인한 화면입니다.
+![전국 바람 격자와 흐름선, 범례 및 48시간 시간축](docs/images/readme-overview.webp)
+
+<p align="center"><sub>풍속 색상과 흐름선을 함께 표시하고, 아래 시간축으로 예보 시각을 이동합니다.</sub></p>
 
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/images/temperature-map.png" alt="전국 기온 분포">
-      <p align="center"><strong>기온 분포</strong><br>전국 격자와 구간별 비율</p>
+      <img src="docs/images/readme-vworld.webp" alt="VWorld 도로 배경지도 위의 바람 격자">
     </td>
     <td width="50%">
-      <img src="docs/images/precipitation-map.png" alt="전국 1시간 강수량 분포">
-      <p align="center"><strong>1시간 강수량</strong><br>강수 강도와 무강수 영역</p>
+      <img src="docs/images/readme-terrain.webp" alt="기온 격자를 입체 지형으로 표현한 3D 화면">
     </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>VWorld 도로 지도</strong><br><sub>배경지도와 기상 레이어를 함께 비교</sub></td>
+    <td align="center"><strong>3D 기상 지형</strong><br><sub>회전 · 확대 · 지형/지구본 전환</sub></td>
   </tr>
 </table>
 
-### VWorld 도로 배경지도
+![서울 지점의 48시간 풍향과 풍속 상세예보](docs/images/location-forecast.png)
 
-![VWorld 도로 배경지도 위의 전국 바람 분포](docs/images/vworld-road-map.png)
+<p align="center"><sub>지역을 검색하거나 지도를 선택하면 풍향·풍속 차트와 시간대별 상세예보를 엽니다.</sub></p>
 
-VWorld Base 타일과 PBF 벡터 도로를 OpenLayers에 직접 연결한 실제 화면입니다. 기상 격자와
-바람 흐름은 같은 지도 위에 유지됩니다. VWorld 키가 없거나 타일을 불러오지 못하면
-OpenStreetMap 도로지도로 자동 전환됩니다.
+## 제공 기능
 
-### 지역별 48시간 예보
+| 영역 | 확인할 수 있는 정보 |
+|---|---|
+| 기상 지도 | 풍향·풍속, 기온, 1시간 강수량, 강수형태, 1시간 신적설, 상대습도, 하늘상태, 파고, 하향단파복사 |
+| 지도 표현 | 구간별 색상, 바람 흐름선, 등치선, 값 분포 범례, 대표 지역, 거리 측정 |
+| 시간·지역 | +1~+48시간 예보, 발표 시각 이동, 지역·위경도 검색, 지점별 차트와 상세 카드 |
+| 지도 보기 | 기상청 격자 LCC, Web Mercator, 위경도, VWorld 도로, 행정 경계, 3D 지형과 지구본 |
+| 주변 정보 | AirKorea PM10·PM2.5, ITS 도로 CCTV, 기상특보, 태풍 경로, 최근 낙뢰 |
 
-![서울특별시 48시간 풍향·풍속 시계열](docs/images/location-forecast.png)
+## 사용 방법
 
-서울 좌표를 검색해 연 실제 화면입니다. 기상청 단기예보 응답으로 만든 48시간
-풍향·풍속 시계열과 기온, 강수확률, 강수량, 습도, 파고를 시간대별로 함께 보여줍니다.
-
-### 전국 대기질
-
-![전국 PM2.5 관측과 바람 흐름](docs/images/air-quality.png)
-
-AirKorea의 최신 PM2.5 관측을 등급별 측정소로 표시하고, 같은 시각의 바람 흐름을
-함께 비교합니다. 캡처 시점에는 전국 673개 측정소 응답을 확인했습니다.
-
-### 3D 기상 지형
-
-![기온 분포 3D 지형 화면](docs/images/terrain-3d.png)
-
-드래그로 회전하고 휠로 확대할 수 있으며, 지형과 지구본 표현을 전환할 수 있습니다.
-
-### 일사 분포
-
-![일사강도 분포 데모 화면](docs/images/solar-map.png)
-
-일사 화면은 KIM 하향단파복사 자료를 표현합니다. 현재 실데이터 원천을 불러오지 못해
-위 캡처에는 로컬 데모 자료를 사용했습니다.
-
-## 제공 정보와 현재 연결 상태
-
-| 영역 | 제공 정보 | 현재 확인 상태 |
-|---|---|---|
-| 기상 격자 | 바람, 기온, 강수량, 강수형태, 적설, 습도, 하늘상태, 파고 | 실데이터 응답과 지도 렌더링 확인 |
-| 일사 | 지면 하향단파복사 | 화면·범례 동작 확인, 실데이터 원천은 현재 미연결 |
-| 지점 예보 | 48시간 풍향·풍속 차트, 시간대별 상세예보 | 기상청 실데이터 49개 시간대 응답과 화면 렌더링 확인 |
-| 대기질 | PM10, PM2.5 측정소 | AirKorea 실데이터 응답과 전국 측정소 렌더링 확인 |
-| 교통 | ITS 도로 CCTV와 HLS 영상 | 자격 증명은 연결됐으나 Cloudflare에서 ITS 원점 연결 시간 초과 확인 중 |
-| 위험기상 | 기상특보, 태풍 경로, 최근 낙뢰 | 태풍·낙뢰 실데이터 응답 확인, 기상특보 캐시 원천 점검 필요 |
-| 도로 배경지도 | VWorld Base·PBF 벡터 도로, OpenStreetMap 대체지도 | VWorld 실타일·벡터 렌더링과 자동 대체 확인 |
-
-외부 자료가 연결되지 않았을 때는 기상 지도를 유지하면서 해당 기능에 오류 안내와
-재시도 버튼을 표시합니다. 예보와 관측 자료는 제공기관의 갱신 시각, 통신 상태,
-자격 증명에 따라 달라질 수 있습니다.
+1. 상단에서 `기상`, `대기질`, `교통` 중 원하는 영역을 선택합니다.
+2. 기상 요소와 `색상`·`흐름선`·`등치선`을 조합하고, 아래 시간축으로 예보를 이동합니다.
+3. 지역을 검색해 상세예보를 열거나 `3D` 버튼으로 현재 분포를 입체적으로 살펴봅니다.
 
 ## 로컬에서 실행하기
 
-JDK 17이 필요합니다. 외부 API 없이 화면과 상호작용을 확인하려면 데모 모드를 사용합니다.
-
-```bash
-WEATHER_GRID_DEMO_MODE=true ./gradlew bootRun --args='--server.port=8080'
-```
+JDK 17이 필요합니다. 외부 API 키 없이 화면을 살펴보려면 데모 모드로 실행합니다.
 
 ```powershell
 $env:WEATHER_GRID_DEMO_MODE = "true"
-.\gradlew.bat bootRun --args='--server.port=8080'
+.\gradlew.bat bootRun
 ```
 
-브라우저에서 [http://localhost:8080](http://localhost:8080)을 엽니다.
+macOS와 Linux에서는 다음 명령을 사용합니다.
 
-실제 자료를 사용하려면 필요한 키를 저장소 파일에 넣지 말고 실행 환경변수로 주입합니다.
+```bash
+WEATHER_GRID_DEMO_MODE=true ./gradlew bootRun
+```
 
-| 환경변수 | 용도 |
+브라우저에서 [http://localhost:8080](http://localhost:8080)을 엽니다. 데모 모드에서는
+바람·기온·일사 샘플과 주요 화면 동작을 확인할 수 있습니다.
+
+<details>
+<summary><strong>실데이터 연결에 필요한 환경변수</strong></summary>
+
+| 환경변수 | 연결 대상 |
 |---|---|
 | `KMA_API_AUTH_KEY` | 기상청 API Hub |
-| `DATA_GO_KR_SERVICE_KEY` | AirKorea 등 공공데이터포털 API |
+| `DATA_GO_KR_SERVICE_KEY` | AirKorea 등 공공데이터포털 |
 | `ITS_API_KEY` | 국가교통정보센터 CCTV |
-| `VWORLD_API_KEY` | VWorld 2D·배경지도·WMTS/TMS API |
+| `VWORLD_API_KEY` | VWorld 배경지도와 벡터 도로 |
 
-VWorld 키에는 실제 실행 주소를 등록하고 2D 지도, 배경지도, WMTS/TMS API 이용 권한을
-허용해야 합니다. 키나 타일을 사용할 수 없으면 OpenStreetMap 도로지도로 자동 전환됩니다.
+키는 저장소 파일에 넣지 않고 실행 환경에 주입합니다. VWorld를 사용할 때는 실제 실행
+주소와 2D 지도·배경지도·WMTS/TMS 권한을 등록해야 합니다.
 
-## 데이터 출처
+</details>
 
-| 데이터 | 출처 |
+## 데이터 출처와 이용 안내
+
+| 데이터 | 제공기관 |
 |---|---|
-| 기상 예보 | 기상청 API Hub 단기예보·KIM 자료 |
-| 대기질 | 한국환경공단 AirKorea 대기오염정보·측정소정보 |
-| 도로 CCTV | 국가교통정보센터 ITS |
-| 배경지도·경계 | 국토교통부 VWorld, OpenStreetMap contributors, Natural Earth 5.1.1 |
+| 기상 예보·수치자료 | [기상청 API Hub](https://apihub.kma.go.kr/) |
+| 대기질 | [한국환경공단 AirKorea](https://www.airkorea.or.kr/) |
+| 도로 CCTV | [국가교통정보센터 ITS](https://www.its.go.kr/) |
+| 배경지도·경계 | [VWorld](https://www.vworld.kr/), [OpenStreetMap](https://www.openstreetmap.org/copyright), Natural Earth |
 
-지도 경계는 시각화를 위한 자료이며 법적·지적 경계를 나타내지 않습니다. 기상 정보는
-안전과 생명을 좌우하는 단독 판단 근거로 사용하지 말고 제공기관의 공식 발표를 함께
-확인해 주세요.
+외부 자료는 제공기관의 갱신 시각과 통신 상태에 따라 달라질 수 있습니다. 지도 경계는
+시각화를 위한 자료이며 법적·지적 경계를 뜻하지 않습니다. 기상 정보는 안전을 좌우하는
+단독 판단 근거로 사용하지 말고 제공기관의 공식 발표를 함께 확인해 주세요.
 
-## 더 알아보기
+현재 연결 조건과 알려진 제한은 [제공 범위 문서](docs/known-limitations.md)에서 확인할 수
+있습니다. 이 저장소에는 별도 오픈소스 라이선스가 부여되지 않았으므로 재사용 전 저장소
+소유자의 허가가 필요합니다.
 
-- [현재 제공 범위와 알려진 제한](docs/known-limitations.md)
-- [기여 방법과 독립 구현 원칙](CONTRIBUTING.md)
-- [보안 문제 비공개 신고](SECURITY.md)
-- [외부 라이브러리와 데이터 고지](THIRD_PARTY_NOTICES.md)
+---
+
+<p align="center">
+  <a href="CONTRIBUTING.md">기여 안내</a>
+  &nbsp;·&nbsp;
+  <a href="SECURITY.md">보안 신고</a>
+  &nbsp;·&nbsp;
+  <a href="THIRD_PARTY_NOTICES.md">외부 라이브러리·데이터 고지</a>
+</p>
