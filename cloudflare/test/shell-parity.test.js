@@ -23,8 +23,8 @@ const weatherGridPaletteScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-palette-state.js', import.meta.url)), 'utf8');
 const weatherGridBasemapScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-basemap-state.js', import.meta.url)), 'utf8');
-const weatherGridKakaoScript = readFileSync(fileURLToPath(
-    new URL('../../src/main/resources/static/js/weather-grid-kakao.js', import.meta.url)), 'utf8');
+const weatherGridVWorldScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/weather-grid-vworld.js', import.meta.url)), 'utf8');
 const weatherGridMapBootstrapScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-map-bootstrap.js', import.meta.url)), 'utf8');
 const weatherGridSearchScript = readFileSync(fileURLToPath(
@@ -208,21 +208,22 @@ test('팔레트와 기본 지도 생성은 핵심 셸보다 먼저 독립 상태
     [springShell, publicShell].forEach((source) => {
         const paletteIndex = source.indexOf('/static/js/weather-grid-palette-state.js');
         const stateIndex = source.indexOf('/static/js/weather-grid-basemap-state.js');
-        const kakaoStateIndex = source.indexOf('/static/js/weather-grid-kakao-state.js');
-        const kakaoAdapterIndex = source.indexOf('/static/js/weather-grid-kakao.js');
+        const vworldStateIndex = source.indexOf('/static/js/weather-grid-vworld-state.js');
+        const vworldAdapterIndex = source.indexOf('/static/js/weather-grid-vworld.js');
         const bootstrapIndex = source.indexOf('/static/js/weather-grid-map-bootstrap.js');
         const coreIndex = source.indexOf('/static/js/weather-grid.js');
         assert.ok(paletteIndex >= 0 && paletteIndex < bootstrapIndex);
         assert.ok(stateIndex >= 0 && stateIndex < bootstrapIndex);
-        assert.ok(kakaoStateIndex >= 0 && kakaoStateIndex < kakaoAdapterIndex);
-        assert.ok(kakaoAdapterIndex < bootstrapIndex);
+        assert.ok(vworldStateIndex >= 0 && vworldStateIndex < vworldAdapterIndex);
+        assert.ok(vworldAdapterIndex < bootstrapIndex);
         assert.ok(bootstrapIndex < coreIndex);
-        assert.match(source, /id="kakao_basemap"[^>]+aria-hidden="true"[^>]+hidden/);
+        assert.match(source, /id="road_basemap_status"[^>]+role="status"/);
     });
     assert.match(weatherGridPaletteScript, /function colorFor\(/);
     assert.match(weatherGridBasemapScript, /function pixelRatio\(/);
-    assert.match(weatherGridKakaoScript, /https:\/\/dapi\.kakao\.com\/v2\/maps\/sdk\.js/);
-    assert.doesNotMatch(weatherGridKakaoScript, /map\d?\.daumcdn\.net\/map_2d/);
+    assert.match(weatherGridVWorldScript, /new ol\.source\.XYZ/);
+    assert.match(weatherGridVWorldScript, /new ol\.source\.Vector/);
+    assert.match(weatherGridVWorldScript, /new ol\.format\.MVT/);
     assert.match(weatherGridMapBootstrapScript, /new ol\.Map\(/);
     assert.match(weatherGridMapBootstrapScript, /WeatherGridGeodata\.loadInitial\(\)/);
     assert.match(weatherGridScript, /paletteState\.colorFor\(/);

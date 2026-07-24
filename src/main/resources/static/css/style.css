@@ -105,13 +105,10 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .app { position: relative; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
 
 .map_workspace { position: absolute; inset: 0; z-index: 1; }
-.kakao_basemap { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--bg-map-weather); }
-.kakao_basemap[hidden] { display: none; }
 .map { position: absolute; z-index: 1; width: 100%; height: 100%; background: var(--bg-map-weather); transition: background .3s; }
 #map:focus-visible { outline: 0; box-shadow: inset 0 0 0 3px var(--accent); }
 .map-weather    { background: var(--bg-map-weather); }
 .map-boundaries { background: var(--bg-map-boundaries); }
-.map-kakao      { background: transparent; }
 #wind_field_canvas {
     position: absolute; inset: 0; z-index: 10; pointer-events: none;
     opacity: 1; transition: opacity .08s linear;
@@ -1595,11 +1592,25 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 }
 .ol-rotate { display: none; }
 /* OSM 거리지도 저작권 표기 — 작게 상시 노출 */
-.ol-attribution { bottom: 2px; right: 6px; background: transparent; font-size: 10px; max-width: none; }
-.ol-attribution ul { color: var(--text-3); text-shadow: none; font-size: 10px; background: transparent; }
-.ol-attribution a { color: var(--text-2); }
+.ol-attribution {
+    bottom: 84px;
+    right: 76px;
+    max-width: calc(100% - 160px);
+    padding: 3px 7px;
+    border: 1px solid rgba(247, 250, 252, .16);
+    border-radius: 4px;
+    background: rgba(7, 25, 46, .88);
+    font-size: 10px;
+}
+.ol-attribution ul { color: #d8e4f0; text-shadow: none; font-size: 10px; background: transparent; }
+.ol-attribution a { color: #f7fafc; }
 .ol-attribution button { display: none; }
 .ol-attribution.ol-collapsed ul { display: block; }
+.ol-attribution.ol-uncollapsible {
+    bottom: 84px;
+    right: 76px;
+    background: rgba(7, 25, 46, .88);
+}
 
 /* ===================== 앱 알림 대화상자 ===================== */
 

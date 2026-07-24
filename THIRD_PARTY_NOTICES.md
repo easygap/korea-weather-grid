@@ -20,6 +20,11 @@ paths created by that renderer; they are not the Highcharts Windbarb module.
 
 ## Map and public data
 
+- VWorld Base tiles and PBF vector road tiles are requested at runtime from the official
+  `api.vworld.kr` access path. The map UI displays VWorld attribution. VWorld data is not bundled
+  in this repository. Use is subject to the
+  [VWorld API policy](https://www.vworld.kr/v4po_prcint_a001.do) and
+  [copyright policy](https://www.vworld.kr/v4po_prcint_a006.do).
 - OpenStreetMap tiles are requested from the configured tile service and retain the required
   OpenStreetMap attribution in the map UI. OpenStreetMap data is not bundled in this repository.
 - Natural Earth 5.1.1 input data is public domain. The processed files and their current provenance

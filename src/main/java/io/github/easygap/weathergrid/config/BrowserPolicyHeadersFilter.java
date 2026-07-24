@@ -20,25 +20,21 @@ public class BrowserPolicyHeadersFilter extends OncePerRequestFilter {
 
     private static final String CCTV_ORIGIN = "https://cctvsec.ktict.co.kr";
     private static final String CCTV_ALT_PORT = CCTV_ORIGIN + ":8082";
-    private static final String KAKAO_SDK_ORIGIN = "https://dapi.kakao.com";
-    private static final String KAKAO_SCRIPT_ORIGINS =
-            KAKAO_SDK_ORIGIN + " https://t1.daumcdn.net";
-    private static final String KAKAO_ASSET_ORIGINS =
-            "https://t1.daumcdn.net https://*.daumcdn.net https://*.kakaocdn.net";
+    private static final String VWORLD_API_ORIGIN = "https://api.vworld.kr";
     private static final String CONTENT_SECURITY_POLICY = String.join("; ", List.of(
             "default-src 'self'",
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'none'",
             "form-action 'self'",
-            "script-src 'self' " + KAKAO_SCRIPT_ORIGINS,
+            "script-src 'self'",
             "script-src-attr 'none'",
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org "
-                    + KAKAO_SDK_ORIGIN + " " + KAKAO_ASSET_ORIGINS,
+            "img-src 'self' data: blob: https://tile.openstreetmap.org "
+                    + "https://*.tile.openstreetmap.org " + VWORLD_API_ORIGIN,
             "font-src 'self' data:",
             "connect-src 'self' " + CCTV_ORIGIN + " " + CCTV_ALT_PORT + " "
-                    + KAKAO_SDK_ORIGIN + " " + KAKAO_ASSET_ORIGINS,
+                    + VWORLD_API_ORIGIN,
             "media-src 'self' blob: " + CCTV_ORIGIN + " " + CCTV_ALT_PORT,
             "worker-src 'self' blob:",
             "manifest-src 'self'"

@@ -15,14 +15,14 @@ class MapRuntimeConfigControllerTest {
 
     @Test
     void returnsTheConfiguredClientKeyWithoutCachingIt() throws Exception {
-        String key = "a".repeat(32);
+        String key = "12345678-1234-1234-1234-123456789abc";
         MockMvc mvc = mvc(new MapProviderProperties(key));
 
         mvc.perform(get("/api/runtime/map-config"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$.kakaoEnabled").value(true))
-                .andExpect(jsonPath("$.kakaoJavascriptKey").value(key));
+                .andExpect(jsonPath("$.vworldEnabled").value(true))
+                .andExpect(jsonPath("$.vworldApiKey").value(key));
     }
 
     @Test
@@ -31,8 +31,8 @@ class MapRuntimeConfigControllerTest {
 
         mvc.perform(get("/api/runtime/map-config"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.kakaoEnabled").value(false))
-                .andExpect(jsonPath("$.kakaoJavascriptKey").value(""));
+                .andExpect(jsonPath("$.vworldEnabled").value(false))
+                .andExpect(jsonPath("$.vworldApiKey").value(""));
     }
 
     @Test

@@ -29,10 +29,10 @@ public final class MapRuntimeConfigController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(new MapRuntimeConfig(
-                        providers.kakaoEnabled(),
-                        providers.kakaoEnabled() ? providers.kakaoJavascriptKey() : ""));
+                        providers.vworldEnabled(),
+                        providers.vworldEnabled() ? providers.vworldApiKey() : ""));
     }
 
-    public record MapRuntimeConfig(boolean kakaoEnabled, String kakaoJavascriptKey) {
+    public record MapRuntimeConfig(boolean vworldEnabled, String vworldApiKey) {
     }
 }

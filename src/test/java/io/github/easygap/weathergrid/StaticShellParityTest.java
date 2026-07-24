@@ -36,7 +36,7 @@ class StaticShellParityTest {
         List<String> versionedAssets = List.of(
                 "css/style.css", "js/app-bootstrap.js", "js/geodata-loader.js", "js/infra.js",
                 "js/station-charts.js", "js/wind-grid.js", "js/windy.js",
-                "js/weather-grid-kakao-state.js", "js/weather-grid-kakao.js",
+                "js/weather-grid-vworld-state.js", "js/weather-grid-vworld.js",
                 "js/weather-grid.js", "js/air-quality.js",
                 "js/weather-grid-interface-state.js", "js/weather-grid-interface.js",
                 "js/weather-grid-control-state.js", "js/weather-grid-controls.js",

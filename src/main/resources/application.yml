@@ -44,9 +44,9 @@ kma:
 # 애플리케이션 런타임 설정
 weather-grid:
   map:
-    # Kakao JavaScript 키는 브라우저에서 사용되는 공개 식별자지만 저장소에는 넣지 않는다.
+    # VWorld 키는 브라우저 타일 요청에 사용되지만 저장소에는 넣지 않는다.
     # 운영 환경에서 도메인 제한을 설정한 키를 주입하며, 없으면 OSM 도로지도로 대체한다.
-    kakao-javascript-key: ${KAKAO_MAP_JAVASCRIPT_KEY:}
+    vworld-api-key: ${VWORLD_API_KEY:}
   upstream:
     # 두 키는 URL 인코딩 전 원문을 운영 환경변수로만 주입한다.
     public-data:

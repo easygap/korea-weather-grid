@@ -24,9 +24,11 @@ class BrowserPolicyHeadersFilterTest {
         assertNotNull(policy);
         assertTrue(policy.contains("connect-src 'self' https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082"));
         assertTrue(policy.contains("media-src 'self' blob: https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082"));
-        assertTrue(policy.contains("script-src 'self' https://dapi.kakao.com https://t1.daumcdn.net"));
-        assertTrue(policy.contains("https://*.daumcdn.net"));
-        assertTrue(policy.contains("https://*.kakaocdn.net"));
+        assertTrue(policy.contains("script-src 'self';"));
+        assertTrue(policy.contains("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://api.vworld.kr"));
+        assertTrue(policy.contains("https://api.vworld.kr"));
+        assertFalse(policy.contains("kakao"));
+        assertFalse(policy.contains("daumcdn"));
         assertFalse(policy.contains("connect-src 'self' https:;"));
         assertFalse(policy.contains("upgrade-insecure-requests"));
         assertNull(response.getHeader("Strict-Transport-Security"));

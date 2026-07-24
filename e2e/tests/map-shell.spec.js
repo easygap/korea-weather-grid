@@ -3,6 +3,14 @@ const { test, expect } = require('@playwright/test');
 test.describe('독립 지도 셸과 대표 지역 검색', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
+    await page.route('**/api/runtime/map-config', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify({ vworldEnabled: false, vworldApiKey: '' })
+      });
+    });
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.WeatherGridMapBootstrap
       && window.WeatherGridSearch
@@ -31,19 +39,25 @@ test.describe('독립 지도 셸과 대표 지역 검색', () => {
     await page.evaluate(() => WeatherGridMapBootstrap.selectMode('streets'));
     await expect(page.locator('#basemap_streets')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#basemap_streets')).toHaveAttribute('data-provider', 'osm');
-    await expect(page.locator('#kakao_basemap_status')).toContainText('OpenStreetMap');
+    await expect(page.locator('#road_basemap_status')).toContainText('OpenStreetMap');
     expect(await page.evaluate(() => ({
       mode: WeatherGridMapBootstrap.snapshot().mode,
       weather: weatherBasemapLayer.getVisible(),
       boundaries: vectorLayer.getVisible(),
       streets: streetTileLayer.getVisible(),
-      kakao: WeatherGridKakaoBasemap.diagnostics()
+      vworld: WeatherGridVWorldBasemap.diagnostics()
     }))).toEqual({
       mode: 'streets',
       weather: false,
       boundaries: false,
       streets: true,
-      kakao: { active: false, status: 'osm', sdkLoaded: false }
+      vworld: {
+        active: false,
+        status: 'osm',
+        baseLayerReady: false,
+        vectorLayerReady: false,
+        renderedVectorFeatures: 0
+      }
     });
 
     await page.evaluate(async () => {
@@ -102,65 +116,63 @@ test.describe('독립 지도 셸과 대표 지역 검색', () => {
   });
 });
 
-test.describe('Kakao 공식 SDK 어댑터', () => {
-  test('Kakao 배경과 OpenLayers 뷰를 동기화하고 OSM 대체 레이어를 숨긴다', async ({ page }) => {
+test.describe('VWorld 공식 벡터 지도 API 어댑터', () => {
+  test('VWorld 배경·벡터 도로를 같은 지도에 올리고 OSM 대체 레이어를 숨긴다', async ({ page }) => {
+    const key = '12345678-1234-1234-1234-123456789abc';
     await page.route('**/api/runtime/map-config', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify({
-          kakaoEnabled: true,
-          kakaoJavascriptKey: 'a'.repeat(32)
+          vworldEnabled: true,
+          vworldApiKey: key
         })
       });
     });
-    await page.route('https://dapi.kakao.com/v2/maps/sdk.js**', async (route) => {
+    await page.route('https://api.vworld.kr/req/wmts/vector/**', async (route) => {
+      if (route.request().url().endsWith('.pbf')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/x-protobuf',
+          body: Buffer.alloc(0)
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
-        contentType: 'application/javascript',
-        body: `
-          window.kakao = { maps: {
-            load: function (ready) { ready(); },
-            LatLng: function (lat, lon) { this.lat = lat; this.lon = lon; },
-            Map: function (element, options) {
-              this.center = options.center;
-              this.level = options.level;
-              this.relayoutCount = 0;
-              this.setCenter = function (center) { this.center = center; };
-              this.setLevel = function (level) { this.level = level; };
-              this.relayout = function () { this.relayoutCount += 1; };
-              element.dataset.testKakaoMap = 'ready';
-              window.__testKakaoMap = this;
-            }
-          } };
-        `
+        contentType: 'image/png',
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+          + 'AAAADUlEQVR42mNk+M/wHwAF/gL+Xn0bAAAAAElFTkSuQmCC',
+          'base64')
       });
     });
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.WeatherGridMapBootstrap);
     await page.evaluate(() => WeatherGridMapBootstrap.selectMode('streets'));
-    await expect(page.locator('#basemap_streets')).toHaveAttribute('data-provider', 'kakao');
-    await expect(page.locator('#kakao_basemap')).toHaveAttribute('data-test-kakao-map', 'ready');
+    await expect(page.locator('#basemap_streets')).toHaveAttribute('data-provider', 'vworld');
+    await expect(page.locator('#road_basemap_status')).toContainText('VWorld');
 
     expect(await page.evaluate(() => ({
-      diagnostics: WeatherGridKakaoBasemap.diagnostics(),
-      kakaoHidden: document.getElementById('kakao_basemap').hidden,
-      mapClass: document.getElementById('map').className,
+      diagnostics: WeatherGridVWorldBasemap.diagnostics(),
+      vworldLayers: weatherMap.getLayers().getArray()
+        .filter((layer) => /^vworld-/.test(layer.get('title') || '')).length,
       osmVisible: streetTileLayer.getVisible()
     }))).toEqual({
-      diagnostics: { active: true, status: 'kakao', sdkLoaded: true },
-      kakaoHidden: false,
-      mapClass: 'map map-kakao',
+      diagnostics: {
+        active: true,
+        status: 'vworld',
+        baseLayerReady: true,
+        vectorLayerReady: true,
+        renderedVectorFeatures: 0
+      },
+      vworldLayers: 2,
       osmVisible: false
     });
 
-    await page.evaluate(() => weatherMap.getView().setZoom(8));
-    await page.waitForFunction(() => window.__testKakaoMap?.level === 8);
-
     await page.evaluate(() => WeatherGridMapBootstrap.selectMode('weather'));
-    await expect(page.locator('#kakao_basemap')).toBeHidden();
-    expect(await page.evaluate(() => WeatherGridKakaoBasemap.diagnostics().status)).toBe('idle');
+    expect(await page.evaluate(() => WeatherGridVWorldBasemap.diagnostics().status)).toBe('idle');
   });
 });

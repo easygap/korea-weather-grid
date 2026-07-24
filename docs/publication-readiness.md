@@ -122,11 +122,11 @@
 선정하지 않아 제공하지 않는다. 시도(Admin-1) 경계와 대표 지역 검색은 제공하며,
 지오데이터 manifest도 `koreaAdmin2`를 unavailable로 명시한다. 실제 Secret과 상류 자료가
 필요한 RC 검증 및 공개 차단과 혼동하지 않도록 전체 조건은 `docs/known-limitations.md`에서
-별도로 관리한다. 도로 배경지도는 공식 Kakao Maps JavaScript SDK를 우선 사용하는 독립
-어댑터로 구현했고, 키 미설정·SDK 실패 시 OpenStreetMap으로 안전하게 대체한다. 현재 Kakao
-Developers 앱에는 서비스·localhost 도메인과 활성 JavaScript 키가 등록되어 있으나
-`카카오맵 → 사용 설정`이 OFF이므로, 승인 후 ON 전환과 실제 SDK·타일 검증은 운영 검증
-대기로 관리한다.
+별도로 관리한다. 도로 배경지도는 VWorld 공식 벡터 지도 API의 Base PNG와 traffic PBF를
+현재 OpenLayers 지도에 연결하는 독립 어댑터로 구현했고, 키 미설정·타일 실패 시
+OpenStreetMap으로 안전하게 대체한다. 개인 VWorld 키로 localhost 실타일과 벡터 렌더링을
+확인했고 비운영 `public-readiness` Worker 도메인에서도 같은 결과를 재검증했다. 키 원문은
+저장소와 문서에 넣지 않는다.
 
 ## 공개 차단 항목
 

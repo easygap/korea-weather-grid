@@ -36,7 +36,7 @@
 ## 실제 동작 화면
 
 아래 이미지는 저장소의 애플리케이션을 브라우저에서 직접 실행해 캡처했습니다.
-별도로 데모라고 표시한 일사 화면을 제외하면 2026년 7월 23일 실데이터 응답으로
+별도로 데모라고 표시한 일사 화면을 제외하면 2026년 7월 23~24일 실데이터 응답으로
 확인한 화면입니다.
 
 <table>
@@ -51,6 +51,14 @@
     </td>
   </tr>
 </table>
+
+### VWorld 도로 배경지도
+
+![VWorld 도로 배경지도 위의 전국 바람 분포](docs/images/vworld-road-map.png)
+
+VWorld Base 타일과 PBF 벡터 도로를 OpenLayers에 직접 연결한 실제 화면입니다. 기상 격자와
+바람 흐름은 같은 지도 위에 유지됩니다. VWorld 키가 없거나 타일을 불러오지 못하면
+OpenStreetMap 도로지도로 자동 전환됩니다.
 
 ### 지역별 48시간 예보
 
@@ -89,7 +97,7 @@ AirKorea의 최신 PM2.5 관측을 등급별 측정소로 표시하고, 같은 �
 | 대기질 | PM10, PM2.5 측정소 | AirKorea 실데이터 응답과 전국 측정소 렌더링 확인 |
 | 교통 | ITS 도로 CCTV와 HLS 영상 | 자격 증명은 연결됐으나 Cloudflare에서 ITS 원점 연결 시간 초과 확인 중 |
 | 위험기상 | 기상특보, 태풍 경로, 최근 낙뢰 | 태풍·낙뢰 실데이터 응답 확인, 기상특보 캐시 원천 점검 필요 |
-| 도로 배경지도 | Kakao Maps, OpenStreetMap 대체지도 | Kakao 제품 비활성 상태에서는 OpenStreetMap으로 자동 전환 |
+| 도로 배경지도 | VWorld Base·PBF 벡터 도로, OpenStreetMap 대체지도 | VWorld 실타일·벡터 렌더링과 자동 대체 확인 |
 
 외부 자료가 연결되지 않았을 때는 기상 지도를 유지하면서 해당 기능에 오류 안내와
 재시도 버튼을 표시합니다. 예보와 관측 자료는 제공기관의 갱신 시각, 통신 상태,
@@ -117,11 +125,10 @@ $env:WEATHER_GRID_DEMO_MODE = "true"
 | `KMA_API_AUTH_KEY` | 기상청 API Hub |
 | `DATA_GO_KR_SERVICE_KEY` | AirKorea 등 공공데이터포털 API |
 | `ITS_API_KEY` | 국가교통정보센터 CCTV |
-| `KAKAO_MAP_JAVASCRIPT_KEY` | Kakao Maps JavaScript SDK |
+| `VWORLD_API_KEY` | VWorld 2D·배경지도·WMTS/TMS API |
 
-Kakao 지도는 Kakao Developers에서 **카카오맵 사용 설정**을 켜고, 실제 실행 주소를
-JavaScript SDK 도메인에 등록해야 합니다. 키나 SDK를 사용할 수 없으면
-OpenStreetMap 도로지도로 자동 전환됩니다.
+VWorld 키에는 실제 실행 주소를 등록하고 2D 지도, 배경지도, WMTS/TMS API 이용 권한을
+허용해야 합니다. 키나 타일을 사용할 수 없으면 OpenStreetMap 도로지도로 자동 전환됩니다.
 
 ## 데이터 출처
 
@@ -130,7 +137,7 @@ OpenStreetMap 도로지도로 자동 전환됩니다.
 | 기상 예보 | 기상청 API Hub 단기예보·KIM 자료 |
 | 대기질 | 한국환경공단 AirKorea 대기오염정보·측정소정보 |
 | 도로 CCTV | 국가교통정보센터 ITS |
-| 배경지도·경계 | Kakao Maps, OpenStreetMap contributors, Natural Earth 5.1.1 |
+| 배경지도·경계 | 국토교통부 VWorld, OpenStreetMap contributors, Natural Earth 5.1.1 |
 
 지도 경계는 시각화를 위한 자료이며 법적·지적 경계를 나타내지 않습니다. 기상 정보는
 안전과 생명을 좌우하는 단독 판단 근거로 사용하지 말고 제공기관의 공식 발표를 함께

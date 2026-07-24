@@ -881,3 +881,28 @@
   응답을 제어해 활성화·뷰 동기화·OSM 숨김·종료를 검증하고, 실제 키에서는 Map API OFF의
   403을 OSM으로 대체했다. 전체 E2E 71개를 병렬 실행할 때 기존 기온·일사·4K 풍장 3개가
   로컬 서버 부하로 시간 초과했으나 실패 항목을 단일 워커로 재실행해 모두 통과했다.
+
+## 2026-07-24 · VWorld 벡터 도로 배경지도 전환
+
+- 입력과 권한: 개인 VWorld 키에 2D 지도·배경지도·WMTS/TMS API를 허용했다. 키는
+  `VWORLD_API_KEY` 환경변수로만 주입하고 저장소·화면 문서·로그에는 원문을 넣지 않는다.
+  운영 키에는 RC와 운영 도메인 제한을 유지한다.
+- 공식 API 확인: VWorld 벡터 지도 가이드의 `{z}/{x}/{y}` 순서를 실제 키로 확인했다.
+  Base PNG와 traffic·POI PBF, 벡터 스타일 응답이 모두 200이었다. 비공식 URL이나 VWorld
+  JavaScript SDK 복사본은 사용하지 않는다.
+- 독립 구현: `weather-grid-vworld-state.js`가 UUID 설정과 공식 타일 URL을 계산하고,
+  `weather-grid-vworld.js`가 OpenLayers 10.9의 XYZ·MVT로 Base와 벡터 도로를 같은 지도에
+  올린다. MVT는 보이는 타일을 최대 24개만 읽어 현재 도법의 일반 벡터 피처로 변환한다.
+  전국 축척에서는 Base만 사용하고 지역 확대 시 벡터 도로를 추가한다. 기상 격자·흐름선·
+  경계 레이어는 기존 사용자 정의 도법에 유지한다. Kakao 전용 SDK, 컨테이너, CSP origin,
+  런타임 계약은 제거했다.
+- 실패와 출처: 키 누락·형식 오류·probe 실패·지역 확대 PBF 전체 실패에서는 OSM으로 자동
+  전환한다. 지도에 VWorld 출처 링크를 상시 표시하고 `THIRD_PARTY_NOTICES.md`에
+  [API 정책](https://www.vworld.kr/v4po_prcint_a001.do)과
+  [저작권 정책](https://www.vworld.kr/v4po_prcint_a006.do)을 연결했다.
+- 검증: Spring 전체 테스트와 Worker·정적 셸 218개, VWorld 지도 E2E 3개가 통과했다.
+  1440×900 실제 Chromium의 지역 확대 화면에서 PBF 12건이 모두 200이었고 도로 피처
+  9,400개를 현재 도법으로 렌더링했다. 실패 요청과 콘솔 오류는 0건이었다. 활성 상태,
+  Base·벡터 레이어, OSM 숨김, VWorld 출처와 실제 화면 캡처를 함께 확인했다. 같은 소스를
+  비운영 `public-readiness` Worker 프리뷰에 올린 뒤 실제 RC 도메인에서도 같은 PBF 응답,
+  피처 수, OSM 상태와 오류 0건을 재확인했다.

@@ -10,14 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MapProviderPropertiesTest {
 
     @Test
-    void acceptsAnEmptyOrHexadecimalJavascriptKey() {
+    void acceptsAnEmptyOrUuidFormattedApiKey() {
         MapProviderProperties empty = new MapProviderProperties("  ");
-        MapProviderProperties configured = new MapProviderProperties("a".repeat(32));
+        String key = "12345678-1234-1234-1234-123456789abc";
+        MapProviderProperties configured = new MapProviderProperties(key);
 
-        assertFalse(empty.kakaoEnabled());
-        assertEquals("", empty.kakaoJavascriptKey());
-        assertTrue(configured.kakaoEnabled());
-        assertEquals("a".repeat(32), configured.kakaoJavascriptKey());
+        assertFalse(empty.vworldEnabled());
+        assertEquals("", empty.vworldApiKey());
+        assertTrue(configured.vworldEnabled());
+        assertEquals(key, configured.vworldApiKey());
     }
 
     @Test

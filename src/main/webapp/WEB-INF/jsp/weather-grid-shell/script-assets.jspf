@@ -7,8 +7,8 @@
 <script defer src="${pageContext.request.contextPath}/static/js/windy.js?v=20260720.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-palette-state.js?v=20260723.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-basemap-state.js?v=20260723.1"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-kakao-state.js?v=20260723.1"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-kakao.js?v=20260723.1"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-vworld-state.js?v=20260724.1"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-vworld.js?v=20260724.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-map-bootstrap.js?v=20260723.2"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid.js?v=20260723.9"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/isoline.js?v=20260721.2"></script>

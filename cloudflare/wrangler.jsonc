@@ -88,6 +88,6 @@
     ]
 
     // 시크릿: KMA_API_AUTH_KEY, DATA_GO_KR_SERVICE_KEY(Decoding 키), ITS_API_KEY
-    // 선택값 KAKAO_MAP_JAVASCRIPT_KEY는 도메인 제한된 JavaScript 키이며 저장소에는 넣지 않는다.
+    // 선택값 VWORLD_API_KEY는 도메인 제한된 키이며 저장소에는 넣지 않는다.
     // 로컬은 커밋되지 않는 .dev.vars. ALLOW_MOCK_DATA는 로컬 UI 데모에서만 true.
 }

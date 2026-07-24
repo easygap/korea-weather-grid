@@ -5,7 +5,7 @@
     'use strict';
 
     var State = window.WeatherGridBasemapState;
-    var KakaoBasemap = window.WeatherGridKakaoBasemap;
+    var VWorldBasemap = window.WeatherGridVWorldBasemap;
     if (!State || !window.ol || !window.proj4 || !window.WeatherGridWindGrid
             || !window.WeatherGridGeodata) {
         throw new Error('Basemap state, OpenLayers, proj4, wind grid and geodata must load first');
@@ -361,8 +361,8 @@
         if (button) {
             button.dataset.provider = provider;
             button.setAttribute('aria-label', {
-                loading: 'Kakao 도로 배경지도 불러오는 중',
-                kakao: 'Kakao 도로 배경지도',
+                loading: 'VWorld 도로 배경지도 불러오는 중',
+                vworld: 'VWorld 벡터 도로 배경지도',
                 osm: 'OpenStreetMap 도로 배경지도'
             }[provider] || '도로 배경지도');
         }
@@ -370,29 +370,33 @@
 
     function applyRoadProvider(visible) {
         var token = ++roadProviderToken;
-        var mapElement = document.getElementById('map');
-        mapElement.classList.remove('map-kakao');
         if (!visible) {
             streetLayer.setVisible(false);
-            if (KakaoBasemap) KakaoBasemap.hide();
+            if (VWorldBasemap) VWorldBasemap.hide();
             updateRoadProvider('idle');
             return;
         }
 
         streetLayer.setVisible(true);
         updateRoadProvider('loading');
-        if (!KakaoBasemap) {
+        if (!VWorldBasemap) {
             updateRoadProvider('osm');
             return;
         }
-        KakaoBasemap.show(map).then(function (kakaoActive) {
+        VWorldBasemap.show(map).then(function (vworldActive) {
             if (token !== roadProviderToken || basemapState.mode !== 'streets') return;
-            streetLayer.setVisible(!kakaoActive);
-            mapElement.classList.toggle('map-kakao', kakaoActive);
-            updateRoadProvider(kakaoActive ? 'kakao' : 'osm');
+            streetLayer.setVisible(!vworldActive);
+            updateRoadProvider(vworldActive ? 'vworld' : 'osm');
             map.render();
         });
     }
+
+    window.addEventListener('weather-grid:vworld-unavailable', function () {
+        if (basemapState.mode !== 'streets') return;
+        streetLayer.setVisible(true);
+        updateRoadProvider('osm');
+        map.render();
+    });
 
     function applyBasemapState() {
         var visibility = State.layerVisibility(basemapState.mode);
