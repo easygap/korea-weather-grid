@@ -19,23 +19,30 @@
       "license": "project-license-pending"
     },
     {
-      "path": "src/main/resources/static/image/basemap-weather.svg",
-      "bytes": 1148,
-      "sha256": "a74974e1b38c765967cc3ef263110ac1f5b7d8d77bb4ff568cf2f3c7f21f9506",
-      "origin": "repository-authored",
+      "path": "src/main/resources/static/image/basemap-weather-v2.webp",
+      "bytes": 22182,
+      "sha256": "1b244f4cf7a057879325556cafe918102ba1e2556d1ccaef3675b305eabb20f9",
+      "origin": "project-commissioned-original-generated-artwork",
       "license": "project-license-pending"
     },
     {
-      "path": "src/main/resources/static/image/basemap-boundaries.svg",
-      "bytes": 780,
-      "sha256": "aea7879fb62c1f234f8576a5823d4df6a2d952de744a668cf6fe029c292560c2",
-      "origin": "repository-authored",
+      "path": "src/main/resources/static/image/basemap-boundaries-v2.webp",
+      "bytes": 18376,
+      "sha256": "115292fefc06e0e38fa2a0934e91a87cddefea455c23d8c36dd75af3bc67da11",
+      "origin": "project-commissioned-original-generated-artwork",
       "license": "project-license-pending"
     },
     {
-      "path": "src/main/resources/static/image/basemap-streets.svg",
-      "bytes": 1005,
-      "sha256": "d4b1fc4f6426600f3331864471ea7eb51ca5d8ad423edbfe89422b05efae6cc2",
+      "path": "src/main/resources/static/image/basemap-streets-v2.webp",
+      "bytes": 33180,
+      "sha256": "2ce66351734f46e563354fa57415266c03b919406a4966a41167525ab5ae52ee",
+      "origin": "project-commissioned-original-generated-artwork",
+      "license": "project-license-pending"
+    },
+    {
+      "path": "src/main/resources/static/image/bora-navigation-icons.svg",
+      "bytes": 5533,
+      "sha256": "d048e9dae5faeb69d27d5d2fff000e73ed2446718ccbe185cd8596981f9bb2e2",
       "origin": "repository-authored",
       "license": "project-license-pending"
     },

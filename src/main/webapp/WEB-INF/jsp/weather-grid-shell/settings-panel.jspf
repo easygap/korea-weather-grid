@@ -1,9 +1,9 @@
 <%@ page pageEncoding="UTF-8" %>
     <!-- Compact domain controls and the detailed settings panel -->
     <nav class="mobile_primary_controls" id="mobile_primary_controls" aria-label="모바일 데이터 영역">
-        <button type="button" data-data-domain="weather" class="on" aria-pressed="true">기상</button>
-        <button type="button" data-data-domain="air" aria-pressed="false">대기질</button>
-        <button type="button" data-data-domain="traffic" aria-pressed="false">교통</button>
+        <button type="button" data-data-domain="weather" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-weather"></use></svg><span>기상</span></button>
+        <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
+        <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
     </nav>
     <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -207,9 +207,9 @@
                         <legend class="flabel" id="map_background_label">배경 지도</legend>
                         <div id="basemap_picker" class="basemap_picker">
                             <ul id="basemap_choices">
-                                <li><button type="button" class="is-selected-basemap" id="basemap_weather" aria-pressed="true"><img src="${pageContext.request.contextPath}/static/image/basemap-weather.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="기상 정보가 잘 보이는 기본 지도 미리보기"><span>기상 중심</span></button></li>
-                                <li><button type="button" id="basemap_boundaries" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-boundaries.svg?v=20260722.1" width="210" height="164" loading="lazy" alt="행정 경계를 함께 보여주는 지도 미리보기"><span>행정 경계</span></button></li>
-                                <li><button type="button" id="basemap_streets" aria-label="도로 배경지도" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-streets.svg?v=20260722.1" width="210" height="164" loading="lazy" alt=""><span>도로</span></button></li>
+                                <li><button type="button" class="is-selected-basemap" id="basemap_weather" aria-pressed="true"><img src="${pageContext.request.contextPath}/static/image/basemap-weather-v2.webp?v=20260724.1" width="210" height="164" loading="lazy" alt="바람 흐름과 기상장을 강조한 기상 중심 지도 미리보기"><span class="basemap_label"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#map-weather"></use></svg>기상 중심</span></button></li>
+                                <li><button type="button" id="basemap_boundaries" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-boundaries-v2.webp?v=20260724.1" width="210" height="164" loading="lazy" alt="행정구역 경계 체계를 강조한 지도 미리보기"><span class="basemap_label"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#map-boundaries"></use></svg>행정 경계</span></button></li>
+                                <li><button type="button" id="basemap_streets" aria-label="도로 배경지도" aria-pressed="false"><img src="${pageContext.request.contextPath}/static/image/basemap-streets-v2.webp?v=20260724.1" width="210" height="164" loading="lazy" alt=""><span class="basemap_label"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#map-roads"></use></svg>도로</span></button></li>
                             </ul>
                         </div>
                     </fieldset>

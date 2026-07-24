@@ -17,17 +17,17 @@
         </div>
 
         <nav class="data_domain_nav" id="data_domain_nav" aria-label="데이터 영역">
-            <button type="button" data-data-domain="weather" class="on" aria-pressed="true">기상</button>
-            <button type="button" data-data-domain="air" aria-pressed="false">대기질</button>
-            <button type="button" data-data-domain="traffic" aria-pressed="false">교통</button>
+            <button type="button" data-data-domain="weather" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-weather"></use></svg><span>기상</span></button>
+            <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
+            <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
         </nav>
 
         <div class="explore_modes" id="explore_modes" role="group" aria-label="기상 요소">
-            <button type="button" data-explore-mode="wind" class="on" aria-pressed="true"><strong>바람</strong></button>
-            <button type="button" data-explore-mode="temperature" aria-pressed="false"><strong>기온</strong></button>
-            <button type="button" data-explore-mode="precipitation" aria-pressed="false"><strong>강수·눈</strong></button>
-            <button type="button" data-explore-mode="solar" aria-pressed="false"><strong>일사</strong></button>
-            <button type="button" data-explore-mode="hazards" aria-pressed="false"><strong>위험기상</strong></button>
+            <button type="button" data-explore-mode="wind" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-wind"></use></svg><strong>바람</strong></button>
+            <button type="button" data-explore-mode="temperature" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-temperature"></use></svg><strong>기온</strong></button>
+            <button type="button" data-explore-mode="precipitation" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-precipitation"></use></svg><strong>강수·눈</strong></button>
+            <button type="button" data-explore-mode="solar" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-solar"></use></svg><strong>일사</strong></button>
+            <button type="button" data-explore-mode="hazards" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-hazards"></use></svg><strong>위험기상</strong></button>
         </div>
         <div class="explore_mode_summary" id="explore_mode_summary" data-kind="예보" role="status" aria-live="polite">
             <strong>바람 흐름</strong><span>풍속 색상과 흐름선을 함께 표시합니다.</span>
