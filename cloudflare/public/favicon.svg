@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BORA">
-  <title>BORA weather layers</title>
-  <rect width="64" height="64" rx="16" fill="#0b1220"/>
-  <circle cx="47" cy="17" r="6" fill="#fbbf24"/>
-  <path d="M12 25c8-7 16-7 24 0s14 7 20 1" fill="none" stroke="#7dd3fc" stroke-width="5" stroke-linecap="round"/>
-  <path d="M10 38c7-5 14-5 21 0s14 5 22-1" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
-  <path d="M17 49c5-3 10-3 15 0s10 3 15 0" fill="none" stroke="#818cf8" stroke-width="4" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="BORA">
+  <title>BORA - Korea Weather Grid</title>
+  <style>.mast{stroke:#23262b}@media(prefers-color-scheme:dark){.mast{stroke:#e8eaf0}}</style>
+  <line class="mast" x1="12" y1="8" x2="12" y2="56" stroke-width="7.5" stroke-linecap="round"/>
+  <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="#978ff9"/>
 </svg>
