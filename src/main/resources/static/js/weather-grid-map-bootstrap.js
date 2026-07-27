@@ -16,12 +16,12 @@
     proj4.defs(PROJECTION_CODE, DfsProjection.proj4Definition);
     ol.proj.proj4.register(proj4);
 
-    // 표시 좌표도 실제 DFS 기준을 쓰도록 투영 범위와 지리 범위를 함께 등록한다.
+    // 지리 범위는 도법에 등록하되 표시 범위는 각 View에서 제한한다.
+    // 도법 extent를 지역 범위로 축소하면 OpenLayers의 줌 0 축척도 함께 바뀐다.
     var lccProjection = ol.proj.get(PROJECTION_CODE);
     var lccExtent = ol.proj.transformExtent(
         State.geographicLimit, 'EPSG:4326', PROJECTION_CODE, 16);
     lccProjection.setWorldExtent(State.geographicLimit.slice());
-    lccProjection.setExtent(lccExtent.slice());
 
     var compactQuery = window.matchMedia('(max-width: 900px)');
     var finePointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');

@@ -8,7 +8,9 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
 
-    var DEFAULT_TARGET_SAMPLES = 120000;
+    // 1280×720에서도 2px 간격을 유지해 도서 지역의 한두 셀 폭 자료가
+    // 결측 셀로 치환되지 않게 한다. 큰 화면은 stride를 계속 늘려 제한한다.
+    var DEFAULT_TARGET_SAMPLES = 150000;
     var DEFAULT_MINIMUM_STRIDE = 2;
     var TRANSPARENT = Object.freeze([0, 0, 0, 0]);
 

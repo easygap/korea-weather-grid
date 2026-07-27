@@ -829,7 +829,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 
 /* 조회 실패 — 잘못된 이전 시각을 남기지 않고 재시도 가능한 비차단 오류 배너 */
 #data_error {
-    position: absolute; top: 64px; left: 50%; z-index: 27; transform: translateX(-50%);
+    position: absolute; top: 110px; left: 50%; z-index: 32; transform: translateX(-50%);
     display: flex; align-items: center; gap: 10px; max-width: min(520px, calc(100vw - 32px));
     padding: 8px 8px 8px 14px; border-radius: 14px; color: #fecaca;
     background: rgba(91, 25, 31, .94); border: 1px solid rgba(248,113,113,.48);
@@ -876,7 +876,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .warning_banner[aria-expanded="true"] .warning_banner_chevron { transform: rotate(225deg) translate(-2px, -2px); }
 .warning_banner[data-severity="critical"] { border-color: color-mix(in srgb, #f87171 58%, var(--stroke)); }
 .warning_banner[data-severity="critical"] .warning_banner_mark { background: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,.16); }
-#data_error:not([hidden]) ~ .warning_banner { top: 116px; }
+#data_error:not([hidden]) ~ .warning_banner { top: 174px; }
 
 .warning_panel {
     position: absolute; top: 158px; left: 50%; z-index: 29; transform: translateX(-50%);
@@ -885,7 +885,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     border: 1px solid var(--stroke); box-shadow: var(--shadow-2);
 }
 .warning_panel[hidden] { display: none; }
-#data_error:not([hidden]) ~ .warning_panel { top: 164px; }
+#data_error:not([hidden]) ~ .warning_panel { top: 222px; }
 .warning_panel_header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .warning_panel_header > div { min-width: 0; }
 .warning_panel_header span { display: block; margin-bottom: 3px; color: var(--text-3); font-size: .95rem; font-weight: 750; letter-spacing: .08em; }
