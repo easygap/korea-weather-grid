@@ -4,9 +4,9 @@
     "main": "src/worker.js",
     "compatibility_date": "2026-07-20",
 
-    // KMA·공공데이터·ITS 원점이 모두 국내에 있다. 특히 ITS의 9443 API는
-    // 장거리 경로에서 연결이 지연될 수 있어 L4 원점 근처에서 Worker를 실행한다.
-    "placement": { "host": "openapi.its.go.kr:9443" },
+    // KMA·공공데이터·ITS 원점이 모두 국내에 있다. 실험 기능인 host 탐지는
+    // ITS 원점을 국외로 오인할 수 있으므로 서울 리전과 가까운 위치에서 실행한다.
+    "placement": { "region": "aws:ap-northeast-2" },
 
     // 정적 자산: public/ (index.html 커밋 + build.mjs가 ../src/main/resources/static을 public/static으로 복사)
     // 공개 API는 항상 워커가 처리하고, 나머지는 정적 자산을 우선한다.
