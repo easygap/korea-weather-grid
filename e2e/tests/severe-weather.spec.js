@@ -167,6 +167,33 @@ test.describe('위험기상 시각화', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   });
 
+  test('모바일에서 데이터 오류와 특보가 함께 떠도 알림과 조작 영역이 겹치지 않는다', async ({ page }) => {
+    await page.route('**/api/weather/grid?**', (route) => route.fulfill({
+      status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'unavailable' })
+    }));
+    await page.route('**/api/hazards/warnings', (route) => route.fulfill({ json: warningPayload }));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+
+    const errorBanner = page.locator('#data_error');
+    const warningBanner = page.locator('#warning_banner');
+    await expect(errorBanner).toBeVisible();
+    await expect(warningBanner).toBeVisible();
+
+    const errorBox = await errorBanner.boundingBox();
+    const warningBox = await warningBanner.boundingBox();
+    const retryBox = await page.locator('#retry_data').boundingBox();
+    expect(warningBox.y).toBeGreaterThanOrEqual(errorBox.y + errorBox.height + 8);
+    expect(retryBox.width).toBeGreaterThanOrEqual(40);
+    expect(retryBox.height).toBeGreaterThanOrEqual(40);
+
+    await warningBanner.click();
+    await expect(page.locator('#warning_panel')).toBeVisible();
+    const panelBox = await page.locator('#warning_panel').boundingBox();
+    expect(panelBox.y).toBeGreaterThanOrEqual(warningBox.y + warningBox.height + 8);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  });
+
   test('특보 권한 대기 상태를 발효 0건으로 오인하지 않는다', async ({ page }) => {
     await mockGrid(page);
     await page.route('**/api/hazards/warnings', (route) => route.fulfill({

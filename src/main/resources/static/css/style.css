@@ -1918,10 +1918,10 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     #data_error {
         top: calc(100px + env(safe-area-inset-top, 0px)); left: 8px; right: 8px;
     }
-    #data_error:not([hidden]) ~ .warning_banner { top: calc(154px + env(safe-area-inset-top, 0px)); }
-    #data_error:not([hidden]) ~ .warning_panel { top: calc(202px + env(safe-area-inset-top, 0px)); }
-    #data_error:not([hidden]) ~ .warning_banner:not([hidden]) ~ .legend_stack { top: calc(202px + env(safe-area-inset-top, 0px)); }
-    #data_error:not([hidden]) ~ .legend_stack { top: calc(154px + env(safe-area-inset-top, 0px)); }
+    #data_error:not([hidden]) ~ .warning_banner { top: calc(166px + env(safe-area-inset-top, 0px)); }
+    #data_error:not([hidden]) ~ .warning_panel { top: calc(214px + env(safe-area-inset-top, 0px)); }
+    #data_error:not([hidden]) ~ .warning_banner:not([hidden]) ~ .legend_stack { top: calc(214px + env(safe-area-inset-top, 0px)); }
+    #data_error:not([hidden]) ~ .legend_stack { top: calc(166px + env(safe-area-inset-top, 0px)); }
     .map_utility_stack {
         left: max(8px, env(safe-area-inset-left, 0px));
         bottom: calc(92px + env(safe-area-inset-bottom, 0px));
