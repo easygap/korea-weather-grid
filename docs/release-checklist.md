@@ -82,8 +82,8 @@ URL 인코딩 전 원문 키를 저장한다. gateway가 query 값을 정확히 
 
 필수 Secret은 `KMA_API_AUTH_KEY`, `DATA_GO_KR_SERVICE_KEY`, `ITS_API_KEY` 세 개다.
 `VWORLD_API_KEY`는 선택값이며, VWorld에서 2D 지도·배경지도·WMTS/TMS API를 허용하고
-RC·운영 도메인이 등록된 경우에만 주입한다. 브라우저 타일 요청에 키가 사용되므로 반드시
-도메인 제한을 유지한다.
+RC·운영 도메인이 등록된 경우에만 주입한다. 키는 동일 출처 타일 프록시에서만 사용하고
+런타임 설정·타일 응답·로그에는 포함하지 않는다. 공급자 쪽 도메인 제한도 함께 유지한다.
 위험기상은 별도 Secret 없이 `KMA_API_AUTH_KEY`를 사용하며, `HAZARD_SNAPSHOTS` KV
 binding과 `*/5 * * * *` Cron이 `wrangler.jsonc`에 함께 있어야 한다.
 업로드 직후 출력되는 `RC_VERSION_ID`를 기록하고,
@@ -92,7 +92,8 @@ URL에서 아래 항목을 확인한다.
 
 - 첫 화면과 모바일 화면이 정상 표시되는지
 - 도로 배경지도에서 VWorld Base PNG와 PBF 벡터 도로가 표시되고 지도 이동·확대·도법
-  전환 뒤 기상 오버레이가 유지되는지, 키 제거·타일 실패 때 OpenStreetMap으로 대체되는지
+  전환 뒤 기상 오버레이가 유지되는지, `/api/runtime/map-config`와 브라우저 요청에 키가
+  노출되지 않는지, 키 제거·타일 실패 때 OpenStreetMap으로 대체되는지
 - 풍속·기온·일사강도 격자가 실제 자료로 200 응답하는지
 - 고도 선택 UI가 지원값 하나만 노출하고, 알 수 없는 `h` 주소를 지원값으로 정규화하는지
 - 격자·지점 API의 지원하지 않는 고도 요청이 상류 호출 없이 즉시 400을 반환하는지

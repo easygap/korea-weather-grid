@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/runtime")
 public final class MapRuntimeConfigController {
 
+    private static final String VWORLD_TILE_BASE = "/api/map/vworld";
+
     private final MapProviderProperties providers;
 
     public MapRuntimeConfigController(MapProviderProperties providers) {
@@ -30,9 +32,9 @@ public final class MapRuntimeConfigController {
                 .cacheControl(CacheControl.noStore())
                 .body(new MapRuntimeConfig(
                         providers.vworldEnabled(),
-                        providers.vworldEnabled() ? providers.vworldApiKey() : ""));
+                        providers.vworldEnabled() ? VWORLD_TILE_BASE : ""));
     }
 
-    public record MapRuntimeConfig(boolean vworldEnabled, String vworldApiKey) {
+    public record MapRuntimeConfig(boolean vworldEnabled, String vworldTileBase) {
     }
 }

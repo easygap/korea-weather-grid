@@ -19,8 +19,6 @@ import java.util.Map;
 public class BrowserPolicyHeadersFilter extends OncePerRequestFilter {
 
     private static final String CCTV_ORIGIN = "https://cctvsec.ktict.co.kr";
-    private static final String CCTV_ALT_PORT = CCTV_ORIGIN + ":8082";
-    private static final String VWORLD_API_ORIGIN = "https://api.vworld.kr";
     private static final String CONTENT_SECURITY_POLICY = String.join("; ", List.of(
             "default-src 'self'",
             "base-uri 'self'",
@@ -29,13 +27,14 @@ public class BrowserPolicyHeadersFilter extends OncePerRequestFilter {
             "form-action 'self'",
             "script-src 'self'",
             "script-src-attr 'none'",
-            "style-src 'self' 'unsafe-inline'",
+            "style-src 'self'",
+            "style-src-elem 'self'",
+            "style-src-attr 'unsafe-inline'",
             "img-src 'self' data: blob: https://tile.openstreetmap.org "
-                    + "https://*.tile.openstreetmap.org " + VWORLD_API_ORIGIN,
+                    + "https://*.tile.openstreetmap.org",
             "font-src 'self' data:",
-            "connect-src 'self' " + CCTV_ORIGIN + " " + CCTV_ALT_PORT + " "
-                    + VWORLD_API_ORIGIN,
-            "media-src 'self' blob: " + CCTV_ORIGIN + " " + CCTV_ALT_PORT,
+            "connect-src 'self' " + CCTV_ORIGIN,
+            "media-src 'self' blob: " + CCTV_ORIGIN,
             "worker-src 'self' blob:",
             "manifest-src 'self'"
     ));

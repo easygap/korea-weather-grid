@@ -1,5 +1,5 @@
 /**
- * VWorld 공식 벡터 지도 API를 기존 OpenLayers 지도에 연결한다.
+ * 동일 출처 프록시로 받은 VWorld 벡터 지도를 기존 OpenLayers 지도에 연결한다.
  * Base 래스터는 사용자 정의 투영으로 재투영하고, 보이는 traffic PBF만 현재 도법의
  * 일반 벡터 피처로 변환해 VectorTile의 사용자 정의 도법 제약을 피한다.
  */
@@ -99,7 +99,7 @@
         }, LOAD_TIMEOUT_MS);
         return fetch(url, {
             method: 'GET',
-            mode: 'cors',
+            mode: 'same-origin',
             cache: 'no-store',
             signal: controller.signal
         }).then(function (response) {
@@ -226,7 +226,7 @@
         return Promise.allSettled(plan.tiles.map(function (tile) {
             return fetch(tile.url, {
                 method: 'GET',
-                mode: 'cors',
+                mode: 'same-origin',
                 cache: 'default',
                 signal: signal
             }).then(function (response) {
@@ -305,8 +305,8 @@
         var token = ++requestToken;
         updateStatus('loading');
         return loadRuntimeConfig().then(function (config) {
-            if (!config.enabled) throw new Error('VWorld API key unavailable');
-            var urls = State.tileUrls(config.key);
+            if (!config.enabled) throw new Error('VWorld tile proxy unavailable');
+            var urls = State.tileUrls(config.tileBase);
             if (!urls) throw new Error('VWorld tile URL unavailable');
             return probe(urls.probe).then(function () {
                 if (token !== requestToken) return false;

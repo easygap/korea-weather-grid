@@ -84,10 +84,16 @@
             // 유효 조합 열거로 KMA 격자 cache miss를 대량 생성하는 공격을 억제한다.
             // 한 요청의 WSD/UUU/VVV 병렬 조회도 공유 Promise로 한 번만 소비한다.
             "simple": { "limit": 12, "period": 60 }
+        },
+        {
+            "name": "VWORLD_TILE_LIMITER",
+            "namespace_id": "3847007",
+            // 같은 출처 캐시 miss만 IP별로 제한해 비공개 키의 호출 한도를 보호한다.
+            "simple": { "limit": 300, "period": 60 }
         }
     ]
 
     // 시크릿: KMA_API_AUTH_KEY, DATA_GO_KR_SERVICE_KEY(Decoding 키), ITS_API_KEY
-    // 선택값 VWORLD_API_KEY는 도메인 제한된 키이며 저장소에는 넣지 않는다.
+    // 선택값 VWORLD_API_KEY는 Worker 타일 프록시에서만 사용하고 브라우저에는 반환하지 않는다.
     // 로컬은 커밋되지 않는 .dev.vars. ALLOW_MOCK_DATA는 로컬 UI 데모에서만 true.
 }

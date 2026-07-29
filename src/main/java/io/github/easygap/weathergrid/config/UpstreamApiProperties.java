@@ -19,12 +19,12 @@ public record UpstreamApiProperties(
     public record Endpoint(URI baseUrl, String credential) {
         public Endpoint {
             if (baseUrl == null || !baseUrl.isAbsolute()
-                    || !("https".equalsIgnoreCase(baseUrl.getScheme())
-                    || "http".equalsIgnoreCase(baseUrl.getScheme()))
+                    || !"https".equalsIgnoreCase(baseUrl.getScheme())
+                    || baseUrl.getHost() == null
                     || baseUrl.getUserInfo() != null
                     || baseUrl.getQuery() != null
                     || baseUrl.getFragment() != null) {
-                throw new IllegalArgumentException("Upstream base URL must be an absolute HTTP(S) URL");
+                throw new IllegalArgumentException("Upstream base URL must be an absolute HTTPS URL");
             }
             credential = credential == null ? "" : credential.strip();
         }

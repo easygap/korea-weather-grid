@@ -22,11 +22,16 @@ class BrowserPolicyHeadersFilterTest {
 
         String policy = response.getHeader("Content-Security-Policy");
         assertNotNull(policy);
-        assertTrue(policy.contains("connect-src 'self' https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082"));
-        assertTrue(policy.contains("media-src 'self' blob: https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082"));
+        assertTrue(policy.contains("connect-src 'self' https://cctvsec.ktict.co.kr"));
+        assertTrue(policy.contains("media-src 'self' blob: https://cctvsec.ktict.co.kr"));
         assertTrue(policy.contains("script-src 'self';"));
-        assertTrue(policy.contains("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://api.vworld.kr"));
-        assertTrue(policy.contains("https://api.vworld.kr"));
+        assertTrue(policy.contains("style-src 'self';"));
+        assertTrue(policy.contains("style-src-elem 'self';"));
+        assertTrue(policy.contains("style-src-attr 'unsafe-inline';"));
+        assertTrue(policy.contains("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org"));
+        assertFalse(policy.contains("https://api.vworld.kr"));
+        assertFalse(policy.contains(":8082"));
+        assertFalse(policy.contains("style-src 'self' 'unsafe-inline'"));
         assertFalse(policy.contains("kakao"));
         assertFalse(policy.contains("daumcdn"));
         assertFalse(policy.contains("connect-src 'self' https:;"));

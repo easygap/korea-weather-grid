@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.regex.Pattern;
 
-/** 브라우저 지도 공급자 설정. 키 원문은 로그나 서버 렌더링 모델에 넣지 않는다. */
+/** 지도 공급자 설정. 키 원문은 동일 출처 프록시 밖이나 로그에 노출하지 않는다. */
 @ConfigurationProperties("weather-grid.map")
 public record MapProviderProperties(String vworldApiKey) {
 

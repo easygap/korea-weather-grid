@@ -16,8 +16,9 @@ test('기상 지점 마커는 래스터 자산 없이 OpenLayers 벡터 스타�
     assert.doesNotMatch(mapBootstrapScript, /station[^'"\s]*\.(?:png|webp|svg)/i);
 });
 
-test('도로 배경지도는 VWorld 벡터 API 어댑터와 OSM 대체 레이어를 분리한다', () => {
-    assert.match(vworldStateScript, /api\.vworld\.kr/);
+test('도로 배경지도는 같은 출처 VWorld 프록시와 OSM 대체 레이어를 분리한다', () => {
+    assert.match(vworldStateScript, /\/api\/map\/vworld/);
+    assert.doesNotMatch(vworldStateScript, /api\.vworld\.kr|vworldApiKey/);
     assert.match(vworldAdapterScript, /\/api\/runtime\/map-config/);
     assert.match(vworldAdapterScript, /new ol\.source\.Vector/);
     assert.match(vworldAdapterScript, /featureProjection: plan\.projection/);
