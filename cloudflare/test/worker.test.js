@@ -211,25 +211,20 @@ test('HTTP 운영 요청은 경로와 쿼리를 보존해 HTTPS로 이동한다'
     assert.match(response.headers.get('Strict-Transport-Security'), /max-age=31536000/);
 });
 
-test('runtime map config는 VWorld 키 대신 같은 출처 타일 경로만 공개한다', async () => {
+test('Cloudflare runtime map config는 VWorld 키를 읽거나 공개하지 않는다', async () => {
     const key = '12345678-1234-1234-1234-123456789abc';
-    const enabled = await worker.fetch(
+    const disabled = await worker.fetch(
         request('/api/runtime/map-config'), { VWORLD_API_KEY: key }, {});
-    assert.equal(enabled.status, 200);
-    assert.equal(enabled.headers.get('Cache-Control'), 'no-store');
-    assert.match(enabled.headers.get('Strict-Transport-Security'), /max-age=31536000/);
-    assert.deepEqual(await enabled.json(), {
-        vworldEnabled: true,
-        vworldTileBase: '/api/map/vworld'
+    assert.equal(disabled.status, 200);
+    assert.equal(disabled.headers.get('Cache-Control'), 'no-store');
+    assert.match(disabled.headers.get('Strict-Transport-Security'), /max-age=31536000/);
+    const body = await disabled.json();
+    assert.deepEqual(body, {
+        vworldEnabled: false,
+        vworldTileBase: ''
     });
-
-    for (const env of [{}, { VWORLD_API_KEY: 'malformed' }]) {
-        const disabled = await worker.fetch(request('/api/runtime/map-config'), env, {});
-        assert.deepEqual(await disabled.json(), {
-            vworldEnabled: false,
-            vworldTileBase: ''
-        });
-    }
+    assert.equal(JSON.stringify(body).includes(key), false);
+    assert.equal('vworldApiKey' in body, false);
 
     assert.equal((await worker.fetch(
         request('/api/runtime/map-config?callback=attacker'), {}, {})).status, 400);
@@ -238,89 +233,22 @@ test('runtime map config는 VWorld 키 대신 같은 출처 타일 경로만 공
     }), {}, {})).status, 405);
 });
 
-test('VWorld 타일 프록시는 키를 숨기고 검증된 PNG만 키 없는 캐시에 저장한다', async (t) => {
+test('Cloudflare에서는 VWorld 타일 경로를 외부 원점으로 중계하지 않는다', async (t) => {
     const originalFetch = globalThis.fetch;
-    const originalCaches = globalThis.caches;
-    const cache = new MemoryCache();
-    const key = '12345678-1234-1234-1234-123456789abc';
-    const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4]);
-    const calls = [];
-    globalThis.caches = { default: cache };
-    globalThis.fetch = async (url, options) => {
-        calls.push({ url: String(url), options });
-        return new Response(png, {
-            headers: { 'Content-Type': 'image/png', 'Content-Length': String(png.length) }
-        });
-    };
-    t.after(() => {
-        globalThis.fetch = originalFetch;
-        globalThis.caches = originalCaches;
-    });
-
-    const env = { VWORLD_API_KEY: key, VWORLD_TILE_LIMITER: allowLimiter() };
-    const path = '/api/map/vworld/base/11/1746/793.png';
-    const first = await worker.fetch(request(path), env, {});
-    assert.equal(first.status, 200);
-    assert.equal(first.headers.get('Content-Type'), 'image/png');
-    assert.match(first.headers.get('Cache-Control'), /max-age=86400/);
-    assert.deepEqual(new Uint8Array(await first.arrayBuffer()), png);
-    assert.equal(calls.length, 1);
-    assert.match(calls[0].url, new RegExp(key));
-    assert.equal(calls[0].options.redirect, 'error');
-    assert.ok(calls[0].options.signal instanceof AbortSignal);
-    assert.equal(cache.putCalls, 1);
-    assert.ok(cache.keys.every((cachedKey) => !cachedKey.includes(key)));
-
-    const second = await worker.fetch(request(path), env, {});
-    assert.equal(second.status, 200);
-    assert.deepEqual(new Uint8Array(await second.arrayBuffer()), png);
-    assert.equal(calls.length, 1, '두 번째 요청은 키 없는 내부 캐시에서 처리한다');
-});
-
-test('VWorld 타일 프록시는 범위 밖·잘못된 경로와 과도한 응답을 거부한다', async (t) => {
-    const originalFetch = globalThis.fetch;
-    const originalCaches = globalThis.caches;
-    globalThis.caches = { default: new MemoryCache() };
     let upstreamCalls = 0;
-    let limiterCalls = 0;
     globalThis.fetch = async () => {
         upstreamCalls++;
-        return new Response(byteStream(512 * 1024 + 1), {
-            headers: { 'Content-Type': 'image/png' }
-        });
+        return new Response('unexpected');
     };
     t.after(() => {
         globalThis.fetch = originalFetch;
-        globalThis.caches = originalCaches;
     });
-    const env = {
-        VWORLD_API_KEY: '12345678-1234-1234-1234-123456789abc',
-        VWORLD_TILE_LIMITER: {
-            async limit() {
-                limiterCalls++;
-                return { success: true };
-            }
-        }
-    };
 
-    const invalid = [
-        '/api/map/vworld/base/1/1/1.png',
-        '/api/map/vworld/base/11/0/0.png',
-        '/api/map/vworld/base/11/1746/793.pbf',
-        '/api/map/vworld/traffic/11/1746/793.png',
-        '/api/map/vworld/base/11/1746/793.png?key=attacker'
-    ];
-    for (const path of invalid) {
-        assert.equal((await worker.fetch(request(path), env, {})).status, 400);
-    }
-    assert.equal(limiterCalls, 0);
+    const response = await worker.fetch(
+        request('/api/map/vworld/base/11/1746/793.png'),
+        { VWORLD_API_KEY: '12345678-1234-1234-1234-123456789abc' }, {});
+    assert.equal(response.status, 404);
     assert.equal(upstreamCalls, 0);
-
-    const oversized = await worker.fetch(
-        request('/api/map/vworld/base/11/1746/793.png'), env, {});
-    assert.equal(oversized.status, 503);
-    assert.equal(limiterCalls, 1);
-    assert.equal(upstreamCalls, 1);
 });
 
 test('gridData returns the structured 10m wind field contract', async (t) => {

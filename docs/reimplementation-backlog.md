@@ -124,7 +124,7 @@ DFS/KIM 파서를 strict 숫자 스트림·제품별 reader·독립 KIM geometry
 | 기능 | 상태 | 독립 구현 입력과 완료 조건 |
 |---|---|---|
 | 전국 시군구(Admin-2) 경계·선택 | unavailable | 검증 가능한 최신·전국·재배포 가능 원천과 라이선스를 선정한 뒤 결정적 변환기, 자산 hash·HTTP 계약과 지도 선택 E2E 추가 |
-| VWorld 도로 배경지도 | implemented · verified | 공식 Base PNG·traffic PBF, 키 비노출 동일 출처 프록시, OpenLayers 통합, 화면 출처 표시, CSP, 미설정·타일 실패 OSM fallback과 순수 상태·서버·Worker·브라우저 계약 테스트 완료. localhost와 `public-readiness` RC 실타일·벡터 렌더링 확인 |
+| VWorld 도로 배경지도 | implemented · runtime constrained | Spring의 키 비노출 동일 출처 프록시와 공식 Base PNG·traffic PBF, OpenLayers 통합, 화면 출처 표시, CSP, 미설정·타일 실패 OSM fallback을 검증했다. Cloudflare는 VWorld 원점의 edge 요청 502 때문에 키를 사용하지 않고 OSM으로 즉시 대체한다 |
 
 각 항목을 완료할 때 `docs/reimplementation-log.md`에 공개 입력 사양, 설계 차이, 검증 명령과
 날짜를 남긴다. 완료 전에는 저장소를 public으로 전환하거나 공개 release를 만들지 않는다.

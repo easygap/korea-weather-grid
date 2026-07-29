@@ -95,11 +95,12 @@ WEATHER_GRID_DEMO_MODE=true ./gradlew bootRun
 | `KMA_API_AUTH_KEY` | 기상청 API Hub |
 | `DATA_GO_KR_SERVICE_KEY` | AirKorea 등 공공데이터포털 |
 | `ITS_API_KEY` | 국가교통정보센터 CCTV |
-| `VWORLD_API_KEY` | VWorld 배경지도와 벡터 도로 |
+| `VWORLD_API_KEY` | Spring 배포의 VWorld 배경지도와 벡터 도로 |
 
 키는 저장소 파일에 넣지 않고 실행 환경에 주입합니다. VWorld 키는 서버의 동일 출처 타일
-프록시에서만 사용하며 브라우저 응답에는 포함하지 않습니다. VWorld를 사용할 때는 실제 실행
-주소와 2D 지도·배경지도·WMTS/TMS 권한을 등록해야 합니다.
+프록시에서만 사용하며 브라우저 응답에는 포함하지 않습니다. Cloudflare 배포는 VWorld 원점의
+edge 요청 제약 때문에 키를 사용하지 않고 OpenStreetMap으로 대체합니다. VWorld를 사용할
+때는 실제 실행 주소와 2D 지도·배경지도·WMTS/TMS 권한을 등록해야 합니다.
 
 </details>
 

@@ -358,52 +358,6 @@ async function readTextResponseLimited(response, maxBytes, fatalUtf8 = true) {
     }
 }
 
-/** 고정 상한 안에서만 바이너리 응답을 합쳐 타일 압축폭탄과 무제한 버퍼링을 막는다. */
-async function readBytesResponseLimited(response, maxBytes) {
-    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) {
-        if (response.body) await response.body.cancel('invalid response limit').catch(() => { });
-        return null;
-    }
-    if (!response.ok || !response.body) {
-        if (response.body) await response.body.cancel('upstream response rejected').catch(() => { });
-        return null;
-    }
-    const declared = Number(response.headers.get('content-length'));
-    if (Number.isFinite(declared) && declared > maxBytes) {
-        await response.body.cancel('response too large').catch(() => { });
-        return null;
-    }
-
-    const reader = response.body.getReader();
-    const chunks = [];
-    let total = 0;
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            total += value.byteLength;
-            if (total > maxBytes) {
-                await reader.cancel('response too large').catch(() => { });
-                return null;
-            }
-            chunks.push(value);
-        }
-        if (total === 0) return null;
-        const joined = new Uint8Array(total);
-        let offset = 0;
-        for (const chunk of chunks) {
-            joined.set(chunk, offset);
-            offset += chunk.byteLength;
-        }
-        return joined;
-    } catch {
-        await reader.cancel('invalid or interrupted response').catch(() => { });
-        return null;
-    } finally {
-        reader.releaseLock();
-    }
-}
-
 async function fetchKmaText(url, maxBytes, timeoutMs = KMA.UPSTREAM_TIMEOUT_MS) {
     const endpoint = (() => {
         try { return new URL(url).pathname; } catch { return 'invalid-url'; }
@@ -2176,26 +2130,6 @@ const text = (s, options = {}) => new Response(s, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8', ...SEC_HEADERS, ...(options.headers || {}) }
 });
 const hasKmaKey = (env) => typeof env.KMA_API_AUTH_KEY === 'string' && env.KMA_API_AUTH_KEY.trim().length > 0;
-const vworldApiKey = (env) => {
-    const candidate = typeof env.VWORLD_API_KEY === 'string'
-        ? env.VWORLD_API_KEY.trim() : '';
-    return /^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(candidate)
-        ? candidate : '';
-};
-const VWORLD = Object.freeze({
-    PUBLIC_ROOT: '/api/map/vworld',
-    UPSTREAM_ROOT: 'https://api.vworld.kr/req/wmts/vector',
-    MIN_ZOOM: 2,
-    MAX_ZOOM: 14,
-    MIN_LONGITUDE: 116,
-    MAX_LONGITUDE: 140,
-    MIN_LATITUDE: 29,
-    MAX_LATITUDE: 46,
-    BASE_MAX_BYTES: 512 * 1024,
-    TRAFFIC_MAX_BYTES: 2 * 1024 * 1024,
-    UPSTREAM_TIMEOUT_MS: 6000,
-    CACHE_TTL: 86400
-});
 
 function isLocalHttp(url) {
     return url.protocol === 'http:' && (
@@ -2216,142 +2150,6 @@ function redirectToHttps(url) {
             ...SEC_HEADERS
         }
     });
-}
-
-function mercatorTileLatitude(y, count) {
-    return Math.atan(Math.sinh(Math.PI * (1 - 2 * y / count))) * 180 / Math.PI;
-}
-
-function vworldTileRequest(pathname) {
-    const match = pathname.match(
-        /^\/api\/map\/vworld\/(base|traffic)\/(\d{1,2})\/(\d{1,8})\/(\d{1,8})\.(png|pbf)$/
-    );
-    if (!match) return null;
-    const kind = match[1];
-    if ((kind === 'base' && match[5] !== 'png')
-        || (kind === 'traffic' && match[5] !== 'pbf')) return null;
-
-    const zoom = Number(match[2]);
-    const x = Number(match[3]);
-    const y = Number(match[4]);
-    if (!Number.isInteger(zoom) || zoom < VWORLD.MIN_ZOOM || zoom > VWORLD.MAX_ZOOM) return null;
-    const count = 2 ** zoom;
-    if (!Number.isInteger(x) || !Number.isInteger(y)
-        || x < 0 || y < 0 || x >= count || y >= count) return null;
-
-    const west = x / count * 360 - 180;
-    const east = (x + 1) / count * 360 - 180;
-    const north = mercatorTileLatitude(y, count);
-    const south = mercatorTileLatitude(y + 1, count);
-    if (east < VWORLD.MIN_LONGITUDE || west > VWORLD.MAX_LONGITUDE
-        || north < VWORLD.MIN_LATITUDE || south > VWORLD.MAX_LATITUDE) return null;
-    return { kind, zoom, x, y };
-}
-
-function vworldCacheKey(tile) {
-    return new Request(`https://bora-cache.internal/vworld/v1/${tile.kind}`
-        + `/${tile.zoom}/${tile.x}/${tile.y}`);
-}
-
-function vworldUpstreamUrl(key, tile) {
-    const suffix = `${tile.zoom}/${tile.x}/${tile.y}`;
-    return tile.kind === 'base'
-        ? `${VWORLD.UPSTREAM_ROOT}/${key}/Base/${suffix}.png`
-        : `${VWORLD.UPSTREAM_ROOT}/getTile/${key}/traffic/${suffix}.pbf`;
-}
-
-function validVworldContentType(tile, contentType) {
-    return tile.kind === 'base'
-        ? /^image\/png\b/i.test(contentType)
-        : /^application\/(?:x-protobuf|octet-stream)\b/i.test(contentType);
-}
-
-function validPngSignature(bytes) {
-    const signature = [137, 80, 78, 71, 13, 10, 26, 10];
-    return bytes.length >= signature.length
-        && signature.every((value, index) => bytes[index] === value);
-}
-
-async function matchVworldTileCache(key) {
-    try {
-        const cache = globalThis.caches?.default;
-        return cache ? await cache.match(key) : null;
-    } catch {
-        return null;
-    }
-}
-
-async function putVworldTileCache(key, response, ctx) {
-    let operation;
-    try {
-        const cache = globalThis.caches?.default;
-        if (!cache) return;
-        operation = cache.put(key, response.clone()).catch(() => { });
-    } catch {
-        return;
-    }
-    if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(operation);
-    else await operation;
-}
-
-async function serveVworldTile(request, env, ctx, url) {
-    if (request.method !== 'GET') return methodNotAllowed('GET');
-    if ([...url.searchParams.keys()].length !== 0) return badRequest('허용되지 않은 파라미터');
-    const tile = vworldTileRequest(url.pathname);
-    if (!tile) return badRequest('지원하지 않는 VWorld 타일');
-
-    const key = vworldApiKey(env);
-    if (!key) return serviceUnavailable();
-    const cacheKey = vworldCacheKey(tile);
-    const cached = await matchVworldTileCache(cacheKey);
-    if (cached) return cached;
-
-    await acquireRateLimit(env.VWORLD_TILE_LIMITER, `vworld:${workerClientId(request)}`);
-    const raced = await matchVworldTileCache(cacheKey);
-    if (raced) return raced;
-
-    let upstream;
-    try {
-        upstream = await fetch(vworldUpstreamUrl(key, tile), {
-            method: 'GET',
-            headers: {
-                Accept: tile.kind === 'base'
-                    ? 'image/png' : 'application/x-protobuf, application/octet-stream'
-            },
-            redirect: 'error',
-            cache: 'no-store',
-            signal: AbortSignal.timeout(VWORLD.UPSTREAM_TIMEOUT_MS)
-        });
-    } catch (error) {
-        logUpstreamFailure('vworld', tile.kind,
-            error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'timeout' : 'network_error');
-        return serviceUnavailable();
-    }
-
-    const contentType = upstream.headers.get('content-type') || '';
-    if (!upstream.ok || !validVworldContentType(tile, contentType)) {
-        if (upstream.body) await upstream.body.cancel('invalid VWorld response').catch(() => { });
-        logUpstreamFailure('vworld', tile.kind,
-            upstream.ok ? 'invalid_content_type' : `http_${upstream.status}`);
-        return serviceUnavailable();
-    }
-
-    const maxBytes = tile.kind === 'base' ? VWORLD.BASE_MAX_BYTES : VWORLD.TRAFFIC_MAX_BYTES;
-    const bytes = await readBytesResponseLimited(upstream, maxBytes);
-    if (!bytes || (tile.kind === 'base' && !validPngSignature(bytes))) {
-        logUpstreamFailure('vworld', tile.kind, 'invalid_or_oversized_body');
-        return serviceUnavailable();
-    }
-
-    const response = new Response(bytes, {
-        headers: {
-            'Content-Type': tile.kind === 'base' ? 'image/png' : 'application/x-protobuf',
-            'Cache-Control': `public, max-age=${VWORLD.CACHE_TTL}, stale-while-revalidate=604800`,
-            ...SEC_HEADERS
-        }
-    });
-    await putVworldTileCache(cacheKey, response, ctx);
-    return response;
 }
 
 function parseLeadHours(value, defaultValue = 0) {
@@ -2563,9 +2361,6 @@ export default {
         if (url.protocol === 'http:' && !isLocalHttp(url)) return redirectToHttps(url);
 
         try {
-            if (url.pathname.startsWith(`${VWORLD.PUBLIC_ROOT}/`)) {
-                return await serveVworldTile(request, env, ctx, url);
-            }
             switch (url.pathname) {
                 case '/':
                     if (request.method !== 'GET' && request.method !== 'HEAD') return methodNotAllowed('GET, HEAD');
@@ -2575,10 +2370,9 @@ export default {
                 case '/api/runtime/map-config': {
                     if (request.method !== 'GET') return methodNotAllowed('GET');
                     if ([...q.keys()].length !== 0) return badRequest('허용되지 않은 파라미터');
-                    const key = vworldApiKey(env);
                     return json({
-                        vworldEnabled: key.length > 0,
-                        vworldTileBase: key.length > 0 ? VWORLD.PUBLIC_ROOT : ''
+                        vworldEnabled: false,
+                        vworldTileBase: ''
                     }, { headers: { 'Cache-Control': 'no-store' } });
                 }
 
