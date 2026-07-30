@@ -442,7 +442,10 @@ function readForecastControls() {
 
 		let mapNoticeTimer = 0;
 		/** 지도 빈 영역의 우발적 탭은 모달로 흐름을 막지 않고 짧은 상태 메시지로 안내한다. */
-		function showMapNotice(message) {
+		function showMapNotice(input) {
+			const options = input && typeof input === 'object' ? input : { message: input };
+			const message = String(options.message || '').trim();
+			if (!message) return;
 			let notice = document.getElementById('map_notice');
 			if (!notice) {
 				notice = document.createElement('div');
@@ -452,10 +455,26 @@ function readForecastControls() {
 				notice.setAttribute('aria-live', 'polite');
 				document.querySelector('.map_workspace').appendChild(notice);
 			}
-			notice.textContent = message;
+			const text = document.createElement('span');
+			text.textContent = message;
+			notice.replaceChildren(text);
+			notice.dataset.action = 'false';
+			if (options.actionLabel && typeof options.onAction === 'function') {
+				const action = document.createElement('button');
+				action.type = 'button';
+				action.textContent = String(options.actionLabel);
+				action.addEventListener('click', function () {
+					clearTimeout(mapNoticeTimer);
+					notice.hidden = true;
+					options.onAction();
+				}, { once: true });
+				notice.appendChild(action);
+				notice.dataset.action = 'true';
+			}
 			notice.hidden = false;
 			clearTimeout(mapNoticeTimer);
-			mapNoticeTimer = window.setTimeout(function () { notice.hidden = true; }, 2600);
+			mapNoticeTimer = window.setTimeout(function () { notice.hidden = true; },
+				Number.isFinite(options.duration) ? Math.max(2000, options.duration) : 2600);
 		}
 		window.WEATHER_GRID_SHOW_NOTICE = showMapNotice;
 

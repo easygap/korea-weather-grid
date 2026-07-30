@@ -8,7 +8,7 @@ test.describe('독립 지도 셸과 대표 지역 검색', () => {
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify({ vworldEnabled: false, vworldApiKey: '' })
+        body: JSON.stringify({ vworldEnabled: false, vworldTileBase: '' })
       });
     });
     await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -116,9 +116,14 @@ test.describe('독립 지도 셸과 대표 지역 검색', () => {
   });
 });
 
-test.describe('VWorld 공식 벡터 지도 API 어댑터', () => {
+test.describe('VWorld 동일 출처 타일 프록시 어댑터', () => {
   test('VWorld 배경·벡터 도로를 같은 지도에 올리고 OSM 대체 레이어를 숨긴다', async ({ page }) => {
-    const key = '12345678-1234-1234-1234-123456789abc';
+    const directProviderRequests = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).hostname === 'api.vworld.kr') {
+        directProviderRequests.push(request.url());
+      }
+    });
     await page.route('**/api/runtime/map-config', async (route) => {
       await route.fulfill({
         status: 200,
@@ -126,11 +131,11 @@ test.describe('VWorld 공식 벡터 지도 API 어댑터', () => {
         headers: { 'Cache-Control': 'no-store' },
         body: JSON.stringify({
           vworldEnabled: true,
-          vworldApiKey: key
+          vworldTileBase: '/api/map/vworld'
         })
       });
     });
-    await page.route('https://api.vworld.kr/req/wmts/vector/**', async (route) => {
+    await page.route('**/api/map/vworld/**', async (route) => {
       if (route.request().url().endsWith('.pbf')) {
         await route.fulfill({
           status: 200,
@@ -171,6 +176,7 @@ test.describe('VWorld 공식 벡터 지도 API 어댑터', () => {
       vworldLayers: 2,
       osmVisible: false
     });
+    expect(directProviderRequests).toEqual([]);
 
     await page.evaluate(() => WeatherGridMapBootstrap.selectMode('weather'));
     expect(await page.evaluate(() => WeatherGridVWorldBasemap.diagnostics().status)).toBe('idle');

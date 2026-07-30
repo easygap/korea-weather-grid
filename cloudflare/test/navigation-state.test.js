@@ -100,6 +100,27 @@ test('직렬화 결과는 고정 순서이며 비활성 선택지는 생략한�
         'e=pcp&h=10m&d=2026-07-20&t=08&f=7&proj=EPSG%3A4326&v=heat%2Ciso&haz=typhoon');
 });
 
+test('공유 URL은 지도 중심과 확대 수준을 제한된 정밀도로 보존한다', () => {
+    const encoded = navigation.encode({
+        element: 'wdws',
+        date: '2026-07-22',
+        baseTime: '11',
+        forecastHour: 1,
+        projection: 'EPSG:3857',
+        view: { latitude: 37.566535, longitude: 126.977969, zoom: 9.376 },
+        layers: { heat: true, stream: true, iso: false },
+        hazards: {}
+    });
+
+    assert.match(encoded, /lat=37\.567&lon=126\.978&z=9\.38/);
+    assert.deepEqual(navigation.decode('#' + encoded, context).view, {
+        latitude: 37.567,
+        longitude: 126.978,
+        zoom: 9.38
+    });
+    assert.equal(navigation.decode('#lat=90&lon=0&z=99', context).view, undefined);
+});
+
 test('빈 해시는 복원할 탐색 상태가 아니다', () => {
     assert.equal(navigation.decode('', context), null);
     assert.equal(navigation.decode('#', context), null);

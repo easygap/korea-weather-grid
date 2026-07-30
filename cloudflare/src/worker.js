@@ -2112,10 +2112,11 @@ async function buildStationData(env, lat, lon, baseDateIn, baseTimeIn, element) 
 
 // 모든 응답에 붙는 보안 헤더 (정적 자산은 public/_headers가 담당)
 const SEC_HEADERS = {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-Frame-Options': 'DENY',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
@@ -2129,12 +2130,27 @@ const text = (s, options = {}) => new Response(s, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8', ...SEC_HEADERS, ...(options.headers || {}) }
 });
 const hasKmaKey = (env) => typeof env.KMA_API_AUTH_KEY === 'string' && env.KMA_API_AUTH_KEY.trim().length > 0;
-const vworldApiKey = (env) => {
-    const candidate = typeof env.VWORLD_API_KEY === 'string'
-        ? env.VWORLD_API_KEY.trim() : '';
-    return /^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(candidate)
-        ? candidate : '';
-};
+
+function isLocalHttp(url) {
+    return url.protocol === 'http:' && (
+        url.hostname === 'localhost'
+        || url.hostname === '127.0.0.1'
+        || url.hostname === '[::1]'
+    );
+}
+
+function redirectToHttps(url) {
+    const target = new URL(url);
+    target.protocol = 'https:';
+    return new Response(null, {
+        status: 308,
+        headers: {
+            Location: target.href,
+            'Cache-Control': 'public, max-age=3600',
+            ...SEC_HEADERS
+        }
+    });
+}
 
 function parseLeadHours(value, defaultValue = 0) {
     if (value === undefined || value === null) return defaultValue;
@@ -2316,15 +2332,30 @@ async function serveSevereWeather(request, env, ctx, kind, minutes = null) {
     await enforcePublicEnvironmentalLimit(request, env, kind);
     const snapshot = await readSevereWeatherSnapshot(env, kind, { minutes });
     if (!snapshot) {
-        /* 특보는 첫 화면에서 유휴 로드한다. 승인 전 503을 매 방문마다 콘솔 오류로
-         * 남기지 않고, 자료 없음과 구분되는 명시적 준비 상태를 짧게 캐시한다. */
-        if (kind !== 'warnings') return serviceUnavailable();
-        const unavailable = json({
+        /* 공개 화면은 세 자료를 함께 조회한다. 아직 정상 snapshot이 없을 때 503을
+         * 반복하기보다, 실제 0건과 구분되는 준비 상태를 같은 응답 계약으로 돌려준다. */
+        const unavailablePayload = kind === 'typhoon' ? {
+            schema: 'bora.typhoon/v1',
+            source: '기상청 태풍 분석·예보',
+            status: 'unavailable',
+            active: []
+        } : kind === 'lightning' ? {
+            schema: 'bora.lightning/v1',
+            source: '기상청 낙뢰관측',
+            status: 'unavailable',
+            from: null,
+            to: null,
+            truncated: false,
+            strikes: []
+        } : {
             schema: 'bora.warnings/v1',
             source: '기상청 기상특보',
             status: 'unavailable',
             warnings: []
-        }, { headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=60' } });
+        };
+        const unavailable = json(unavailablePayload, {
+            headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=60' }
+        });
         await putSevereWeatherPublicCache(kind, minutes, unavailable, ctx);
         return unavailable;
     }
@@ -2342,6 +2373,7 @@ export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const q = url.searchParams;
+        if (url.protocol === 'http:' && !isLocalHttp(url)) return redirectToHttps(url);
 
         try {
             switch (url.pathname) {
@@ -2353,10 +2385,9 @@ export default {
                 case '/api/runtime/map-config': {
                     if (request.method !== 'GET') return methodNotAllowed('GET');
                     if ([...q.keys()].length !== 0) return badRequest('허용되지 않은 파라미터');
-                    const key = vworldApiKey(env);
                     return json({
-                        vworldEnabled: key.length > 0,
-                        vworldApiKey: key
+                        vworldEnabled: false,
+                        vworldTileBase: ''
                     }, { headers: { 'Cache-Control': 'no-store' } });
                 }
 

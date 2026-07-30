@@ -282,7 +282,12 @@ test('public validation is strict and KV misses never fall through to an upstrea
 
     for (const minutes of [15, 30, 60]) {
         const miss = await worker.fetch(request(`/api/hazards/lightning?minutes=${minutes}`), env, {});
-        assert.equal(miss.status, 503);
+        assert.equal(miss.status, 200);
+        const body = await miss.json();
+        assert.equal(body.status, 'unavailable');
+        assert.deepEqual(body.strikes, []);
+        assert.equal(body.truncated, false);
+        assert.match(miss.headers.get('Cache-Control'), /max-age=60/);
     }
     const warningMiss = await worker.fetch(request('/api/hazards/warnings'), env, {});
     assert.equal(warningMiss.status, 200);
@@ -294,8 +299,14 @@ test('public validation is strict and KV misses never fall through to an upstrea
     assert.equal(upstreamCalls, 0);
 
     const stale = await worker.fetch(request('/api/hazards/typhoons'), env, {});
-    assert.equal(stale.status, 503);
-    assert.equal(stale.headers.get('Cache-Control'), 'no-store');
+    assert.equal(stale.status, 200);
+    assert.deepEqual(await stale.json(), {
+        schema: 'bora.typhoon/v1',
+        source: '기상청 태풍 분석·예보',
+        status: 'unavailable',
+        active: []
+    });
+    assert.match(stale.headers.get('Cache-Control'), /max-age=60/);
     assert.equal(limiterCalls, 5);
     assert.equal(await readSevereWeatherSnapshot(env, 'typhoon'), null);
 });

@@ -21,8 +21,10 @@ Spring 164개, Worker·정적 셸 218개, 실제 Chromium E2E 71개 계약 테�
 2026-07-23 기준으로 완료했으며, 이후 변경은 같은 품질 게이트로 다시 검증한다.
 
 VWorld 도로 배경지도는 공식 벡터 지도 API의 Base PNG와 traffic PBF를 현재 OpenLayers
-지도에 직접 연결한다. 키 미설정, 키 형식 오류, 타일 점검 실패, 연속 타일 오류에는 OSM으로
-대체한다. 키는 저장소에 넣지 않고 실행 환경에서 주입하며 지도 화면에 VWorld 출처를 표시한다.
+지도에 표시한다. Spring 배포에서는 브라우저가 동일 출처 타일 프록시만 호출하고 VWorld
+키는 서버 안에서만 사용한다. Cloudflare Worker에서 VWorld 원점 요청이 502로 거부되는
+것을 RC에서 확인했으므로 Worker는 키를 읽지 않고 런타임 설정을 비활성화해 즉시 OSM으로
+대체한다. 키 미설정, 키 형식 오류, 타일 점검 실패, 연속 타일 오류에도 OSM으로 대체한다.
 
 ## 운영 검증 대기
 
@@ -32,10 +34,12 @@ AirKorea 측정소, 태풍·낙뢰 실데이터 응답을 확인했다.
 
 - ITS Secret은 프리뷰에 연결됐지만 Cloudflare에서 ITS 9443 원점 연결이 시간 초과된다.
   원점의 서버별 접근 조건을 확인한 뒤 서로 다른 CCTV HLS manifest와 첫 segment를 검증
-- VWorld 키의 운영 URL 등록과 호출 한도는 운영 전환 전에 다시 확인한다. localhost와
+- VWorld 키의 운영 URL 등록과 호출 한도는 Spring 운영 전환 전에 다시 확인한다. localhost와
   `public-readiness` RC의 지역 확대 화면에서는 PBF 12건이 모두 200으로 응답했고 현재
   도법으로 변환한 도로 피처 9,400개와 Base PNG 렌더링을 확인했다. 전국 축척에서는
-  호출량을 제한하기 위해 Base 지도를 사용하고 지역 확대 시 벡터 도로를 추가한다.
+  호출량을 제한하기 위해 Base 지도를 사용하고 지역 확대 시 벡터 도로를 추가한다. 기존에
+  브라우저로 전달된 운영 키는 VWorld 관리 화면에서 별도로 교체해야 한다. Cloudflare에서는
+  VWorld 원점이 edge 요청을 지원하기 전까지 OSM 대체 상태를 유지한다.
 - 위험기상 태풍·낙뢰 응답은 확인했다. 기상특보는 프리뷰 KV에서 unavailable 상태이므로
   snapshot Cron과 KV binding의 fresh/stale 전환을 추가 확인
 - KIM 하향단파복사 실데이터는 현재 키의 별도 자료 이용승인을 확인

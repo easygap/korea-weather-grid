@@ -74,6 +74,25 @@
         return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
     }
 
+    function decimalInRange(value, minimum, maximum) {
+        if (typeof value !== 'string' || !/^\d{1,3}(?:\.\d{1,5})?$/.test(value)) return null;
+        var parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum ? parsed : null;
+    }
+
+    function decodedView(params) {
+        var latitude = decimalInRange(params.get('lat'), 29, 46);
+        var longitude = decimalInRange(params.get('lon'), 116, 140);
+        var zoom = decimalInRange(params.get('z'), 5.5, 12.5);
+        if (latitude === null || longitude === null || zoom === null) return null;
+        return Object.freeze({ latitude: latitude, longitude: longitude, zoom: zoom });
+    }
+
+    function fixedDecimal(value, digits) {
+        var factor = Math.pow(10, digits);
+        return (Math.round(Number(value) * factor + 1e-8) / factor).toFixed(digits);
+    }
+
     function decode(hash, context) {
         context = context || {};
         if (!hash || hash === '#') return null;
@@ -108,7 +127,7 @@
         if (!includes(LIGHTNING_WINDOWS, lightningWindow)) lightningWindow = 60;
         var air = includes(['pm10', 'pm25'], params.get('air')) ? params.get('air') : 'off';
 
-        return Object.freeze({
+        var restored = {
             element: element,
             height: '10m',
             date: date,
@@ -123,7 +142,10 @@
                 lightning: includes(hazards, 'lightning'),
                 lightningMinutes: lightningWindow
             })
-        });
+        };
+        var view = decodedView(params);
+        if (view) restored.view = view;
+        return Object.freeze(restored);
     }
 
     function encode(state) {
@@ -135,6 +157,15 @@
         params.set('t', includes(BASE_TIMES, state.baseTime) ? state.baseTime : '02');
         params.set('f', String(integerInRange(state.forecastHour, 1, 48, 1)));
         params.set('proj', includes(PROJECTIONS, state.projection) ? state.projection : PROJECTIONS[0]);
+        var view = state.view || {};
+        if (Number.isFinite(view.latitude) && view.latitude >= 29 && view.latitude <= 46
+                && Number.isFinite(view.longitude) && view.longitude >= 116 && view.longitude <= 140
+                && Number.isFinite(view.zoom) && view.zoom >= 5.5 && view.zoom <= 12.5) {
+            // 지도 공유에 충분한 약 100 m 정밀도로 제한해 불필요한 위치 노출을 줄인다.
+            params.set('lat', fixedDecimal(view.latitude, 3));
+            params.set('lon', fixedDecimal(view.longitude, 3));
+            params.set('z', fixedDecimal(view.zoom, 2));
+        }
         var layers = state.layers || {};
         var visible = VIEW_LAYERS.filter(function (layer) { return Boolean(layers[layer]); });
         params.set('v', visible.length ? visible.join(',') : 'none');

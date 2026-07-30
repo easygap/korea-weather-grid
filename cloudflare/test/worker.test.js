@@ -202,30 +202,53 @@ function cctvPayload(items, dataCount = items.length) {
 
 const CCTV_CIRCUIT_KEY = 'https://bora-cache.internal/its/cctv/v2/live-circuit';
 
-test('runtime map config exposes only a validated optional VWorld API key', async () => {
-    const key = '12345678-1234-1234-1234-123456789abc';
-    const enabled = await worker.fetch(
-        request('/api/runtime/map-config'), { VWORLD_API_KEY: key }, {});
-    assert.equal(enabled.status, 200);
-    assert.equal(enabled.headers.get('Cache-Control'), 'no-store');
-    assert.deepEqual(await enabled.json(), {
-        vworldEnabled: true,
-        vworldApiKey: key
-    });
+test('HTTP 운영 요청은 경로와 쿼리를 보존해 HTTPS로 이동한다', async () => {
+    const response = await worker.fetch(new Request(
+        'http://bora.test/api/runtime/map-config?source=test'), {}, {});
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get('Location'),
+        'https://bora.test/api/runtime/map-config?source=test');
+    assert.match(response.headers.get('Strict-Transport-Security'), /max-age=31536000/);
+});
 
-    for (const env of [{}, { VWORLD_API_KEY: 'malformed' }]) {
-        const disabled = await worker.fetch(request('/api/runtime/map-config'), env, {});
-        assert.deepEqual(await disabled.json(), {
-            vworldEnabled: false,
-            vworldApiKey: ''
-        });
-    }
+test('Cloudflare runtime map config는 VWorld 키를 읽거나 공개하지 않는다', async () => {
+    const key = '12345678-1234-1234-1234-123456789abc';
+    const disabled = await worker.fetch(
+        request('/api/runtime/map-config'), { VWORLD_API_KEY: key }, {});
+    assert.equal(disabled.status, 200);
+    assert.equal(disabled.headers.get('Cache-Control'), 'no-store');
+    assert.match(disabled.headers.get('Strict-Transport-Security'), /max-age=31536000/);
+    const body = await disabled.json();
+    assert.deepEqual(body, {
+        vworldEnabled: false,
+        vworldTileBase: ''
+    });
+    assert.equal(JSON.stringify(body).includes(key), false);
+    assert.equal('vworldApiKey' in body, false);
 
     assert.equal((await worker.fetch(
         request('/api/runtime/map-config?callback=attacker'), {}, {})).status, 400);
     assert.equal((await worker.fetch(new Request('https://bora.test/api/runtime/map-config', {
         method: 'POST'
     }), {}, {})).status, 405);
+});
+
+test('Cloudflare에서는 VWorld 타일 경로를 외부 원점으로 중계하지 않는다', async (t) => {
+    const originalFetch = globalThis.fetch;
+    let upstreamCalls = 0;
+    globalThis.fetch = async () => {
+        upstreamCalls++;
+        return new Response('unexpected');
+    };
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+    });
+
+    const response = await worker.fetch(
+        request('/api/map/vworld/base/11/1746/793.png'),
+        { VWORLD_API_KEY: '12345678-1234-1234-1234-123456789abc' }, {});
+    assert.equal(response.status, 404);
+    assert.equal(upstreamCalls, 0);
 });
 
 test('gridData returns the structured 10m wind field contract', async (t) => {

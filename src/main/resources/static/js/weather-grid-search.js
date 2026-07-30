@@ -23,11 +23,12 @@
     var coordinatePopupClose = document.querySelector('.coordinate_popup_close');
     var coordinatePanelClose = document.querySelector('.coordinate_panel_close');
     var timelineButton = document.querySelector('.station_timeline_button');
+    var currentLocationButton = document.getElementById('current_location');
     var activeIndex = -1;
     var currentSuggestions = [];
 
     if (!input || !stationForm || !searchButton || !suggestionList || !coordinateToggle
-            || !coordinatePanel || !coordinateForm) {
+            || !coordinatePanel || !coordinateForm || !currentLocationButton) {
         throw new Error('Search controls are incomplete');
     }
 
@@ -39,6 +40,61 @@
                 confirmButtonText: '닫기'
             });
         }
+    }
+
+    function finishLocationRequest() {
+        currentLocationButton.disabled = false;
+        currentLocationButton.removeAttribute('aria-busy');
+    }
+
+    function openCurrentLocation() {
+        if (!window.isSecureContext || !navigator.geolocation) {
+            notify('현재 위치는 HTTPS와 위치 서비스를 지원하는 브라우저에서 사용할 수 있습니다.');
+            return;
+        }
+        currentLocationButton.disabled = true;
+        currentLocationButton.setAttribute('aria-busy', 'true');
+        navigator.geolocation.getCurrentPosition(function (position) {
+            finishLocationRequest();
+            var latitude = Number(position && position.coords && position.coords.latitude);
+            var longitude = Number(position && position.coords && position.coords.longitude);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+                    || latitude < 32 || latitude > 44 || longitude < 122 || longitude > 134) {
+                notify('현재 위치가 기상 예보 지원 범위를 벗어났습니다.');
+                return;
+            }
+            var view = MapRuntime.map.getView();
+            var projection = view.getProjection().getCode();
+            var center = MapRuntime.fromGeographic([longitude, latitude], projection);
+            var targetZoom = Math.min(view.getMaxZoom(), Math.max(9.4, view.getZoom()));
+            view.cancelAnimations();
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                view.setCenter(center);
+                view.setZoom(targetZoom);
+            } else {
+                view.animate({ center: center, zoom: targetZoom, duration: 420 });
+            }
+            input.value = '현재 위치';
+            closeSuggestions();
+            Location.openTimeline({
+                name: '현재 위치',
+                latitude: latitude,
+                longitude: longitude,
+                includeForecast: true
+            });
+        }, function (error) {
+            finishLocationRequest();
+            var message = error && error.code === 1
+                ? '위치 권한이 허용되지 않았습니다. 브라우저의 사이트 권한을 확인해 주세요.'
+                : error && error.code === 3
+                    ? '현재 위치 확인 시간이 초과되었습니다. 다시 시도해 주세요.'
+                    : '현재 위치를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+            notify(message);
+        }, {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 5 * 60 * 1000
+        });
     }
 
     function optionNodes() {
@@ -177,6 +233,7 @@
     coordinateToggle.addEventListener('click', function () {
         setCoordinatePanel(coordinatePanel.style.display === 'none', false);
     });
+    currentLocationButton.addEventListener('click', openCurrentLocation);
     if (coordinatePanelClose) {
         coordinatePanelClose.addEventListener('click', function () {
             setCoordinatePanel(false, true);

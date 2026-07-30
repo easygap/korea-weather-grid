@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MapRuntimeConfigControllerTest {
 
     @Test
-    void returnsTheConfiguredClientKeyWithoutCachingIt() throws Exception {
+    void returnsTheSameOriginProxyWithoutExposingTheConfiguredKey() throws Exception {
         String key = "12345678-1234-1234-1234-123456789abc";
         MockMvc mvc = mvc(new MapProviderProperties(key));
 
@@ -22,7 +22,8 @@ class MapRuntimeConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.vworldEnabled").value(true))
-                .andExpect(jsonPath("$.vworldApiKey").value(key));
+                .andExpect(jsonPath("$.vworldTileBase").value("/api/map/vworld"))
+                .andExpect(jsonPath("$.vworldApiKey").doesNotExist());
     }
 
     @Test
@@ -32,7 +33,8 @@ class MapRuntimeConfigControllerTest {
         mvc.perform(get("/api/runtime/map-config"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.vworldEnabled").value(false))
-                .andExpect(jsonPath("$.vworldApiKey").value(""));
+                .andExpect(jsonPath("$.vworldTileBase").value(""))
+                .andExpect(jsonPath("$.vworldApiKey").doesNotExist());
     }
 
     @Test

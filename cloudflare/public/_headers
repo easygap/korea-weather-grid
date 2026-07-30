@@ -3,11 +3,11 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://api.vworld.kr; font-src 'self' data:; connect-src 'self' https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082 https://api.vworld.kr; media-src 'self' blob: https://cctvsec.ktict.co.kr https://cctvsec.ktict.co.kr:8082; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://cctvsec.ktict.co.kr; media-src 'self' blob: https://cctvsec.ktict.co.kr; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
 
 /static/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800

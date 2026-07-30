@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const rasterState = require('../../src/main/resources/static/js/weather-grid-raster-state.js');
 
-test('출력 크기에서 약 12만 개 이하의 균일 표본 계획을 만든다', () => {
+test('출력 크기에 맞춰 도서 지역을 보존하는 균일 표본 계획을 만든다', () => {
     assert.deepEqual(rasterState.samplePlan(640, 480), {
         width: 640,
         height: 480,
@@ -14,14 +14,22 @@ test('출력 크기에서 약 12만 개 이하의 균일 표본 계획을 만든
         sampleHeight: 240,
         sampleCount: 76800
     });
+    assert.deepEqual(rasterState.samplePlan(1280, 720), {
+        width: 1280,
+        height: 720,
+        stride: 2,
+        sampleWidth: 640,
+        sampleHeight: 360,
+        sampleCount: 230400
+    });
     const qhd = rasterState.samplePlan(2560, 1440);
     assert.deepEqual(qhd, {
         width: 2560,
         height: 1440,
-        stride: 6,
-        sampleWidth: 427,
-        sampleHeight: 240,
-        sampleCount: 102480
+        stride: 5,
+        sampleWidth: 512,
+        sampleHeight: 288,
+        sampleCount: 147456
     });
     assert.ok(Object.isFrozen(qhd));
     assert.equal(rasterState.samplePlan(0, 480), null);

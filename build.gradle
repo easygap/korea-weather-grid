@@ -18,6 +18,10 @@ repositories {
     mavenCentral()
 }
 
+// Spring Boot 관리 버전에 포함된 공개 취약점 패치가 반영될 때까지 안전한 버전으로 고정한다.
+ext['jackson-bom.version'] = '3.1.5'
+ext['netty.version'] = '4.2.16.Final'
+
 dependencies {
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'

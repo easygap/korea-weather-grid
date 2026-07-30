@@ -21,7 +21,8 @@ public final class WeatherRequestBudget {
         AIR_QUALITY,
         TRAFFIC_CAMERAS,
         WEATHER_GRID,
-        WEATHER_TIMESERIES
+        WEATHER_TIMESERIES,
+        VWORLD_TILES
     }
 
     public enum RefreshSource {

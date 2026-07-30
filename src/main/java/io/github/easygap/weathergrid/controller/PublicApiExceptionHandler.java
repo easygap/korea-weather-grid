@@ -14,7 +14,8 @@ import java.nio.charset.StandardCharsets;
 @RestControllerAdvice(assignableTypes = {
         EnvironmentalDataController.class,
         TrafficCameraController.class,
-        HazardStatusController.class
+        HazardStatusController.class,
+        VworldTileController.class
 })
 public final class PublicApiExceptionHandler {
 

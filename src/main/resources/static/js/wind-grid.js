@@ -1,13 +1,17 @@
 (function (root, factory) {
     'use strict';
-    const api = factory();
+    const projection = typeof module === 'object' && module.exports
+        ? require('./weather-grid-dfs-projection.js')
+        : root.WeatherGridDfsProjection;
+    const api = factory(projection);
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.WeatherGridWindGrid = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (DfsProjection) {
     'use strict';
 
+    if (!DfsProjection) throw new Error('DFS projection must load before wind-grid');
+
     const SCHEMA = 'weather-grid.wind-field/v1';
-    const DEG_TO_RAD = Math.PI / 180;
     const EDGE_FEATHER_CELLS = 10;
     const SUPPORTED_GRID = Object.freeze({
         nxMin: 5,
@@ -15,24 +19,7 @@
         nyMin: 1,
         nyMax: 162
     });
-
-    // 기상청 단기예보 5 km DFS 격자의 공식 Lambert Conformal Conic 상수.
-    const RE = 6371.00877;
-    const GRID_KM = 5;
-    const STANDARD_LAT_1 = 30 * DEG_TO_RAD;
-    const STANDARD_LAT_2 = 60 * DEG_TO_RAD;
-    const ORIGIN_LON = 126 * DEG_TO_RAD;
-    const ORIGIN_LAT = 38 * DEG_TO_RAD;
-    const ORIGIN_X = 43;
-    const ORIGIN_Y = 136;
-    const RE_GRID = RE / GRID_KM;
-    let CONE = Math.tan(Math.PI / 4 + STANDARD_LAT_2 / 2)
-        / Math.tan(Math.PI / 4 + STANDARD_LAT_1 / 2);
-    CONE = Math.log(Math.cos(STANDARD_LAT_1) / Math.cos(STANDARD_LAT_2)) / Math.log(CONE);
-    const SCALE = Math.pow(Math.tan(Math.PI / 4 + STANDARD_LAT_1 / 2), CONE)
-        * Math.cos(STANDARD_LAT_1) / CONE;
-    const ORIGIN_RADIUS = RE_GRID * SCALE
-        / Math.pow(Math.tan(Math.PI / 4 + ORIGIN_LAT / 2), CONE);
+    const projectionParameters = DfsProjection.parameters;
 
     function invariant(condition, message) {
         if (!condition) throw new TypeError('잘못된 바람 벡터장: ' + message);
@@ -65,16 +52,7 @@
     /** 위경도 → 기상청 DFS 분수 격자 [x, y]. 정수 좌표가 셀 중심이다. */
     function latLonToGridFraction(latitude, longitude) {
         invariant(finiteNumber(latitude) && finiteNumber(longitude), '위경도 형식');
-        const radius = RE_GRID * SCALE
-            / Math.pow(Math.tan(Math.PI / 4 + latitude * DEG_TO_RAD / 2), CONE);
-        let theta = longitude * DEG_TO_RAD - ORIGIN_LON;
-        if (theta > Math.PI) theta -= Math.PI * 2;
-        if (theta < -Math.PI) theta += Math.PI * 2;
-        theta *= CONE;
-        return [
-            radius * Math.sin(theta) + ORIGIN_X,
-            ORIGIN_RADIUS - radius * Math.cos(theta) + ORIGIN_Y
-        ];
+        return DfsProjection.latLonToGridFraction(latitude, longitude);
     }
 
     /**
@@ -99,10 +77,7 @@
         for (let x = 0; x < width; x += 1) {
             const longitude = options.lonMin
                 + (x + 0.5) / width * (options.lonMax - options.lonMin);
-            let theta = longitude * DEG_TO_RAD - ORIGIN_LON;
-            if (theta > Math.PI) theta -= Math.PI * 2;
-            if (theta < -Math.PI) theta += Math.PI * 2;
-            theta *= CONE;
+            const theta = DfsProjection.angleAtLongitude(longitude);
             sinTheta[x] = Math.sin(theta);
             cosTheta[x] = Math.cos(theta);
         }
@@ -112,12 +87,12 @@
         for (let y = 0; y < height; y += 1) {
             const latitude = options.latMax
                 - (y + 0.5) / height * (options.latMax - options.latMin);
-            const radius = RE_GRID * SCALE
-                / Math.pow(Math.tan(Math.PI / 4 + latitude * DEG_TO_RAD / 2), CONE);
+            const radius = DfsProjection.radiusAtLatitude(latitude);
             const offset = y * width;
             for (let x = 0; x < width; x += 1) {
-                const gridX = radius * sinTheta[x] + ORIGIN_X;
-                const gridY = ORIGIN_RADIUS - radius * cosTheta[x] + ORIGIN_Y;
+                const gridX = radius * sinTheta[x] + projectionParameters.originGridX;
+                const gridY = projectionParameters.originRadius - radius * cosTheta[x]
+                    + projectionParameters.originGridY;
                 const column = Math.round((gridX - options.nxMin) / options.step);
                 const southRow = Math.round((gridY - options.nyMin) / options.step);
                 if (column < 0 || column >= options.nx || southRow < 0 || southRow >= options.ny) continue;

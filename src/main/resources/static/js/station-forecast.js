@@ -21,6 +21,7 @@
     var activeTimeout = null;
     var lastRequest = null;
     var REQUEST_TIMEOUT_MS = 20000;
+    var RETRY_DELAY_MS = 450;
 
     var dateFormatter = new Intl.DateTimeFormat('ko-KR', {
         timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', weekday: 'short'
@@ -215,6 +216,46 @@
         });
     }
 
+    function waitForRetry(signal) {
+        return new Promise(function (resolve, reject) {
+            var timer = window.setTimeout(done, RETRY_DELAY_MS);
+            function done() {
+                signal.removeEventListener('abort', aborted);
+                resolve();
+            }
+            function aborted() {
+                window.clearTimeout(timer);
+                signal.removeEventListener('abort', aborted);
+                var error = new Error('ABORTED');
+                error.name = 'AbortError';
+                reject(error);
+            }
+            if (signal.aborted) aborted();
+            else signal.addEventListener('abort', aborted, { once: true });
+        });
+    }
+
+    async function fetchForecast(url, controller, sequence) {
+        for (var attempt = 0; attempt < 2; attempt += 1) {
+            var response = await fetch(url, {
+                headers: { Accept: 'application/json' }, signal: controller.signal
+            });
+            if (response.ok) return response;
+            if (response.body && typeof response.body.cancel === 'function') {
+                try { await response.body.cancel(); } catch (error) { /* 다음 시도 가능 여부 판단을 계속한다. */ }
+            }
+            var retryable = [502, 503, 504].indexOf(response.status) >= 0;
+            if (!retryable || attempt > 0) {
+                throw new Error(response.status === 503 ? 'SERVICE_UNAVAILABLE' : 'REQUEST_FAILED');
+            }
+            if (sequence === requestSequence) {
+                showState('loading', '상세예보 응답이 지연되어 한 번 더 확인하는 중…', false);
+            }
+            await waitForRetry(controller.signal);
+        }
+        throw new Error('REQUEST_FAILED');
+    }
+
     async function loadForecast(params) {
         if (activeController) activeController.abort();
         if (activeTimeout) window.clearTimeout(activeTimeout);
@@ -239,10 +280,8 @@
         });
 
         try {
-            var response = await fetch(apiUrl('/api/weather/point-forecast?' + query.toString()), {
-                headers: { Accept: 'application/json' }, signal: controller.signal
-            });
-            if (!response.ok) throw new Error(response.status === 503 ? 'SERVICE_UNAVAILABLE' : 'REQUEST_FAILED');
+            var response = await fetchForecast(
+                apiUrl('/api/weather/point-forecast?' + query.toString()), controller, sequence);
             var payload = await response.json();
             var items = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.items) ? payload.items : []);
             if (sequence !== requestSequence) return null;
