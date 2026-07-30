@@ -38,6 +38,8 @@ class BrowserPolicyHeadersFilterTest {
         assertFalse(policy.contains("upgrade-insecure-requests"));
         assertNull(response.getHeader("Strict-Transport-Security"));
         assertEquals("DENY", response.getHeader("X-Frame-Options"));
+        assertEquals("camera=(), microphone=(), geolocation=(self)",
+                response.getHeader("Permissions-Policy"));
     }
 
     @Test

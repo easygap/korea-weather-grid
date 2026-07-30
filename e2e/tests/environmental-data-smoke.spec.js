@@ -19,6 +19,39 @@ function forecastItems(baseDate) {
   }));
 }
 
+test('상세예보 503은 한 번 자동 재시도해 복구한다', async ({ page }) => {
+  const baseDate = '20260712';
+  let forecastRequests = 0;
+  await page.route('**/api/weather/point-forecast?**', async (route) => {
+    forecastRequests += 1;
+    if (forecastRequests === 1) {
+      await route.fulfill({ status: 503, body: 'data temporarily unavailable' });
+      return;
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        baseDate,
+        baseTime: '0200',
+        latitude: 37.5665,
+        longitude: 126.978,
+        source: '기상청 단기예보',
+        items: forecastItems(baseDate)
+      })
+    });
+  });
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.WEATHER_GRID_STATION_FORECAST);
+  await page.evaluate(({ date }) => window.WEATHER_GRID_STATION_FORECAST.open({
+    latitude: 37.5665, longitude: 126.978, baseDate: date, baseTime: '0200'
+  }), { date: baseDate });
+
+  await expect.poll(() => forecastRequests).toBe(2);
+  await expect(page.locator('#forecast_strip .forecast_card')).toHaveCount(48);
+  await expect(page.locator('#forecast_strip_retry')).toBeHidden();
+});
+
 test('상세예보와 대기질 레이어가 독립적으로 로드된다', async ({ page }) => {
   const baseDate = '20260712';
   let forecastRequests = 0;

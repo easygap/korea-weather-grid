@@ -248,7 +248,16 @@
         retryButton.hidden = !canRetry;
         if ((kind === 'error' || kind === 'zoom') && message !== lastMapNotice && window.WEATHER_GRID_SHOW_NOTICE) {
             lastMapNotice = message;
-            window.WEATHER_GRID_SHOW_NOTICE(message);
+            window.WEATHER_GRID_SHOW_NOTICE({
+                message: message,
+                actionLabel: kind === 'zoom' ? '지역 확대' : '다시 시도',
+                duration: 7000,
+                onAction: kind === 'zoom' ? function () {
+                    var view = weatherMap.getView();
+                    var targetZoom = Math.min(view.getMaxZoom(), Math.max(MIN_ZOOM + 0.3, view.getZoom()));
+                    view.animate({ zoom: targetZoom, duration: 320 });
+                } : retryFetch
+            });
         } else if (kind === 'ready' || kind === 'stale') lastMapNotice = '';
     }
 
@@ -433,7 +442,9 @@
                     ? '새 자료 갱신에 실패해 이전 CCTV 위치를 유지합니다.'
                     : (error && error.status === 429
                         ? '요청이 많습니다. 잠시 뒤 다시 시도해 주세요.'
-                        : 'CCTV 정보를 불러오지 못했습니다. 기상 지도는 계속 사용할 수 있습니다.'));
+                        : (error && error.status === 503
+                            ? 'ITS CCTV 연결이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+                            : 'CCTV 정보를 불러오지 못했습니다. 기상 지도는 계속 사용할 수 있습니다.')));
             setStatus('error', message, true);
         } finally {
             clearTimeout(listRequest.timeoutId);

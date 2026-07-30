@@ -11,7 +11,8 @@
     var Layers = window.WeatherGridLayers;
     var Runs = window.WeatherGridRuns;
     var Timeline = window.WeatherGridTimeline;
-    if (!Navigation || !Controls || !Readout || !Explore || !Layers || !Runs || !Timeline) {
+    var MapRuntime = window.WeatherGridMapRuntime;
+    if (!Navigation || !Controls || !Readout || !Explore || !Layers || !Runs || !Timeline || !MapRuntime) {
         throw new Error('Navigation, controls, readout, explore, layers, runs and timeline must load first');
     }
 
@@ -41,6 +42,19 @@
             && window.WEATHER_GRID_CCTV.isEnabled());
     }
 
+    function viewSnapshot() {
+        var view = MapRuntime.map.getView();
+        var center = view.getCenter();
+        var geographic = center && MapRuntime.toGeographic(center, view.getProjection().getCode());
+        var zoom = view.getZoom();
+        if (!Array.isArray(geographic) || !geographic.every(Number.isFinite) || !Number.isFinite(zoom)) return null;
+        return Object.freeze({
+            latitude: geographic[1],
+            longitude: geographic[0],
+            zoom: zoom
+        });
+    }
+
     function snapshot() {
         normalizeHeight();
         var hazards = Explore.hazards();
@@ -51,6 +65,7 @@
             baseTime: elementValue('baseTime', '02'),
             forecastHour: Timeline.currentHour(),
             projection: window.WEATHER_GRID_VIEW_PROJ,
+            view: viewSnapshot(),
             layers: Layers.snapshot(),
             air: airMode(),
             cctv: cctvEnabled(),
@@ -107,6 +122,17 @@
         });
     }
 
+    function restoreView(viewState) {
+        if (!viewState) return false;
+        var view = MapRuntime.map.getView();
+        var center = MapRuntime.fromGeographic(
+            [viewState.longitude, viewState.latitude], view.getProjection().getCode());
+        if (!Array.isArray(center) || !center.every(Number.isFinite)) return false;
+        view.setCenter(center);
+        view.setZoom(Math.max(view.getMinZoom(), Math.min(view.getMaxZoom(), viewState.zoom)));
+        return true;
+    }
+
     function restoreInitialState() {
         if (!Navigation.hasInitialHash) return;
         var restored = Navigation.readInitial({
@@ -150,16 +176,24 @@
             restoring = false;
         }
 
-        if (restored.projection !== window.WEATHER_GRID_VIEW_PROJ) {
+        var projectionChanged = restored.projection !== window.WEATHER_GRID_VIEW_PROJ;
+        if (projectionChanged) {
             Navigation.projection.request(restored.projection, 'deep-link');
         } else {
             Navigation.projection.sync(restored.projection);
-            refresh();
         }
+        restoreView(restored.view);
+        if (!projectionChanged) refresh();
         updateHash();
     }
 
     window.jQuery(restoreInitialState);
+
+    var viewUpdateTimer = 0;
+    MapRuntime.map.on('moveend', function () {
+        window.clearTimeout(viewUpdateTimer);
+        viewUpdateTimer = window.setTimeout(updateHash, 120);
+    });
 
     window.WeatherGridSession = Object.freeze({
         snapshot: snapshot,

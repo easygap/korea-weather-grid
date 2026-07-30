@@ -627,6 +627,10 @@
             var code = projectionCode || window.WEATHER_GRID_VIEW_PROJ || PROJECTION_CODE;
             return ol.proj.getTransform(code, 'EPSG:4326')(coordinate);
         },
+        fromGeographic: function (coordinate, projectionCode) {
+            var code = projectionCode || window.WEATHER_GRID_VIEW_PROJ || PROJECTION_CODE;
+            return ol.proj.getTransform('EPSG:4326', code)(coordinate);
+        },
         coreLayers: function () {
             return Object.freeze({
                 weatherBasemap: landLayer,

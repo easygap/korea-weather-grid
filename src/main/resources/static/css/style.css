@@ -122,6 +122,15 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     color: var(--text-2); box-shadow: var(--shadow-2); font-size: 1.2rem; font-weight: 650;
     line-height: 1.35; text-align: center; pointer-events: none;
 }
+.map_notice[data-action="true"] {
+    display: flex; align-items: center; gap: 10px; border-radius: 12px; pointer-events: auto;
+}
+.map_notice button {
+    min-height: 32px; padding: 0 11px; flex: none; border-radius: 8px;
+    background: var(--accent); color: var(--on-accent); font-weight: 800;
+}
+.map_notice button:hover { filter: brightness(1.08); }
+.map_notice button:active { scale: .96; }
 .map_notice[hidden] { display: none; }
 
 /* ===================== 상단 바 (브랜드 + 검색 + 액션) ===================== */
@@ -178,7 +187,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 /* 검색 */
 .search-container { position: relative; width: min(270px, 22vw); margin-left: auto; padding-left: 10px; }
 .station_query {
-    width: 100%; height: 36px; padding: 0 76px 0 12px; color: var(--text); font-size: 1.3rem;
+    width: 100%; height: 36px; padding: 0 110px 0 12px; color: var(--text); font-size: 1.3rem;
     background: var(--chip); border: 1px solid var(--stroke); border-radius: 5px;
     transition: border-color .15s;
 }
@@ -192,12 +201,20 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 }
 .station_search_button:hover { background-color: var(--chip-hover); }
 .coordinate_search_button {
-    position: absolute; top: 50%; right: 35px; transform: translateY(-50%); width: 34px; height: 34px;
+    position: absolute; top: 50%; right: 69px; transform: translateY(-50%); width: 34px; height: 34px;
     border-radius: 4px; background-color: transparent;
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23978ff9' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M12 2v3M12 19v3M2 12h3M19 12h3'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: center; cursor: pointer;
 }
 .coordinate_search_button:hover { background-color: var(--chip-hover); }
+.current_location_button {
+    position: absolute; top: 50%; right: 35px; transform: translateY(-50%); width: 34px; height: 34px;
+    border-radius: 4px; background-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m20 4-7.2 16-2.2-6.6L4 11.2 20 4Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center; cursor: pointer;
+}
+.current_location_button:hover { background-color: var(--chip-hover); }
+.current_location_button[aria-busy="true"] { opacity: .65; cursor: wait; }
 .suggestions {
     position: absolute; top: calc(100% + 6px); left: 0; width: 100%; max-height: 240px; overflow-y: auto;
     background: var(--surface-2); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
@@ -709,7 +726,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .legend_toggle {
     display: none; width: 100%; min-height: 40px; padding: 0 10px; align-items: center; justify-content: space-between;
     border-radius: 11px; background: var(--chip); color: var(--text); font-size: 1.2rem; font-weight: 800;
-    transition: background-color .15s, color .15s, scale .12s;
+    white-space: nowrap; transition: background-color .15s, color .15s, scale .12s;
 }
 .legend_toggle::after { content: "▾"; color: var(--text-2); transition: transform .15s ease-out; }
 .legend_toggle:hover { background: var(--chip-hover); }
@@ -1670,14 +1687,14 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .legend_title { display: none; }
     .legend_toggle { display: flex; }
     .legend:not(.legend-collapsed) .legend_toggle { margin-bottom: 7px; }
-    .legend.legend-collapsed { width: 100px; max-height: none; overflow: visible; }
-    .weather_legend:not(.legend-ready) { width: 100px; max-height: none; overflow: visible; }
+    .legend.legend-collapsed { width: 116px; max-height: none; overflow: visible; }
+    .weather_legend:not(.legend-ready) { width: 116px; max-height: none; overflow: visible; }
     .weather_legend:not(.legend-ready) #legend_scale,
     .weather_legend:not(.legend-ready) .grid_stats { display: none; }
     .air_legend { width: min(224px, calc(100vw - 16px)); }
-    .air_legend.legend-collapsed { width: 104px; }
+    .air_legend.legend-collapsed { width: 116px; }
     .hazard_legend { width: min(224px, calc(100vw - 16px)); }
-    .hazard_legend.legend-collapsed { width: 106px; }
+    .hazard_legend.legend-collapsed { width: 116px; }
     .map_status_panel { display: none; }    /* 하단 선택 시각 칩과 중복되어 작은 지도 영역만 가린다. */
     .icon-btn { padding: 0 10px; font-size: 1.2rem; }
     .icon-btn .lbl { display: none; }
@@ -1706,11 +1723,11 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .legend_title { display: none; }
     .legend_toggle { display: flex; }
     .legend:not(.legend-collapsed) .legend_toggle { margin-bottom: 7px; }
-    .legend.legend-collapsed { width: 100px; max-height: none; overflow: visible; }
+    .legend.legend-collapsed { width: 116px; max-height: none; overflow: visible; }
     .air_legend { width: min(224px, calc(100vw - 16px)); }
-    .air_legend.legend-collapsed { width: 104px; }
+    .air_legend.legend-collapsed { width: 116px; }
     .hazard_legend { width: min(224px, calc(100vw - 16px)); }
-    .hazard_legend.legend-collapsed { width: 106px; }
+    .hazard_legend.legend-collapsed { width: 116px; }
     .grid_stats h3 { font-size: 1.0rem; }
     .grid_stats dl div { font-size: 1.0rem; line-height: 1.55; }
     #legend_scale .lg_row { grid-template-columns: 11px 56px minmax(44px, 1fr) 27px; font-size: 1.0rem; line-height: 1.55; gap: 5px; }
@@ -1786,7 +1803,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 
 @media (pointer: coarse) {
     .seg button, .chiprow .chip, .forecast_run_button, .latest_run_button, .lswitch, .base_run_actions button,
-    .forecast_run_list button, .legend_toggle, .ol-control button, .station_search_button, .coordinate_search_button,
+    .forecast_run_list button, .legend_toggle, .ol-control button, .station_search_button, .coordinate_search_button, .current_location_button,
     .coordinate_panel_close, .coordinate_popup_close, .icon-btn, .dock_collapse, .coordinate_lookup, .station_timeline_button,
     .air_popup_close, .cctv_popup_close, .cctv_play, #retry_data, #air_quality_retry,
     #cctv_retry, #forecast_strip_retry, .hazard_popup_close, .warning_panel_close,
@@ -1866,7 +1883,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .brand svg { width: 22px; height: 22px; }
     .brand .brand_txt strong { font-size: 1.4rem; }
     .search-container { flex: 1; min-width: 0; width: auto; padding-left: 6px; }
-    .station_query { height: 34px; padding-right: 38px; font-size: 1.4rem; }
+    .station_query { height: 34px; padding-right: 72px; font-size: 1.4rem; }
     .station_search_button { width: 32px; height: 32px; }
     .top-actions { margin-left: 4px; }
     .icon-btn { width: 36px; height: 36px; padding: 0; }

@@ -2116,7 +2116,7 @@ const SEC_HEADERS = {
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-Frame-Options': 'DENY',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
@@ -2332,15 +2332,30 @@ async function serveSevereWeather(request, env, ctx, kind, minutes = null) {
     await enforcePublicEnvironmentalLimit(request, env, kind);
     const snapshot = await readSevereWeatherSnapshot(env, kind, { minutes });
     if (!snapshot) {
-        /* 특보는 첫 화면에서 유휴 로드한다. 승인 전 503을 매 방문마다 콘솔 오류로
-         * 남기지 않고, 자료 없음과 구분되는 명시적 준비 상태를 짧게 캐시한다. */
-        if (kind !== 'warnings') return serviceUnavailable();
-        const unavailable = json({
+        /* 공개 화면은 세 자료를 함께 조회한다. 아직 정상 snapshot이 없을 때 503을
+         * 반복하기보다, 실제 0건과 구분되는 준비 상태를 같은 응답 계약으로 돌려준다. */
+        const unavailablePayload = kind === 'typhoon' ? {
+            schema: 'bora.typhoon/v1',
+            source: '기상청 태풍 분석·예보',
+            status: 'unavailable',
+            active: []
+        } : kind === 'lightning' ? {
+            schema: 'bora.lightning/v1',
+            source: '기상청 낙뢰관측',
+            status: 'unavailable',
+            from: null,
+            to: null,
+            truncated: false,
+            strikes: []
+        } : {
             schema: 'bora.warnings/v1',
             source: '기상청 기상특보',
             status: 'unavailable',
             warnings: []
-        }, { headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=60' } });
+        };
+        const unavailable = json(unavailablePayload, {
+            headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=60' }
+        });
         await putSevereWeatherPublicCache(kind, minutes, unavailable, ctx);
         return unavailable;
     }

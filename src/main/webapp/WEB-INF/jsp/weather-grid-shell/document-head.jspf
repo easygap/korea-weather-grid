@@ -12,7 +12,7 @@
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/reset.css?v=20260723.1">
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.css">
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260728.1">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260730.1">
 
 
 <script defer src="${pageContext.request.contextPath}/static/js/jquery-4.0.0.min.js"></script>

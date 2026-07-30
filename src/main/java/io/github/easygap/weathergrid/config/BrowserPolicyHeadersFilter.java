@@ -58,7 +58,7 @@ public class BrowserPolicyHeadersFilter extends OncePerRequestFilter {
         headers.put("X-Content-Type-Options", "nosniff");
         headers.put("Referrer-Policy", "strict-origin-when-cross-origin");
         headers.put("X-Frame-Options", "DENY");
-        headers.put("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+        headers.put("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
         headers.put("Cross-Origin-Opener-Policy", "same-origin");
         headers.put("Cross-Origin-Resource-Policy", "same-origin");
         return Map.copyOf(headers);

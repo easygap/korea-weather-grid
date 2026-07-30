@@ -68,6 +68,24 @@ test.describe('지점 시계열 시각화', () => {
     await expect(page.locator('#station_data_table caption')).toContainText('향후 48시간');
   });
 
+  test('모바일 차트 시간축은 겹치지 않도록 라벨 수를 줄인다', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.WEATHER_GRID_STATION_CHARTS);
+    await page.evaluate(() => window.WEATHER_GRID_STATION_CHARTS.ensureReady());
+    await page.evaluate((data) => {
+      document.querySelector('.station_modal').style.display = 'block';
+      window.WEATHER_GRID_STATION_CHARTS.render('wdws', data, '2026071402');
+    }, windSeries());
+
+    const labels = await page.locator('#chart .station-chart-grid text').evaluateAll((nodes) =>
+      nodes.map((node) => node.textContent).filter((text) => /^\d{2}:00 \d{2}\.\d{2}$/.test(text))
+    );
+    expect(labels.length).toBeLessThanOrEqual(4);
+    expect(labels[0]).toBe('03:00 07.14');
+    expect(labels.at(-1)).toBe('02:00 07.16');
+  });
+
   test('0.4m/s 이하 정온은 풍향·나침반 화살·윈드바브를 표시하지 않는다', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 860 });
     await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });

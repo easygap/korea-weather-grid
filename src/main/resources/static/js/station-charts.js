@@ -958,7 +958,10 @@
         }
         var start = baseSeries.pointStart || 0;
         var labelIndexes = [];
-        for (var labelIndex = 0; labelIndex < count; labelIndex += 6) labelIndexes.push(labelIndex);
+        var maxLabelCount = width < 420 ? 4 : (width < 640 ? 6 : 9);
+        var labelStep = count <= maxLabelCount
+            ? 1 : Math.max(1, Math.ceil((count - 1) / (maxLabelCount - 1)));
+        for (var labelIndex = 0; labelIndex < count; labelIndex += labelStep) labelIndexes.push(labelIndex);
         if (labelIndexes[labelIndexes.length - 1] !== count - 1) labelIndexes.push(count - 1);
         labelIndexes.forEach(function (index) {
             var date = new Date(start + index * HOUR);

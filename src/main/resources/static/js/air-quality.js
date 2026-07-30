@@ -218,7 +218,8 @@
     }
 
     function clusterStyle(count, grade) {
-        var countBucket = count > 99 ? '99+' : String(count);
+        // 농도값 마커와 한눈에 구분되도록 군집 수에는 항상 + 접두사를 붙인다.
+        var countBucket = count > 99 ? '+99' : '+' + String(count);
         var key = 'cluster:' + grade + ':' + countBucket;
         if (styleCache.has(key)) return styleCache.get(key);
         var radius = count > 99 ? 22 : count > 20 ? 20 : 18;
