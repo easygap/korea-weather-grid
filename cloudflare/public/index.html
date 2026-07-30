@@ -4,14 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="한국의 기상 예보, 미세먼지 관측, 실시간 도로 CCTV를 시간·공간 기준으로 탐색하는 기상 격자지도 BORA">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#05070a">
 <title>BORA · 한국 기상 격자지도</title>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="stylesheet" type="text/css" href="/static/css/reset.css?v=20260723.1">
+
+
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/plex-mono-500.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/plex-mono-400.woff2">
+
+<link rel="stylesheet" type="text/css" href="/static/css/reset.css?v=20260730.2">
 <link rel="stylesheet" type="text/css" href="/static/vendor/openlayers-10.9.0.css">
 
-<link rel="stylesheet" type="text/css" href="/static/css/style.css?v=20260730.1">
+<link rel="stylesheet" type="text/css" href="/static/css/style.css?v=20260730.2">
 
 
 <script defer src="/static/js/jquery-4.0.0.min.js"></script>
@@ -25,12 +30,18 @@
 
     <!-- Primary navigation and search surface -->
     <header class="topbar">
+
+        <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span class="dock_toggle_label">설정</span>
+        </button>
+
         <div class="brand" title="BORA · Korea Weather Grid">
             <h1 class="sr-only">BORA 한국 기상 격자지도</h1>
 
-            <svg width="32" height="32" viewBox="0 0 64 64" aria-hidden="true">
-                <line x1="12" y1="8" x2="12" y2="56" stroke="currentColor" stroke-width="7.5" stroke-linecap="round"/>
-                <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="#978ff9"/>
+            <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
+                <line x1="12" y1="8" x2="12" y2="56" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+                <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="currentColor"/>
             </svg>
             <div class="brand_txt">
                 <strong>BORA</strong>
@@ -322,10 +333,7 @@
         <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
         <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
     </nav>
-    <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        <span class="dock_toggle_label">설정</span>
-    </button>
+
     <div class="dock_scrim" id="dock_scrim" aria-hidden="true" hidden></div>
 
     <!-- Layer, release-time, and map presentation controls -->

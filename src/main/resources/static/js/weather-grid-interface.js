@@ -129,7 +129,9 @@
         dockToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         dockToggle.setAttribute('aria-label', open ? '표시 설정 닫기' : '표시 설정 열기');
         dockToggle.title = open ? '표시 설정 닫기' : '표시 설정';
-        dockToggle.style.display = open ? 'none' : 'flex';
+        // 데스크톱에서는 상단 바에 자리를 가진 상시 토글이므로 열려 있어도 남긴다.
+        // 모바일에서만 바텀시트가 덮는 영역과 겹치지 않게 감춘다.
+        dockToggle.style.display = (state.compact && open) ? 'none' : '';
 
         if (compactControls) {
             compactControls.classList.toggle('is-hidden', open);
@@ -148,7 +150,7 @@
     }
 
     function themeColor(theme) {
-        return theme === State.LIGHT ? '#eef3f9' : '#0b1220';
+        return theme === State.LIGHT ? '#e7e9ec' : '#05070a';
     }
 
     function renderTheme() {

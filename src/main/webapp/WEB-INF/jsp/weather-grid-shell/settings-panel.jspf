@@ -5,10 +5,7 @@
         <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
         <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
     </nav>
-    <button type="button" class="icon-btn dock_toggle" id="dock_toggle" title="표시 설정" aria-label="표시 설정 열기" aria-controls="dock" aria-expanded="false">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        <span class="dock_toggle_label">설정</span>
-    </button>
+    <%-- #dock_toggle 은 상단 바(primary-navigation.jspf)로 옮겼다 --%>
     <div class="dock_scrim" id="dock_scrim" aria-hidden="true" hidden></div>
 
     <!-- Layer, release-time, and map presentation controls -->

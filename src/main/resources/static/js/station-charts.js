@@ -912,7 +912,13 @@
             };
         });
         var left = 50;
-        var right = axes.length > 1 ? 48 : 18;
+        // 두 번째 축이 실제 값 축인지(제목 있음) 윈드바브 레인 같은 배치용 밴드인지 구분한다.
+        // 배치용 밴드(min 0, max 1, 제목 없음)에 눈금을 그리면 1·1·1·0·0 처럼 무의미한 라벨이 남는다.
+        var secondaryAxis = axes.length > 1 ? (axes[1] || {}) : null;
+        var secondaryLabelled = Boolean(secondaryAxis && secondaryAxis.visible !== false
+            && secondaryAxis.title && secondaryAxis.title.text);
+        // 라벨 없는 경우에도 마지막 x축 라벨의 절반이 들어갈 여백은 남긴다.
+        var right = secondaryLabelled ? 48 : 30;
         var top = 14;
         var bottom = 48;
         var plotWidth = Math.max(1, width - left - right);
@@ -949,11 +955,12 @@
                 grid.appendChild(svgNode('text', { x: left - 7, y: y + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'end' }, formatNumber(value, Math.abs(value) < 10 ? 1 : 0)));
             }
         }
-        if (axes.length > 1 && axes[1].visible !== false) {
+        if (secondaryLabelled) {
             for (var rightTick = 0; rightTick <= 4; rightTick += 1) {
                 var rightY = top + rightTick * plotHeight / 4;
                 var rightValue = ranges[1].max - rightTick * (ranges[1].max - ranges[1].min) / 4;
-                grid.appendChild(svgNode('text', { x: left + plotWidth + 7, y: rightY + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'start' }, formatNumber(rightValue, 0)));
+                grid.appendChild(svgNode('text', { x: left + plotWidth + 7, y: rightY + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'start' },
+                    formatNumber(rightValue, Math.abs(rightValue) < 10 ? 1 : 0)));
             }
         }
         var start = baseSeries.pointStart || 0;
