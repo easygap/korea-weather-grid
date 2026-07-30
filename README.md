@@ -84,6 +84,26 @@
   </tr>
 </table>
 
+### 대기질과 도로 상황
+
+`대기질`은 측정소를 등급별로 묶어 보여주고 같은 시각의 바람 흐름을 같이 깔아 둡니다.
+농도가 어디서 밀려오는지 짐작해 보기 좋습니다.
+`교통`은 지도를 확대한 범위의 CCTV만 불러오고, 영상은 카메라를 고르고 재생을 누른 뒤에만
+연결합니다.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/media/air-quality.webp" alt="전국 PM2.5 측정소 등급과 바람 흐름">
+      <p align="center"><strong>PM2.5 대기질</strong><br>측정소 등급 · 관측시각 표기</p>
+    </td>
+    <td width="50%">
+      <img src="docs/media/traffic-cctv.webp" alt="수도권 도로 지도 위 ITS CCTV 위치">
+      <p align="center"><strong>도로 CCTV</strong><br>현재 화면 범위의 카메라만 조회</p>
+    </td>
+  </tr>
+</table>
+
 ### 색이 아니라 선으로 보고 싶을 때
 
 왼쪽 `설정`에서 표현 방식을 바꿀 수 있습니다. 색을 끄고 **등치선**만 켜면 같은 풍속을 잇는 선과
