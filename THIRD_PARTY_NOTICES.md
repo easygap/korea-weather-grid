@@ -11,6 +11,10 @@ third-party CDNs. Each distribution keeps its upstream license alongside the dep
 | hls.js | 1.6.16 light build | HLS playback fallback | Apache-2.0 | `static/vendor/hls.light.min.js`, `static/vendor/hls.LICENSE.txt` | <https://github.com/video-dev/hls.js/tree/v1.6.16> |
 | three.js | r185 | Optional 3D terrain and globe | MIT | `static/js/three/**`, `static/vendor/three.LICENSE.txt` | <https://github.com/mrdoob/three.js/tree/r185> |
 | earth | source approach credited, no vendored runtime | Historical inspiration for the particle-flow rendering approach | MIT | `static/js/windy.js`, `static/vendor/cambecc-earth.LICENSE.md` | <https://github.com/cambecc/earth> |
+| IBM Plex Mono | Google Fonts v20 Latin subset | Readout typeface for values, timestamps, and coordinates | OFL-1.1 | `static/font/plex-mono-{400,500,600}.woff2`, `static/font/OFL.txt` | <https://github.com/IBM/plex> |
+
+Only the Latin subset of IBM Plex Mono is vendored (about 45 KB total for three weights). Hangul is
+rendered by the platform UI stack declared in `--font-ui`; no Korean webfont is downloaded.
 
 ## Charts
 

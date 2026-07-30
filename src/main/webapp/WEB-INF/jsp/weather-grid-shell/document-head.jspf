@@ -5,14 +5,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="한국의 기상 예보, 미세먼지 관측, 실시간 도로 CCTV를 시간·공간 기준으로 탐색하는 기상 격자지도 BORA">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#05070a">
 <title>BORA · 한국 기상 격자지도</title>
 
 <link rel="icon" type="image/svg+xml" href="${pageContext.request.contextPath}/favicon.svg">
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/reset.css?v=20260723.1">
+
+<%-- 판독부 서체는 첫 화면의 수치를 그리므로 스타일시트보다 먼저 요청한다 --%>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/plex-mono-500.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/plex-mono-400.woff2">
+
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/reset.css?v=20260730.2">
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.css">
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260730.1">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260730.2">
 
 
 <script defer src="${pageContext.request.contextPath}/static/js/jquery-4.0.0.min.js"></script>
