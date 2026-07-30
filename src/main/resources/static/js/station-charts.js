@@ -853,6 +853,25 @@
         return { min: minimum, max: maximum };
     }
 
+    /**
+     * 축이 차지하는 세로 밴드를 계산한다. top·height는 플롯 높이에 대한 백분율 문자열이며,
+     * 생략하면 플롯 전체를 쓴다. 풍향 화살표처럼 값이 아닌 표식을 아래쪽 별도 레인에
+     * 두려면 이 밴드를 반드시 반영해야 한다.
+     */
+    function axisBand(axisOptions, top, plotHeight) {
+        var ratio = function (raw, fallback) {
+            if (typeof raw === 'number' && Number.isFinite(raw)) return raw / 100;
+            if (typeof raw === 'string') {
+                var parsed = parseFloat(raw);
+                if (Number.isFinite(parsed)) return parsed / 100;
+            }
+            return fallback;
+        };
+        var offset = Math.min(0.95, Math.max(0, ratio(axisOptions.top, 0)));
+        var size = Math.min(1 - offset, Math.max(0.05, ratio(axisOptions.height, 1 - offset)));
+        return { top: top + offset * plotHeight, height: size * plotHeight };
+    }
+
     function lineSegments(data, xFor, yFor) {
         var segments = [];
         var current = [];
@@ -927,10 +946,17 @@
             return Math.max(maximum, item.data.length);
         }, 0));
         var ranges = axes.map(function (axis, index) { return axisRange(axis || {}, series, index); });
+        // 축은 플롯 전체가 아니라 자기 밴드 안에만 그린다. 풍향 화살표처럼 값이 아닌 표식은
+        // top/height로 아래쪽 별도 레인을 잡아두는데, 이를 무시하면 0~1 축의 0.5가 플롯
+        // 정중앙(= 풍속축 중간값 격자선)에 찍혀 데이터 선과 겹친다.
+        var bands = axes.map(function (axis) { return axisBand(axis || {}, top, plotHeight); });
         var xFor = function (index) { return left + (count <= 1 ? plotWidth / 2 : index * plotWidth / (count - 1)); };
         var yFor = function (value, axisIndex) {
-            var range = ranges[axisIndex] || ranges[0];
-            return top + (range.max - value) / (range.max - range.min) * plotHeight;
+            var index = ranges[axisIndex] ? axisIndex : 0;
+            var range = ranges[index];
+            var band = bands[index];
+            var span = range.max - range.min;
+            return band.top + (span === 0 ? 0.5 : (range.max - value) / span) * band.height;
         };
         var svg = svgNode('svg', {
             class: 'station-chart-root', viewBox: '0 0 ' + width + ' ' + height,
@@ -949,15 +975,22 @@
         var primaryVisible = axes[0].visible !== false;
         if (primaryVisible) {
             for (var tick = 0; tick <= 4; tick += 1) {
-                var y = top + tick * plotHeight / 4;
+                var y = bands[0].top + tick * bands[0].height / 4;
                 var value = ranges[0].max - tick * (ranges[0].max - ranges[0].min) / 4;
                 grid.appendChild(svgNode('line', { x1: left, y1: y, x2: left + plotWidth, y2: y, stroke: gridColor, 'stroke-dasharray': '3 4' }));
                 grid.appendChild(svgNode('text', { x: left - 7, y: y + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'end' }, formatNumber(value, Math.abs(value) < 10 ? 1 : 0)));
             }
         }
+        // 별도 레인이 있으면 값 영역과 표식 영역의 경계를 얇은 선으로 알려 준다.
+        if (bands.length > 1 && bands[1].top > bands[0].top + bands[0].height) {
+            grid.appendChild(svgNode('line', {
+                x1: left, y1: bands[1].top - 4, x2: left + plotWidth, y2: bands[1].top - 4,
+                stroke: gridColor, 'stroke-width': 1
+            }));
+        }
         if (secondaryLabelled) {
             for (var rightTick = 0; rightTick <= 4; rightTick += 1) {
-                var rightY = top + rightTick * plotHeight / 4;
+                var rightY = bands[1].top + rightTick * bands[1].height / 4;
                 var rightValue = ranges[1].max - rightTick * (ranges[1].max - ranges[1].min) / 4;
                 grid.appendChild(svgNode('text', { x: left + plotWidth + 7, y: rightY + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'start' },
                     formatNumber(rightValue, Math.abs(rightValue) < 10 ? 1 : 0)));
