@@ -7,8 +7,8 @@
             <h1 class="sr-only">BORA 한국 기상 격자지도</h1>
 
             <svg width="32" height="32" viewBox="0 0 64 64" aria-hidden="true">
-                <line x1="18.5" y1="8" x2="18.5" y2="56" stroke="currentColor" stroke-width="4.6" stroke-linecap="round"/>
-                <path d="M20 9 C 34 6, 47 11, 57.5 19.5 C 45 23, 32.5 28.5, 20 34 Z" fill="#978ff9"/>
+                <line x1="12" y1="8" x2="12" y2="56" stroke="currentColor" stroke-width="7.5" stroke-linecap="round"/>
+                <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="#978ff9"/>
             </svg>
             <div class="brand_txt">
                 <strong>BORA</strong>
