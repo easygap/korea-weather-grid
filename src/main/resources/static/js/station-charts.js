@@ -1085,11 +1085,31 @@
             });
             svg.addEventListener('pointerleave', function () { tooltip.hidden = true; });
         }
+        var resizeTimer = 0;
+        var resizeObserver = null;
+        if (typeof ResizeObserver === 'function') {
+            resizeObserver = new ResizeObserver(function (entries) {
+                var rect = entries[0] && entries[0].contentRect;
+                if (!rect || !activeChart || activeChart.container !== host) return;
+                var nextWidth = Math.max(320, Math.round(rect.width || 0));
+                var nextHeight = Math.max(240, Math.round(rect.height || 0));
+                if (Math.abs(nextWidth - width) < 2 && Math.abs(nextHeight - height) < 2) return;
+                clearTimeout(resizeTimer);
+                // 회전·분할 화면처럼 컨테이너 크기가 연속으로 바뀔 때 마지막 크기로 한 번만 다시 그린다.
+                resizeTimer = setTimeout(function () {
+                    resizeTimer = 0;
+                    if (activeChart && activeChart.container === host) refreshTheme();
+                }, 100);
+            });
+            resizeObserver.observe(host);
+        }
         return {
             options: options,
             series: series,
             container: host,
             destroy: function () {
+                clearTimeout(resizeTimer);
+                if (resizeObserver) resizeObserver.disconnect();
                 host.replaceChildren();
                 host.classList.remove('station-chart-native');
             }

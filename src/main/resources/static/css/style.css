@@ -260,7 +260,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: filter var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .coordinate_panel button.coordinate_lookup:hover { filter: brightness(.94); }
-.coordinate_panel button.coordinate_lookup:active { scale: .98; }
+.coordinate_panel button.coordinate_lookup:active { scale: .96; }
 .coordinate_panel_close {
     position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; line-height: 34px; text-align: center;
     border-radius: var(--r-2); background: transparent; color: var(--text-3); cursor: pointer; font-size: 1.2rem;
@@ -279,7 +279,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
         background-color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .icon-btn:hover { color: var(--text); background: var(--chip-hover); }
-.icon-btn:active { scale: .95; }
+.icon-btn:active { scale: .96; }
 .icon-btn.active { color: var(--text); background: var(--lit-bg); border-color: var(--lit-edge); }
 .icon-btn svg { flex: none; }
 .icon-btn .lbl { letter-spacing: -.01em; }
@@ -318,7 +318,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: color var(--t) var(--ease), background-color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .dock_collapse:hover { background: var(--chip-hover); color: var(--text); }
-.dock_collapse:active { scale: .94; }
+.dock_collapse:active { scale: .96; }
 
 /* 지도 위 기상 요소 선택기 */
 .explore_modes {
@@ -336,7 +336,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 }
 .explore_modes button + button { box-shadow: inset 1px 0 0 var(--stroke); }
 .explore_modes button:hover { color: var(--text); background: var(--chip); }
-.explore_modes button:active { transform: scale(.98); }
+.explore_modes button:active { transform: scale(.96); }
 .explore_modes button.on { color: var(--text); background: var(--lit-bg); }
 .explore_modes button.on::after {
     content: ''; position: absolute; left: 9px; right: 9px; bottom: 0; height: 2px;
@@ -490,7 +490,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     font-size: 1rem; font-weight: 700; transition: filter var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 #air_quality_retry:hover, #cctv_retry:hover, #severe_weather_retry:hover { filter: brightness(.94); }
-#air_quality_retry:active, #cctv_retry:active, #severe_weather_retry:active { scale: .95; }
+#air_quality_retry:active, #cctv_retry:active, #severe_weather_retry:active { scale: .96; }
 #cctv_toggle { min-height: 42px; }
 
 /* 위험기상 컨트롤 */
@@ -556,7 +556,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: filter var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .latest_run_button:hover { filter: brightness(.94); }
-.latest_run_button:active { scale: .97; }
+.latest_run_button:active { scale: .96; }
 .forecast_date_control { position: relative; flex: 1; }
 .forecast_date_control .forecast_date_input {
     width: 100%; height: 38px; padding: 0 40px 0 11px; font-family: var(--font-mono);
@@ -590,7 +590,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: background-color var(--t) var(--ease), color var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
 .base_run_actions button:hover:not(:disabled) { color: var(--text); background: var(--chip-hover); }
-.base_run_actions button:active:not(:disabled) { transform: scale(.97); }
+.base_run_actions button:active:not(:disabled) { transform: scale(.96); }
 .base_run_actions .latest_run_button { height: auto; min-width: 56px; color: var(--on-accent); }
 .base_run_actions button:disabled { opacity: .32; cursor: not-allowed; }
 .forecast_base_time_label { margin-top: 13px; }
@@ -755,7 +755,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transform: rotate(45deg) translateY(-2px); transition: transform var(--t) var(--ease);
 }
 .legend_toggle:hover { background: var(--chip-hover); }
-.legend_toggle:active { scale: .97; }
+.legend_toggle:active { scale: .96; }
 .legend.legend-collapsed .legend_toggle::after { transform: rotate(-45deg); }
 .legend.legend-collapsed #legend_scale,
 .legend.legend-collapsed .grid_stats { display: none; }
@@ -915,7 +915,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 }
 .warning_banner[hidden] { display: none; }
 .warning_banner:hover { background: var(--surface-2); }
-.warning_banner:active { scale: .98; }
+.warning_banner:active { scale: .96; }
 .warning_banner_mark {
     width: 8px; height: 8px; border-radius: 50%; background: var(--hazard-warning);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--hazard-warning) 15%, transparent);
@@ -955,7 +955,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: color var(--t) var(--ease), background-color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .warning_panel_close:hover { color: var(--text); background: var(--chip-hover); }
-.warning_panel_close:active { scale: .94; }
+.warning_panel_close:active { scale: .96; }
 .warning_panel_status { margin: 10px 0; color: var(--text-3); font-size: 1.02rem; line-height: 1.5; text-wrap: pretty; }
 .warning_list { display: grid; gap: 6px; }
 .warning_item { padding: 11px; border-radius: var(--r-2); background: var(--chip); box-shadow: inset 0 0 0 1px var(--stroke); }
@@ -1014,7 +1014,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: background-color var(--t) var(--ease), color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .forecast_run_list button:hover { background: var(--chip-hover); color: var(--text); }
-.forecast_run_list button:active { scale: .93; }
+.forecast_run_list button:active { scale: .96; }
 .forecast_run_list button svg { display: block; }
 #btn_play { background: var(--chip); }
 #btn_play.playing { background: var(--accent); color: var(--on-accent); }
@@ -1113,7 +1113,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: filter var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .station_timeline_button:hover { filter: brightness(.94); }
-.station_timeline_button:active { scale: .98; }
+.station_timeline_button:active { scale: .96; }
 
 .air_popup, .cctv_popup, .hazard_popup {
     position: absolute; box-sizing: border-box;
@@ -1149,7 +1149,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: color var(--t) var(--ease), background-color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .air_popup_close:hover, .cctv_popup_close:hover, .hazard_popup_close:hover { color: var(--text); background: var(--chip-hover); }
-.air_popup_close:active, .cctv_popup_close:active, .hazard_popup_close:active { scale: .94; }
+.air_popup_close:active, .cctv_popup_close:active, .hazard_popup_close:active { scale: .96; }
 
 .air_popup_measure {
     display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin: 14px 0 12px;
@@ -1216,7 +1216,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: box-shadow var(--t) var(--ease), background-color var(--t) var(--ease), scale var(--t-fast) var(--ease);
 }
 .cctv_cluster_list button:hover { background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--stroke-strong); }
-.cctv_cluster_list button:active { scale: .98; }
+.cctv_cluster_list button:active { scale: .96; }
 .cctv_cluster_list strong { overflow-wrap: anywhere; font-size: 1.02rem; line-height: 1.4; }
 .cctv_cluster_list span { margin-top: 2px; color: var(--text-3); font-size: .9rem; line-height: 1.4; }
 .cctv_media {
@@ -1627,7 +1627,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: color var(--t) var(--ease), background-color var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
 .map_measure_toggle:hover { color: var(--text); background: var(--surface-2); }
-.map_measure_toggle:active { transform: scale(.97); }
+.map_measure_toggle:active { transform: scale(.96); }
 .map_measure_toggle[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); box-shadow: var(--e-1); }
 .map_measure_toggle svg { flex: none; }
 
@@ -1668,7 +1668,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     transition: color var(--t) var(--ease), background-color var(--t) var(--ease), transform var(--t-fast) var(--ease), opacity var(--t) var(--ease);
 }
 .distance_measure_actions button:hover:not(:disabled) { color: var(--text); background: var(--chip-hover); }
-.distance_measure_actions button:active:not(:disabled) { transform: scale(.97); }
+.distance_measure_actions button:active:not(:disabled) { transform: scale(.96); }
 .distance_measure_actions button:disabled { opacity: .35; cursor: not-allowed; }
 #distance_measure_finish:not(:disabled) { color: var(--on-accent); background: var(--accent); box-shadow: none; }
 
@@ -1810,7 +1810,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .mobile_primary_controls button.on::after {
         content: ''; position: absolute; left: 22%; right: 22%; bottom: 0; height: 2px; background: var(--lit);
     }
-    .mobile_primary_controls button:active { transform: scale(.97); }
+    .mobile_primary_controls button:active { transform: scale(.96); }
 
     /* 설정 독은 바텀시트로 — 드래그 핸들과 스프링 진입 */
     .dock {
@@ -2018,6 +2018,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .coordinate_lookup, .station_timeline_button, .air_popup_close, .cctv_popup_close, .cctv_play, #retry_data,
     #air_quality_retry, #cctv_retry, #forecast_strip_retry, .hazard_popup_close, .warning_panel_close,
     #severe_weather_retry, .map_measure_toggle, #distance_measure_close,
+    .station_modal_header .station_modal_close,
     .distance_measure_actions button { min-width: 44px; min-height: 44px; }
 }
 

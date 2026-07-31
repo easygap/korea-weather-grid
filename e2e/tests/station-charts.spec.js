@@ -86,6 +86,42 @@ test.describe('지점 시계열 시각화', () => {
     expect(labels.at(-1)).toBe('02:00 07.16');
   });
 
+  test('열린 차트는 화면 회전과 창 크기 변경 후 현재 컨테이너 비율로 다시 그린다', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 860 });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.WEATHER_GRID_STATION_CHARTS);
+    await page.evaluate(() => window.WEATHER_GRID_STATION_CHARTS.ensureReady());
+    await page.evaluate((data) => {
+      document.querySelector('.station_modal').style.display = 'block';
+      window.WEATHER_GRID_STATION_CHARTS.render('wdws', data, '2026071402');
+    }, windSeries());
+
+    const initialWidth = await page.locator('#chart .station-chart-root').evaluate((svg) =>
+      Number(svg.getAttribute('viewBox').split(/\s+/)[2])
+    );
+    expect(initialWidth).toBeGreaterThan(900);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(async () => page.locator('#chart .station-chart-root').evaluate((svg) =>
+      Number(svg.getAttribute('viewBox').split(/\s+/)[2])
+    )).toBeLessThan(500);
+
+    const resized = await page.locator('#chart .station-chart-root').evaluate((svg) => {
+      const viewBox = svg.getAttribute('viewBox').split(/\s+/).map(Number);
+      const host = document.getElementById('chart').getBoundingClientRect();
+      return {
+        width: viewBox[2],
+        aspectGap: Math.abs(viewBox[2] / viewBox[3] - host.width / host.height),
+        labels: Array.from(svg.querySelectorAll('.station-chart-grid text'))
+          .filter((node) => /^\d{2}:00 \d{2}\.\d{2}$/.test(node.textContent)).length
+      };
+    });
+    expect(resized.width).toBeLessThan(500);
+    expect(resized.aspectGap).toBeLessThan(0.02);
+    expect(resized.labels).toBeLessThanOrEqual(4);
+    await expect(page.locator('#chart .station-chart-root')).toHaveCount(1);
+  });
+
   test('0.4m/s 이하 정온은 풍향·나침반 화살·윈드바브를 표시하지 않는다', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 860 });
     await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
