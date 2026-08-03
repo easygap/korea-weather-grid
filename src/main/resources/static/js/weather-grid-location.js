@@ -296,22 +296,14 @@
 
     function positionPopup(pixel) {
         var popup = document.querySelector('.coordinate_popup');
-        var container = document.querySelector('.map_workspace');
-        if (!popup || !container || !Array.isArray(pixel)) return;
+        if (!popup || !Array.isArray(pixel)
+                || typeof MapRuntime.positionOverlayPopup !== 'function') return;
         popup.style.left = '8px';
         popup.style.top = '8px';
+        popup.style.maxHeight = '';
         popup.style.display = 'block';
         window.requestAnimationFrame(function () {
-            var containerRect = container.getBoundingClientRect();
-            var popupRect = popup.getBoundingClientRect();
-            var x = pixel[0] + 14;
-            var y = pixel[1] + 14;
-            if (x + popupRect.width > containerRect.width - 8) x = pixel[0] - popupRect.width - 14;
-            if (y + popupRect.height > containerRect.height - 8) y = pixel[1] - popupRect.height - 14;
-            x = Math.max(8, Math.min(x, containerRect.width - popupRect.width - 8));
-            y = Math.max(8, Math.min(y, containerRect.height - popupRect.height - 8));
-            popup.style.left = Math.round(x) + 'px';
-            popup.style.top = Math.round(y) + 'px';
+            if (popup.style.display !== 'none') MapRuntime.positionOverlayPopup(popup, pixel);
         });
     }
 

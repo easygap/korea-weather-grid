@@ -19,6 +19,29 @@ function forecastItems(baseDate) {
   }));
 }
 
+function airQualityPayload() {
+  return {
+    dataTime: '2026-07-13 10:00',
+    dataTimeFrom: '2026-07-13 09:00',
+    stale: false,
+    source: 'AirKorea',
+    stations: [{
+      name: '종로구',
+      address: '서울특별시 종로구',
+      network: '도시대기',
+      latitude: 37.572,
+      longitude: 127.005,
+      pm10: 32,
+      pm25: 14,
+      pm10Grade: 2,
+      pm25Grade: 1,
+      pm10Flag: null,
+      pm25Flag: null,
+      dataTime: '2026-07-13 10:00'
+    }]
+  };
+}
+
 test('상세예보 503은 한 번 자동 재시도해 복구한다', async ({ page }) => {
   const baseDate = '20260712';
   let forecastRequests = 0;
@@ -52,6 +75,48 @@ test('상세예보 503은 한 번 자동 재시도해 복구한다', async ({ pa
   await expect(page.locator('#forecast_strip_retry')).toBeHidden();
 });
 
+test('모바일 상세예보 제목과 출처는 서로 밀어내지 않고 행 단위로 배치된다', async ({ page }) => {
+  const baseDate = '20260712';
+  await page.route('**/api/weather/point-forecast?**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        baseDate,
+        baseTime: '0200',
+        latitude: 37.5665,
+        longitude: 126.978,
+        source: '기상청 단기예보',
+        items: forecastItems(baseDate)
+      })
+    });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.WEATHER_GRID_STATION_FORECAST);
+  await page.evaluate(({ date }) => window.WEATHER_GRID_STATION_FORECAST.open({
+    latitude: 37.5665, longitude: 126.978, baseDate: date, baseTime: '0200'
+  }), { date: baseDate });
+  await expect(page.locator('#forecast_strip .forecast_card')).toHaveCount(48);
+
+  const layout = await page.locator('.forecast_strip_header').evaluate((header) => {
+    const title = header.querySelector('h3');
+    const source = header.querySelector('span');
+    const titleRect = title.getBoundingClientRect();
+    const sourceRect = source.getBoundingClientRect();
+    const titleStyle = getComputedStyle(title);
+    const parsedLineHeight = Number.parseFloat(titleStyle.lineHeight);
+    const lineHeight = Number.isFinite(parsedLineHeight)
+      ? parsedLineHeight
+      : Number.parseFloat(titleStyle.fontSize) * 1.2;
+    return {
+      titleLines: titleRect.height / lineHeight,
+      sourceStartsAfterTitle: sourceRect.top >= titleRect.bottom
+    };
+  });
+  expect(layout.titleLines).toBeLessThan(1.2);
+  expect(layout.sourceStartsAfterTitle).toBe(true);
+});
+
 test('상세예보와 대기질 레이어가 독립적으로 로드된다', async ({ page }) => {
   const baseDate = '20260712';
   let forecastRequests = 0;
@@ -75,26 +140,7 @@ test('상세예보와 대기질 레이어가 독립적으로 로드된다', asyn
     airRequests++;
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({
-        dataTime: '2026-07-13 10:00',
-        dataTimeFrom: '2026-07-13 09:00',
-        stale: false,
-        source: 'AirKorea',
-        stations: [{
-          name: '종로구',
-          address: '서울특별시 종로구',
-          network: '도시대기',
-          latitude: 37.572,
-          longitude: 127.005,
-          pm10: 32,
-          pm25: 14,
-          pm10Grade: 2,
-          pm25Grade: 1,
-          pm10Flag: null,
-          pm25Flag: null,
-          dataTime: '2026-07-13 10:00'
-        }]
-      })
+      body: JSON.stringify(airQualityPayload())
     });
   });
 
@@ -155,6 +201,69 @@ test('상세예보와 대기질 레이어가 독립적으로 로드된다', asyn
   expect(forecastRequests).toBe(1);
   expect(airRequests).toBe(1);
 });
+
+for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 740 }]) {
+  test(`모바일 ${viewport.width}px 대기질 팝업은 상단 탐색과 타임라인 사이에 유지된다`, async ({ page }) => {
+    await page.route('**/api/environment/air-quality?**', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify(airQualityPayload())
+      });
+    });
+    await page.setViewportSize(viewport);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.WEATHER_GRID_AIR_QUALITY);
+    await page.locator('#mobile_primary_controls [data-data-domain="air"]').click();
+    await expect.poll(() => page.evaluate(() =>
+      window.WEATHER_GRID_AIR_QUALITY.layer.getSource().getSource().getFeatures().length
+    )).toBe(1);
+
+    const chromeLayout = await page.evaluate(() => {
+      const caption = document.querySelector('.timeline_caption').getBoundingClientRect();
+      const utility = document.getElementById('map_utility_stack').getBoundingClientRect();
+      return {
+        horizontallySeparated: utility.right <= caption.left || caption.right <= utility.left,
+        verticallySeparated: utility.bottom <= caption.top || caption.bottom <= utility.top
+      };
+    });
+    expect(chromeLayout.horizontallySeparated || chromeLayout.verticallySeparated).toBe(true);
+
+    await page.locator('#map').focus();
+    await page.locator('#map').press('Enter');
+    await expect(page.locator('#air_popup')).not.toHaveAttribute('hidden', '');
+    await expect.poll(() => page.locator('#air_popup').evaluate((popup) => {
+      const popupRect = popup.getBoundingClientRect();
+      const navigationRect = document.getElementById('mobile_primary_controls').getBoundingClientRect();
+      return popupRect.top >= navigationRect.bottom + 7;
+    })).toBe(true);
+
+    const geometry = await page.locator('#air_popup').evaluate((popup) => {
+      const popupRect = popup.getBoundingClientRect();
+      const close = document.getElementById('air_popup_close');
+      const closeRect = close.getBoundingClientRect();
+      const navigationRect = document.getElementById('mobile_primary_controls').getBoundingClientRect();
+      const timelineRect = document.querySelector('.timeline').getBoundingClientRect();
+      const hitTarget = document.elementFromPoint(
+        closeRect.left + closeRect.width / 2,
+        closeRect.top + closeRect.height / 2
+      );
+      return {
+        topGap: popupRect.top - navigationRect.bottom,
+        bottomGap: timelineRect.top - popupRect.bottom,
+        closeVisible: closeRect.top >= navigationRect.bottom
+          && closeRect.bottom <= timelineRect.top,
+        closeClickable: hitTarget === close || close.contains(hitTarget),
+        scrollHeight: popup.scrollHeight,
+        clientHeight: popup.clientHeight
+      };
+    });
+    expect(geometry.topGap).toBeGreaterThanOrEqual(7);
+    expect(geometry.bottomGap).toBeGreaterThanOrEqual(7);
+    expect(geometry.closeVisible).toBe(true);
+    expect(geometry.closeClickable).toBe(true);
+    expect(geometry.clientHeight).toBeLessThanOrEqual(geometry.scrollHeight);
+  });
+}
 
 test('신적설 지점 상세는 단기예보 한 요청을 카드와 차트가 공유한다', async ({ page }) => {
   const baseDate = '20260721';

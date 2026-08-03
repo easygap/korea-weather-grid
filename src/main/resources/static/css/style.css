@@ -1942,6 +1942,11 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .station_chart_header > span { max-width: none; font-size: .82rem; text-align: left; }
     .station_chart_panel .chart { height: clamp(280px, 42dvh, 350px); }
     .forecast_strip_section { padding: 10px; }
+    .forecast_strip_header {
+        display: grid; align-items: start; justify-content: stretch; gap: 4px;
+    }
+    .forecast_strip_header h3 { word-break: keep-all; }
+    .forecast_strip_header span { line-height: 1.4; text-align: left; white-space: normal; }
     .forecast_strip { grid-auto-columns: 106px; }
     .forecast_card { min-height: 152px; }
     .air_quality_control button, #air_quality_retry, #cctv_retry, #forecast_strip_retry, .station_chart_retry,
@@ -1972,6 +1977,13 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
     .app[data-explore-mode="hazards"] .map_utility_stack { bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
     .distance_measure_panel { width: min(280px, calc(100vw - 72px)); }
     .distance_measure_actions button { min-height: 44px; }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+    /* 대기질 타임라인 안내가 거리·축척 조작부를 가리지 않도록 여유를 확보한다. */
+    .app[data-data-domain="air"] .map_utility_stack {
+        bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 @media (max-width: 360px) {

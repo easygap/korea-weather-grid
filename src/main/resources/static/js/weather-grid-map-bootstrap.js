@@ -41,6 +41,62 @@
         return State.initialPadding(window.innerWidth);
     };
 
+    function renderedRect(element) {
+        if (!element || element.hidden) return null;
+        var style = window.getComputedStyle(element);
+        if (style.display === 'none' || style.visibility === 'hidden') return null;
+        var rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 ? rect : null;
+    }
+
+    /**
+     * 지도 팝업을 고정 상단 탐색과 하단 타임라인 사이에 배치한다.
+     * 팝업은 map_workspace의 stacking context 안에 있어 높은 z-index만으로는
+     * 상단 탐색을 덮을 수 없으므로, 실제 가시 영역을 좌표 계산에 반영한다.
+     */
+    function positionOverlayPopup(popup, pixel) {
+        var container = document.querySelector('.map_workspace');
+        if (!container || !popup || !Array.isArray(pixel)
+                || !Number.isFinite(pixel[0]) || !Number.isFinite(pixel[1])) return false;
+
+        var margin = 8;
+        var containerRect = container.getBoundingClientRect();
+        var popupRect = popup.getBoundingClientRect();
+        var safeTop = margin;
+        var safeBottom = containerRect.height - margin;
+
+        [document.querySelector('.topbar'), document.getElementById('mobile_primary_controls')]
+            .forEach(function (element) {
+                var rect = renderedRect(element);
+                if (!rect || rect.bottom <= containerRect.top || rect.top >= containerRect.bottom) return;
+                safeTop = Math.max(safeTop, rect.bottom - containerRect.top + margin);
+            });
+
+        var timelineRect = renderedRect(document.querySelector('.timeline'));
+        if (timelineRect && timelineRect.top > containerRect.top
+                && timelineRect.top < containerRect.bottom) {
+            safeBottom = Math.min(
+                safeBottom, timelineRect.top - containerRect.top - margin);
+        }
+
+        var availableHeight = Math.max(120, safeBottom - safeTop);
+        var effectiveHeight = Math.min(popupRect.height, availableHeight);
+        var x = pixel[0] + 14;
+        var y = pixel[1] + 14;
+        if (x + popupRect.width > containerRect.width - margin) {
+            x = pixel[0] - popupRect.width - 14;
+        }
+        if (y + effectiveHeight > safeBottom) y = pixel[1] - effectiveHeight - 14;
+        x = Math.max(
+            margin, Math.min(x, containerRect.width - popupRect.width - margin));
+        y = Math.max(safeTop, Math.min(y, safeBottom - effectiveHeight));
+
+        popup.style.left = Math.round(x) + 'px';
+        popup.style.top = Math.round(y) + 'px';
+        popup.style.maxHeight = Math.floor(availableHeight) + 'px';
+        return true;
+    }
+
     var mapPixelRatio = State.pixelRatio({
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
@@ -640,6 +696,7 @@
         },
         weatherLayer: function () { return rasterLayer; },
         stationLayer: function () { return stationLayer; },
+        positionOverlayPopup: positionOverlayPopup,
         selectStationName: setSelectedStationName,
         stationAnchors: function () {
             return Object.freeze(stationAnchors.map(function (station) {

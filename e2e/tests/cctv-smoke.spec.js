@@ -409,9 +409,11 @@ test('모바일·reduced-motion에서도 CCTV 조작부와 팝업이 화면 안�
   await page.locator('#map').focus();
   await page.locator('#map').press('Enter');
   const box = await page.locator('#cctv_popup').boundingBox();
+  const mobileNavigation = await page.locator('#mobile_primary_controls').boundingBox();
   expect(box).not.toBeNull();
+  expect(mobileNavigation).not.toBeNull();
   expect(box.x).toBeGreaterThanOrEqual(0);
-  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(mobileNavigation.y + mobileNavigation.height + 7);
   expect(box.x + box.width).toBeLessThanOrEqual(390);
   expect(box.y + box.height).toBeLessThanOrEqual(844);
   await page.locator('#cctv_popup').press('Escape');

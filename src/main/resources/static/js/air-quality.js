@@ -669,22 +669,14 @@
     }
 
     function positionPopup(pixel) {
-        var container = document.querySelector('.map_workspace');
-        if (!container) return;
+        var runtime = window.WeatherGridMapRuntime;
+        if (!runtime || typeof runtime.positionOverlayPopup !== 'function') return;
         popup.hidden = false;
         popup.style.left = '8px';
         popup.style.top = '8px';
+        popup.style.maxHeight = '';
         requestAnimationFrame(function () {
-            var containerRect = container.getBoundingClientRect();
-            var popupRect = popup.getBoundingClientRect();
-            var x = pixel[0] + 14;
-            var y = pixel[1] + 14;
-            if (x + popupRect.width > containerRect.width - 8) x = pixel[0] - popupRect.width - 14;
-            if (y + popupRect.height > containerRect.height - 8) y = pixel[1] - popupRect.height - 14;
-            x = Math.max(8, Math.min(x, containerRect.width - popupRect.width - 8));
-            y = Math.max(8, Math.min(y, containerRect.height - popupRect.height - 8));
-            popup.style.left = Math.round(x) + 'px';
-            popup.style.top = Math.round(y) + 'px';
+            if (!popup.hidden) runtime.positionOverlayPopup(popup, pixel);
         });
     }
 
