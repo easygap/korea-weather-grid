@@ -2274,6 +2274,42 @@ test('14 failed live CCTV supertiles fail closed within the Free subrequest quot
     assert.ok(cache.matchCalls + cache.putCalls + upstreamCalls <= 50);
 });
 
+test('cctv returns validated partial results when only some supertiles fail', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    const cache = new MemoryCache();
+    globalThis.caches = { default: cache };
+    let upstreamCalls = 0;
+    globalThis.fetch = async () => {
+        upstreamCalls++;
+        if (upstreamCalls === 2) return new Response('upstream unavailable', { status: 503 });
+        return jsonResponse(cctvPayload([{
+            cctvname: '서울 부분 응답 CCTV', coordy: '37.6', coordx: '126.9',
+            cctvformat: 'HLS', cctvtype: 4,
+            cctvurl: 'https://cctvsec.ktict.co.kr/live/partial.m3u8',
+            roadsectionid: 'ROAD-PARTIAL'
+        }]));
+    };
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const response = await worker.fetch(request(
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=126.5&maxLon=127.5'),
+    cctvEnv('its-test-key'), {});
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.partial, true);
+    assert.equal(body.stale, false);
+    assert.equal(body.cctvs.length, 1);
+    assert.equal(body.cctvs[0].name, '서울 부분 응답 CCTV');
+    assert.equal(upstreamCalls, 2);
+    assert.equal(cache.matchCalls, 3, '전역 circuit 1회 + supertile 2회');
+    assert.equal(cache.putCalls, 2, '정상 snapshot과 전역 circuit을 각각 한 번 저장한다');
+    assert.ok(cache.keys.includes(CCTV_CIRCUIT_KEY));
+});
+
 test('cctv aborts stalled supertile requests at the six-second upstream timeout', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;

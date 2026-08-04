@@ -48,6 +48,7 @@
     var fetchedAt = '';
     var sourceName = '국가교통정보센터';
     var stale = false;
+    var partial = false;
     var truncated = false;
     var activeRequest = null;
     var requestSequence = 0;
@@ -232,6 +233,10 @@
         loadedCoverage = null;
         lastFetchedAt = 0;
         fetchedAt = '';
+        sourceName = '국가교통정보센터';
+        stale = false;
+        partial = false;
+        truncated = false;
         rawSource.clear(true);
         styleCache.clear();
         layer.changed();
@@ -246,7 +251,8 @@
         status.dataset.state = kind;
         statusText.textContent = message;
         retryButton.hidden = !canRetry;
-        if ((kind === 'error' || kind === 'zoom') && message !== lastMapNotice && window.WEATHER_GRID_SHOW_NOTICE) {
+        if ((kind === 'error' || kind === 'zoom' || kind === 'partial')
+                && message !== lastMapNotice && window.WEATHER_GRID_SHOW_NOTICE) {
             lastMapNotice = message;
             window.WEATHER_GRID_SHOW_NOTICE({
                 message: message,
@@ -346,8 +352,11 @@
     }
 
     function readyMessage() {
-        if (!rawCctvs.length) return '현재 화면에 표시할 CCTV가 없습니다.';
-        return (stale ? '캐시 자료 · ' : '') + 'CCTV ' + rawSource.getFeatures().length + '곳'
+        if (!rawCctvs.length) return partial
+            ? '일부 지역만 확인했으며 표시할 CCTV가 없습니다. 지도를 좁히거나 다시 시도해 주세요.'
+            : '현재 화면에 표시할 CCTV가 없습니다.';
+        return (partial ? '일부 지역 CCTV만 표시 중 · ' : '')
+            + (stale ? '캐시 자료 · ' : '') + 'CCTV ' + rawSource.getFeatures().length + '곳'
             + (truncated ? ' · 일부 결과' : '') + (fetchedAt ? ' · ' + formatTime(fetchedAt) : '');
     }
 
@@ -369,7 +378,7 @@
             return;
         }
         if (!force && Date.now() - lastFetchedAt < FRESH_MS && contains(loadedCoverage, viewport)) {
-            setStatus(stale ? 'stale' : 'ready', readyMessage(), false);
+            setStatus(partial ? 'partial' : (stale ? 'stale' : 'ready'), readyMessage(), partial);
             return;
         }
 
@@ -427,10 +436,11 @@
             lastFetchedAt = Date.now();
             fetchedAt = boundedText(payload.fetchedAt, '', 40);
             stale = !!payload.stale;
+            partial = !!payload.partial;
             truncated = !!payload.truncated || payload.cctvs.length > MAX_ITEMS;
             sourceName = boundedText(payload.source, '국가교통정보센터', 80);
             rebuildFeatures();
-            setStatus(stale ? 'stale' : 'ready', readyMessage(), false);
+            setStatus(partial ? 'partial' : (stale ? 'stale' : 'ready'), readyMessage(), partial);
         } catch (error) {
             if (error && error.name === 'AbortError' && !listRequest.timedOut) return;
             if (sequence !== requestSequence || !enabled) return;

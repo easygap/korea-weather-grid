@@ -366,6 +366,27 @@ test('QHD 화면에서도 최대 확대 시 CCTV 조회 범위가 24타일 안�
   await expect(page.locator('#cctv_status')).toContainText('CCTV 1곳');
 });
 
+test('일부 CCTV 타일만 응답해도 정상 지점을 표시하고 재시도를 안내한다', async ({ page }) => {
+  await page.route('**/api/traffic/cameras?**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(cctvPayload([cctvItem()], { partial: true })),
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.WEATHER_GRID_CCTV);
+  await selectExploreMode(page, 'road');
+  await fitMap(page, [126.978, 37.5665], 0.08, 0.08);
+
+  await expect.poll(() => page.evaluate(() =>
+    window.WEATHER_GRID_CCTV.layer.getSource().getSource().getFeatures().length)).toBe(1);
+  await expect(page.locator('#cctv_status')).toHaveAttribute('data-state', 'partial');
+  await expect(page.locator('#cctv_status')).toContainText('일부 지역 CCTV만 표시 중');
+  await expect(page.locator('#cctv_retry')).toBeVisible();
+});
+
 test('캐시 CCTV 위치는 보여주되 만료된 영상 주소는 재생하지 않는다', async ({ page }) => {
   await installMediaStub(page);
   await page.route('**/api/traffic/cameras?**', async (route) => {

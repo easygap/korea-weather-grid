@@ -477,6 +477,7 @@ a:focus-visible, summary:focus-visible, [role="button"]:focus-visible, [tabindex
 .severe_weather_status[data-state="ready"] .severe_weather_status_icon { background: var(--state-ready); }
 .air_quality_status[data-state="stale"] .air_quality_status_icon,
 .cctv_status[data-state="stale"] .cctv_status_icon,
+.cctv_status[data-state="partial"] .cctv_status_icon,
 .severe_weather_status[data-state="stale"] .severe_weather_status_icon { background: var(--state-stale); }
 .cctv_status[data-state="zoom"] .cctv_status_icon { background: var(--state-ready); }
 .air_quality_status[data-state="error"], .cctv_status[data-state="error"], .severe_weather_status[data-state="error"] {

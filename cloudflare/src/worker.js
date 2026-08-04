@@ -2018,13 +2018,18 @@ async function buildCctv(env, bounds, supertiles) {
             }, CCTV.CIRCUIT_FAILURE_TTL);
         }
     }
-    if (tileSnapshots.some((snapshot) => !snapshot)) throw new WeatherUnavailableError();
+    // 일부 supertile 장애가 정상 지역까지 모두 가리지 않게 한다. 각 snapshot은
+    // normalizeCctvPayload와 캐시 검증을 통과한 값만 사용하며, 전부 실패했을 때는
+    // 기존처럼 503으로 닫아 빈 정상 응답으로 오인되지 않게 한다.
+    const availableSnapshots = tileSnapshots.filter(Boolean);
+    if (!availableSnapshots.length) throw new WeatherUnavailableError();
+    const partial = availableSnapshots.length !== tileSnapshots.length;
 
     let fetchedAt = null;
     let stale = false;
     let truncated = false;
     const deduplicated = new Map();
-    for (const snapshot of tileSnapshots) {
+    for (const snapshot of availableSnapshots) {
         if (fetchedAt === null || snapshot.fetchedAt < fetchedAt) fetchedAt = snapshot.fetchedAt;
         stale ||= snapshot.stale;
         truncated ||= snapshot.truncated;
@@ -2040,6 +2045,7 @@ async function buildCctv(env, bounds, supertiles) {
     return {
         fetchedAt,
         stale,
+        partial,
         truncated,
         source: '국가교통정보센터(ITS)',
         cctvs: all.slice(0, CCTV.MAX_RESULTS)

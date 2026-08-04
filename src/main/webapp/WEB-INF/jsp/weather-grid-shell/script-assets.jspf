@@ -19,7 +19,7 @@
 <script defer src="${pageContext.request.contextPath}/static/js/map-measure.js?v=20260721.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/severe-weather.js?v=20260803.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/air-quality.js?v=20260803.1"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/cctv.js?v=20260803.1"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/cctv.js?v=20260804.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-interface-state.js?v=20260722.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-interface.js?v=20260722.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-control-state.js?v=20260722.2"></script>
