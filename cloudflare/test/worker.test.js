@@ -1827,7 +1827,7 @@ test('airQuality serves the six-hour fallback snapshot as stale when refresh fai
         globalThis.caches = originalCaches;
     });
 
-    await cache.put('https://bora-cache.internal/data-go/air/latest-stale', jsonResponse({
+    await cache.put('https://bora-cache.internal/data-go/air/v2/latest-stale', jsonResponse({
         dataTime: '2026-07-13 09:00',
         source: 'AirKorea',
         stations: [{
@@ -1867,7 +1867,7 @@ test('airQuality negative-caches an upstream refresh failure', async (t) => {
     assert.equal(upstreamCalls, 1);
     assert.equal((await worker.fetch(airRequest.clone(), env, {})).status, 503);
     assert.equal(upstreamCalls, 1);
-    assert.ok(cache.keys.includes('https://bora-cache.internal/data-go/air/refresh-failed'));
+    assert.ok(cache.keys.includes('https://bora-cache.internal/data-go/air/v2/refresh-failed'));
 });
 
 test('public and forecast refresh limits return the shared 429 contract without trusting X-Forwarded-For', async (t) => {

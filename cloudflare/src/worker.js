@@ -1064,6 +1064,23 @@ const CCTV = {
 
 const dataGoCacheKey = (path) => new Request('https://bora-cache.internal/data-go' + path);
 const itsCacheKey = (path) => new Request('https://bora-cache.internal/its' + path);
+const AIR_CACHE_PREFIX = '/air/v2';
+
+function dataGoEndpointName(path) {
+    if (path === DATA_GO.KMA_FORECAST_PATH) return 'kma-forecast';
+    if (path === DATA_GO.AIR_STATION_PATH) return 'air-stations';
+    if (path === DATA_GO.AIR_MEASURE_PATH) return 'air-measurements';
+    return 'unknown';
+}
+
+function logDataGoFailure(path, reason, details = {}) {
+    console.warn(JSON.stringify({
+        event: 'data_go_upstream_failed',
+        endpoint: dataGoEndpointName(path),
+        reason,
+        ...details
+    }));
+}
 
 /**
  * 공공데이터포털 Decoding 키를 URLSearchParams가 정확히 한 번 인코딩한다.
@@ -1106,15 +1123,27 @@ async function readJsonResponseLimited(response, maxBytes) {
 
 async function fetchDataGoJson(env, path, params, maxBytes) {
     const url = dataGoUrl(env, path, params);
-    if (!url) return null;
+    if (!url) {
+        logDataGoFailure(path, 'invalid_service_key');
+        return null;
+    }
     try {
         const response = await fetch(url, {
             headers: { Accept: 'application/json', 'User-Agent': 'bora-weather/1.0' },
             signal: AbortSignal.timeout(DATA_GO.UPSTREAM_TIMEOUT_MS),
             cache: 'no-store'
         });
-        return await readJsonResponseLimited(response, maxBytes);
-    } catch {
+        if (!response.ok) {
+            logDataGoFailure(path, 'http_error', { status: response.status });
+            if (response.body) await response.body.cancel('upstream response rejected').catch(() => { });
+            return null;
+        }
+        const payload = await readJsonResponseLimited(response, maxBytes);
+        if (payload === null) logDataGoFailure(path, 'invalid_or_oversized_body');
+        return payload;
+    } catch (error) {
+        logDataGoFailure(path, error?.name === 'TimeoutError' || error?.name === 'AbortError'
+            ? 'timeout' : 'fetch_error');
         return null;
     }
 }
@@ -1141,7 +1170,14 @@ async function fetchAllDataGoItems(env, path, baseParams, maxBytes, maxItems) {
             ...baseParams, pageNo, numOfRows: pageSize
         }, maxBytes);
         const items = dataGoItems(payload);
-        if (!items) return null;
+        if (!items) {
+            if (payload !== null) {
+                logDataGoFailure(path, 'invalid_payload', {
+                    resultCode: String(payload?.response?.header?.resultCode ?? 'missing')
+                });
+            }
+            return null;
+        }
 
         const declaredTotal = payload?.response?.body?.totalCount;
         if (declaredTotal !== undefined && declaredTotal !== null && declaredTotal !== '') {
@@ -1473,9 +1509,9 @@ async function loadStationLocations(env) {
 }
 
 async function loadAirSnapshot(env) {
-    const freshPath = '/air/latest';
-    const stalePath = '/air/latest-stale';
-    const failedPath = '/air/refresh-failed';
+    const freshPath = `${AIR_CACHE_PREFIX}/latest`;
+    const stalePath = `${AIR_CACHE_PREFIX}/latest-stale`;
+    const failedPath = `${AIR_CACHE_PREFIX}/refresh-failed`;
     const fresh = await getCachedJson(freshPath);
     if (fresh?.source === 'AirKorea' && Array.isArray(fresh.stations) && fresh.stations.length) {
         return { ...fresh, stale: false };
@@ -1507,6 +1543,10 @@ async function loadAirSnapshot(env) {
                     ]);
                     return { ...snapshot, stale: false };
                 }
+                logDataGoFailure(DATA_GO.AIR_MEASURE_PATH, 'unusable_snapshot', {
+                    measurementCount: measureItems?.length || 0,
+                    locationCount: locations.length
+                });
             }
             await putCachedJson(failedPath, { failed: true }, DATA_GO.AIR_FAILURE_TTL);
         } catch (error) {
