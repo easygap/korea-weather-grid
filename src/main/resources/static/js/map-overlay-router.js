@@ -43,6 +43,15 @@
         });
     }
 
+    /** 오버레이 선택 전에 진행 중인 좌표 조회와 기존 좌표 팝업을 함께 정리한다. */
+    function closePointSelection() {
+        if (typeof window.WEATHER_GRID_CANCEL_POINT_LOOKUP === 'function') {
+            window.WEATHER_GRID_CANCEL_POINT_LOOKUP();
+        }
+        var popup = document.querySelector('.coordinate_popup');
+        if (popup) popup.style.display = 'none';
+    }
+
     weatherMap.on('singleclick', function (event) {
         if (window.WEATHER_GRID_MEASURE && window.WEATHER_GRID_MEASURE.isActive()) return;
         var selectedFeature = null;
@@ -60,6 +69,7 @@
             closeAll(false);
             return;
         }
+        closePointSelection();
         closeExcept(selectedKind, false);
         var handler = handlers.get(selectedKind);
         if (handler && typeof handler.openFeature === 'function') {
@@ -84,6 +94,7 @@
             if (!candidates.length) return;
             candidates.sort(function (a, b) { return a.distance - b.distance; });
             event.preventDefault();
+            closePointSelection();
             closeExcept(candidates[0].kind, false);
             candidates[0].activate(true);
         });

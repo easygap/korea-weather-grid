@@ -15,7 +15,7 @@
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-isoline-state.js?v=20260724.3"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/isoline.js?v=20260724.4"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/station-forecast.js?v=20260730.1"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/map-overlay-router.js?v=20260721.3"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/map-overlay-router.js?v=20260804.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/map-measure.js?v=20260721.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/severe-weather.js?v=20260803.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/air-quality.js?v=20260803.1"></script>

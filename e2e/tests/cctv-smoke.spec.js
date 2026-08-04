@@ -258,14 +258,18 @@ test('CCTV는 확대 후 조회되고 선택·재생·정리·경합을 안전�
     const rect = document.getElementById('map').getBoundingClientRect();
     return { x: rect.left + pixel[0], y: rect.top + pixel[1] };
   });
+  await page.evaluate(() => { document.querySelector('.coordinate_popup').style.display = 'block'; });
   await page.mouse.click(cctvPixel.x, cctvPixel.y);
   await expect(page.locator('#cctv_popup_title')).toHaveText('남산 CCTV');
+  await expect(page.locator('.coordinate_popup')).toBeHidden();
   expect(await page.locator('#air_popup:not([hidden]), #cctv_popup:not([hidden])').count()).toBe(1);
   await page.locator('#cctv_popup_close').click();
 
+  await page.evaluate(() => { document.querySelector('.coordinate_popup').style.display = 'block'; });
   await page.locator('#map').focus();
   await page.locator('#map').press('Enter');
   await expect(page.locator('#cctv_popup')).not.toHaveAttribute('hidden', '');
+  await expect(page.locator('.coordinate_popup')).toBeHidden();
   await expect(page.locator('#cctv_cluster_picker')).toBeVisible();
   await page.locator('#cctv_cluster_list button').first().click();
   await expect(page.locator('#cctv_video')).not.toHaveAttribute('src');
