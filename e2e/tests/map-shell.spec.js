@@ -101,6 +101,9 @@ test.describe('독립 지도 셸과 대표 지역 검색', () => {
     await input.press('Enter');
     await expect(page.locator('.station_modal')).toBeVisible();
     await expect(page.locator('#station_chart_title')).toContainText('서울');
+    await expect(page.locator('#suggestions')).toBeHidden();
+    await expect(input).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#station_search_status')).toHaveText('“서울특별시” 예보를 열었습니다.');
 
     await page.locator('.station_modal_close').click();
     const toggle = page.locator('#coordinate_search_toggle');

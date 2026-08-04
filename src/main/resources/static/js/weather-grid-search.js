@@ -75,7 +75,7 @@
                 view.animate({ center: center, zoom: targetZoom, duration: 420 });
             }
             input.value = '현재 위치';
-            closeSuggestions();
+            closeSuggestions(State.selectionStatus('현재 위치'));
             Location.openTimeline({
                 name: '현재 위치',
                 latitude: latitude,
@@ -102,17 +102,22 @@
             suggestionList.querySelectorAll('[role="option"]:not([aria-disabled="true"])'));
     }
 
-    function closeSuggestions() {
+    function closeSuggestions(nextStatus) {
+        var wasOpen = input.getAttribute('aria-expanded') === 'true'
+            || suggestionList.style.display !== 'none';
         suggestionList.style.display = 'none';
         input.setAttribute('aria-expanded', 'false');
         input.removeAttribute('aria-activedescendant');
         activeIndex = -1;
+        if (status && typeof nextStatus === 'string') status.textContent = nextStatus;
+        else if (status && wasOpen) status.textContent = '';
     }
 
     function openSuggestions() {
         if (!suggestionList.children.length) return;
         suggestionList.style.display = 'block';
         input.setAttribute('aria-expanded', 'true');
+        if (status) status.textContent = State.status(input.value, currentSuggestions.length);
     }
 
     function setActive(index) {
@@ -128,7 +133,7 @@
 
     function choose(station) {
         input.value = station.name;
-        closeSuggestions();
+        closeSuggestions(State.selectionStatus(station.name));
         Location.openStation(station.name, station.lat, station.lon);
     }
 

@@ -66,11 +66,17 @@
             : '“' + display + '”와 일치하는 대표 지역이 없습니다.';
     }
 
+    function selectionStatus(value) {
+        var display = String(value || '').trim();
+        return normalizeQuery(display) ? '“' + display + '” 예보를 열었습니다.' : '';
+    }
+
     return Object.freeze({
         normalizeQuery: normalizeQuery,
         suggestions: suggestions,
         exactMatch: exactMatch,
         moveIndex: moveIndex,
-        status: status
+        status: status,
+        selectionStatus: selectionStatus
     });
 }));

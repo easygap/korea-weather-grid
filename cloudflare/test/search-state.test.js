@@ -61,4 +61,6 @@ test('검색 상태 안내는 결과 수와 복구 가능한 빈 결과를 설�
     assert.equal(Search.status('서울', 2), '검색 제안 2개가 있습니다.');
     assert.equal(Search.status('없는 곳', 0), '“없는 곳”와 일치하는 대표 지역이 없습니다.');
     assert.equal(Search.status(' ', 0), '');
+    assert.equal(Search.selectionStatus('부산광역시'), '“부산광역시” 예보를 열었습니다.');
+    assert.equal(Search.selectionStatus(' '), '');
 });
