@@ -81,6 +81,16 @@ RC 절차에서는 사용하지 않는다. 새 RC에서 검증이 끝난 뒤 기
 `DATA_GO_KR_SERVICE_KEY`와 `ITS_API_KEY`에는 `%2B` 같은 percent-encoded 문자열이 아니라
 URL 인코딩 전 원문 키를 저장한다. gateway가 query 값을 정확히 한 번 인코딩한다.
 
+RC의 ITS 실시간 요청만 503이고 같은 키의 공식 `:9443/cctvInfo`가 로컬에서 정상일 때는
+공유 위치 스냅샷을 먼저 검증하고 초기화한다. 첫 명령은 읽기 전용이며, 출력의 `dropped`와
+`credentialIncluded`가 각각 `0`, `false`인지 확인한 뒤에만 두 번째 명령을 실행한다. 키 값은
+Node 프로세스 메모리에서만 읽고 Wrangler 인자·KV 값·출력에 포함하지 않는다.
+
+```powershell
+node scripts/seed-cctv-snapshots.mjs --key-file '<ITS 키 파일>'
+node scripts/seed-cctv-snapshots.mjs --key-file '<ITS 키 파일>' --apply
+```
+
 필수 Secret은 `KMA_API_AUTH_KEY`, `DATA_GO_KR_SERVICE_KEY`, `ITS_API_KEY` 세 개다.
 Cloudflare에는 `VWORLD_API_KEY`를 주입하지 않는다. VWorld 원점이 edge 서버 요청을
 허용하지 않으므로 런타임 설정은 비활성 계약을 반환하고 브라우저는 즉시 OpenStreetMap을
@@ -88,6 +98,9 @@ Cloudflare에는 `VWORLD_API_KEY`를 주입하지 않는다. VWorld 원점이 ed
 설정·타일 응답·로그에는 포함하지 않고 공급자 도메인 제한도 함께 유지한다.
 태풍·낙뢰는 `KMA_API_AUTH_KEY`, 기상특보는 `DATA_GO_KR_SERVICE_KEY`를 사용하며,
 `HAZARD_SNAPSHOTS` KV binding과 `*/5 * * * *` Cron이 `wrangler.jsonc`에 함께 있어야 한다.
+이 KV는 위험기상 외에 PoP 간 CCTV 위치 복구 스냅샷도 저장한다. CCTV 공유 스냅샷은 비어
+있지 않은 타일만 요청당 최대 1건·타일당 24시간에 최대 1회 쓰고 48시간 뒤 삭제되며, 조회
+시 24시간을 넘긴 값은 거부하고 유효한 값도 항상 `stale:true`로 반환해야 한다.
 업로드 직후 출력되는 `RC_VERSION_ID`를 기록하고,
 `wrangler deployments status`에서 직전 정상 버전 ID도 배포 전에 기록한다. RC 미리보기
 URL에서 아래 항목을 확인한다.
@@ -107,6 +120,8 @@ URL에서 아래 항목을 확인한다.
 - 3D 지연 로딩 중 버튼에 진행 상태가 표시되고 Escape 닫기 뒤 열기 버튼으로 포커스가 복귀하는지
 - CCTV 응답이 `stale:false`인지
 - 서로 다른 CCTV 3개의 HLS manifest와 첫 segment가 실제로 재생되는지
+- ITS를 실패시킨 냉시작 PoP에서는 24시간 이내 공유 위치가 `stale:true`로 표시되되 재생
+  버튼이 비활성화되고, 24시간을 넘긴 스냅샷은 503으로 닫히는지
 - 콘솔 오류와 실패한 정적 자산 요청이 없는지
 
 ## 4. 운영 반영

@@ -49,6 +49,28 @@ class RejectingCache {
     }
 }
 
+class MemoryKV {
+    constructor(entries = {}) {
+        this.entries = new Map(Object.entries(entries));
+        this.getCalls = 0;
+        this.putCalls = 0;
+        this.putOptions = [];
+    }
+
+    async get(key, type) {
+        this.getCalls++;
+        const value = this.entries.get(key);
+        if (value === undefined) return null;
+        return type === 'json' && typeof value === 'string' ? JSON.parse(value) : value;
+    }
+
+    async put(key, value, options) {
+        this.putCalls++;
+        this.putOptions.push(options);
+        this.entries.set(key, value);
+    }
+}
+
 const jsonResponse = (body) => new Response(JSON.stringify(body), {
     headers: { 'Content-Type': 'application/json' }
 });
@@ -201,6 +223,7 @@ function cctvPayload(items, dataCount = items.length) {
 }
 
 const CCTV_CIRCUIT_KEY = 'https://bora-cache.internal/its/cctv/v2/live-circuit';
+const CCTV_SHARED_KEY = 'bora:cctv:location:v1:75_253';
 
 test('HTTP 운영 요청은 경로와 쿼리를 보존해 HTTPS로 이동한다', async () => {
     const response = await worker.fetch(new Request(
@@ -2049,10 +2072,10 @@ test('cctv fails closed after a live ITS failure when no short stale cache exist
     assert.equal(cache.putCalls, 1, '여러 타일과 무관하게 전역 circuit만 한 번 쓴다');
     assert.deepEqual(cache.keys, [CCTV_CIRCUIT_KEY]);
     const circuitEntry = cache.entries.get(CCTV_CIRCUIT_KEY);
-    assert.equal(circuitEntry.headers.get('Cache-Control'), 'public, max-age=120');
+    assert.equal(circuitEntry.headers.get('Cache-Control'), 'public, max-age=60');
     const circuit = await circuitEntry.clone().json();
     assert.ok(circuit.retryAfter > Date.now());
-    assert.ok(circuit.retryAfter <= failureStartedAt + 121_000);
+    assert.ok(circuit.retryAfter <= failureStartedAt + 61_000);
 
     globalThis.fetch = async () => {
         upstreamCalls++;
@@ -2220,11 +2243,22 @@ test('24 base tiles collapse to 14 supertiles and stay within the shared Free su
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;
     const cache = new MemoryCache();
+    const kv = new MemoryKV();
     globalThis.caches = { default: cache };
     let upstreamCalls = 0;
-    globalThis.fetch = async () => {
+    globalThis.fetch = async (input) => {
         upstreamCalls++;
-        return jsonResponse(cctvPayload([]));
+        if (upstreamCalls === 1) return jsonResponse(cctvPayload([]));
+        const upstream = new URL(input.url ?? input);
+        const latitude = Number(upstream.searchParams.get('minY')) + 0.1;
+        const longitude = Number(upstream.searchParams.get('minX')) + 0.1;
+        return jsonResponse(cctvPayload([{
+            cctvname: `쿼터 CCTV ${upstreamCalls}`,
+            coordy: String(latitude), coordx: String(longitude),
+            cctvformat: 'HLS', cctvtype: 4,
+            cctvurl: 'https://cctvsec.ktict.co.kr/live/quota.m3u8',
+            roadsectionid: `ROAD-QUOTA-${upstreamCalls}`
+        }]));
     };
     t.after(() => {
         globalThis.fetch = originalFetch;
@@ -2233,21 +2267,113 @@ test('24 base tiles collapse to 14 supertiles and stay within the shared Free su
 
     // 0.25° base tile 2×12=24. 두 축 모두 홀수 index에서 시작해 0.5° supertile 최악값 2×7=14다.
     const response = await worker.fetch(
-        request('/api/traffic/cameras?minLat=37.25&maxLat=37.75&minLon=126.25&maxLon=129.25'), cctvEnv(), {});
+        request('/api/traffic/cameras?minLat=37.25&maxLat=37.75&minLon=126.25&maxLon=129.25'),
+        cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv }), {});
     assert.equal(response.status, 200);
-    assert.equal((await response.json()).cctvs.length, 0);
+    assert.equal((await response.json()).cctvs.length, 6, '빈 첫 타일과 요청 bbox 밖 표본을 독립적으로 제외한다');
     assert.equal(cache.matchCalls, 15, '전역 circuit 1회 + supertile 14회');
     assert.equal(cache.putCalls, 14);
     assert.equal(upstreamCalls, 14);
-    assert.equal(cache.matchCalls + cache.putCalls + upstreamCalls, 43);
-    assert.ok(cache.matchCalls + cache.putCalls + upstreamCalls <= 50);
+    assert.equal(kv.getCalls, 1, '한 요청에서는 첫 성공 supertile만 공유 상태를 확인한다');
+    assert.equal(kv.putCalls, 1, '첫 성공 타일이 비어 있어도 다음 비어 있지 않은 타일을 한 번만 쓴다');
+    assert.equal(kv.putOptions[0].expirationTtl, 2 * 24 * 3600);
+    const operations = cache.matchCalls + cache.putCalls + upstreamCalls + kv.getCalls + kv.putCalls;
+    assert.equal(operations, 45);
+    assert.ok(operations <= 50);
     assert.ok([...cache.entries.keys()].every((key) => key.includes('/its/cctv/v2/') && !key.includes('apiKey')));
-    assert.ok([...cache.entries.values()].every((entry) => entry.headers.get('Cache-Control') === 'public, max-age=300'));
+    assert.ok([...cache.entries.values()].every((entry) => entry.headers.get('Cache-Control') === 'public, max-age=1800'));
     const cachedBodies = await Promise.all([...cache.entries.values()].map((entry) => entry.clone().text()));
     assert.ok(cachedBodies.every((body) => !body.includes('its-test-key')));
 });
 
+test('cctv does not spend KV writes on empty upstream tiles', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    globalThis.caches = { default: new MemoryCache() };
+    globalThis.fetch = async () => jsonResponse(cctvPayload([]));
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const kv = new MemoryKV();
+    const response = await worker.fetch(request(
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=126.75&maxLon=126.95'),
+    cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv }), {});
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).cctvs.length, 0);
+    assert.equal(kv.getCalls, 0);
+    assert.equal(kv.putCalls, 0);
+});
+
+test('cctv refreshes a shared tile at most once per day', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    globalThis.caches = { default: new MemoryCache() };
+    globalThis.fetch = async () => jsonResponse(cctvPayload([{
+        cctvname: '신규 CCTV', coordy: '37.6', coordx: '126.9',
+        cctvformat: 'HLS', cctvtype: 4,
+        cctvurl: 'https://cctvsec.ktict.co.kr/live/new.m3u8',
+        roadsectionid: 'ROAD-NEW'
+    }]));
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const existing = {
+        fetchedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+        truncated: false,
+        cctvs: [{
+            id: 'ROAD-EXISTING|기존 CCTV@37.6000000,126.9000000',
+            name: '기존 CCTV', latitude: 37.6, longitude: 126.9,
+            streamUrl: 'https://cctvsec.ktict.co.kr/live/existing.m3u8',
+            format: 'HLS', resolution: null, fileCreatedAt: null, roadSectionId: 'ROAD-EXISTING'
+        }]
+    };
+    const kv = new MemoryKV({ [CCTV_SHARED_KEY]: JSON.stringify(existing) });
+    const response = await worker.fetch(request(
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=126.75&maxLon=126.95'),
+    cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv }), {});
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).stale, false);
+    assert.equal(kv.getCalls, 1);
+    assert.equal(kv.putCalls, 0);
+    assert.equal(kv.entries.get(CCTV_SHARED_KEY), JSON.stringify(existing));
+});
+
 test('14 failed live CCTV supertiles fail closed within the Free subrequest quota', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    const cache = new MemoryCache();
+    const kv = new MemoryKV();
+    globalThis.caches = { default: cache };
+    let upstreamCalls = 0;
+    globalThis.fetch = async () => {
+        upstreamCalls++;
+        return new Response('upstream unavailable', { status: 503 });
+    };
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const response = await worker.fetch(request(
+        '/api/traffic/cameras?minLat=37.25&maxLat=37.75&minLon=126.25&maxLon=129.25'),
+    cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv }), {});
+    assert.equal(response.status, 503);
+    assert.equal(cache.matchCalls, 15, '전역 circuit 1회 + supertile 14회');
+    assert.equal(cache.putCalls, 1, '실패한 14개 타일 대신 전역 circuit을 한 번만 쓴다');
+    assert.equal(upstreamCalls, 14);
+    assert.equal(kv.getCalls, 14, '각 실패 supertile의 공유 복구 상태를 한 번씩 확인한다');
+    assert.equal(kv.putCalls, 0);
+    assert.deepEqual(cache.keys, [CCTV_CIRCUIT_KEY]);
+    const operations = cache.matchCalls + cache.putCalls + upstreamCalls + kv.getCalls + kv.putCalls;
+    assert.equal(operations, 44);
+    assert.ok(operations <= 50);
+});
+
+test('cctv restores validated locations from KV across cold PoPs without enabling stale playback', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;
     const cache = new MemoryCache();
@@ -2262,16 +2388,69 @@ test('14 failed live CCTV supertiles fail closed within the Free subrequest quot
         globalThis.caches = originalCaches;
     });
 
+    const fetchedAt = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
+    const sharedSnapshot = {
+        fetchedAt,
+        truncated: false,
+        cctvs: [{
+            id: 'ROAD-SHARED|공유 CCTV@37.6000000,126.9000000',
+            name: '공유 CCTV', latitude: 37.6, longitude: 126.9,
+            streamUrl: 'https://cctvsec.ktict.co.kr/live/shared.m3u8',
+            format: 'HLS', resolution: null, fileCreatedAt: null, roadSectionId: 'ROAD-SHARED'
+        }]
+    };
+    const kv = new MemoryKV({ [CCTV_SHARED_KEY]: JSON.stringify(sharedSnapshot) });
+    const cctvRequest = request(
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=126.75&maxLon=126.95');
+    const env = cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv });
+
+    const first = await worker.fetch(cctvRequest.clone(), env, {});
+    assert.equal(first.status, 200);
+    const firstBody = await first.json();
+    assert.equal(firstBody.stale, true, '공유 위치는 오래된 HLS 자동 재생을 막도록 stale이어야 한다');
+    assert.equal(firstBody.partial, false);
+    assert.equal(firstBody.fetchedAt, fetchedAt);
+    assert.equal(firstBody.cctvs[0].name, '공유 CCTV');
+    assert.equal(upstreamCalls, 1);
+    assert.equal(kv.getCalls, 1);
+    assert.equal(kv.putCalls, 0);
+    assert.equal(cache.entries.get(CCTV_CIRCUIT_KEY).headers.get('Cache-Control'), 'public, max-age=60');
+
+    const second = await worker.fetch(cctvRequest.clone(), env, {});
+    assert.equal(second.status, 200);
+    assert.equal((await second.json()).stale, true);
+    assert.equal(upstreamCalls, 1, '열린 circuit에서는 실패한 ITS를 다시 호출하지 않는다');
+    assert.equal(kv.getCalls, 2, '새 PoP 복구 계층은 circuit 중에도 검증해서 읽는다');
+});
+
+test('cctv rejects shared snapshots older than one day', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    globalThis.caches = { default: new MemoryCache() };
+    globalThis.fetch = async () => new Response('upstream unavailable', { status: 503 });
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const kv = new MemoryKV({
+        [CCTV_SHARED_KEY]: JSON.stringify({
+            fetchedAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString(),
+            truncated: false,
+            cctvs: [{
+                id: 'ROAD-OLD|오래된 CCTV@37.6000000,126.9000000',
+                name: '오래된 CCTV', latitude: 37.6, longitude: 126.9,
+                streamUrl: 'https://cctvsec.ktict.co.kr/live/old.m3u8',
+                format: 'HLS', resolution: null, fileCreatedAt: null, roadSectionId: 'ROAD-OLD'
+            }]
+        })
+    });
     const response = await worker.fetch(request(
-        '/api/traffic/cameras?minLat=37.25&maxLat=37.75&minLon=126.25&maxLon=129.25'),
-    cctvEnv('its-test-key'), {});
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=126.75&maxLon=126.95'),
+    cctvEnv('its-test-key', { HAZARD_SNAPSHOTS: kv }), {});
     assert.equal(response.status, 503);
-    assert.equal(cache.matchCalls, 15, '전역 circuit 1회 + supertile 14회');
-    assert.equal(cache.putCalls, 1, '실패한 14개 타일 대신 전역 circuit을 한 번만 쓴다');
-    assert.equal(upstreamCalls, 14);
-    assert.deepEqual(cache.keys, [CCTV_CIRCUIT_KEY]);
-    assert.equal(cache.matchCalls + cache.putCalls + upstreamCalls, 30);
-    assert.ok(cache.matchCalls + cache.putCalls + upstreamCalls <= 50);
+    assert.equal(kv.getCalls, 1);
+    assert.equal(kv.putCalls, 0);
 });
 
 test('cctv returns validated partial results without opening the global circuit', async (t) => {
@@ -2355,7 +2534,7 @@ test('cctv aborts stalled supertile requests at the six-second upstream timeout'
     assert.equal(cache.putCalls, 1, 'timeout은 전역 circuit 한 건으로만 기록한다');
 });
 
-test('cctv serves a five-minute stale supertile and opens one two-minute global circuit', async (t) => {
+test('cctv serves a thirty-minute stale supertile and opens one one-minute global circuit', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;
     const cache = new MemoryCache();
@@ -2371,7 +2550,7 @@ test('cctv serves a five-minute stale supertile and opens one two-minute global 
     });
 
     const stateKey = 'https://bora-cache.internal/its/cctv/v2/75_253/state';
-    const fetchedAtMs = Date.now() - 2 * 60 * 1000;
+    const fetchedAtMs = Date.now() - 10 * 60 * 1000;
     const fetchedAt = new Date(fetchedAtMs).toISOString();
     const cachedState = {
         snapshot: {
@@ -2385,13 +2564,13 @@ test('cctv serves a five-minute stale supertile and opens one two-minute global 
             }]
         },
         freshUntil: fetchedAtMs + 60 * 1000,
-        staleUntil: fetchedAtMs + 5 * 60 * 1000,
+        staleUntil: fetchedAtMs + 30 * 60 * 1000,
         retryAfter: 0
     };
     await cache.put(stateKey, new Response(JSON.stringify(cachedState), {
         headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=300'
+            'Cache-Control': 'public, max-age=1800'
         }
     }));
 
@@ -2412,10 +2591,10 @@ test('cctv serves a five-minute stale supertile and opens one two-minute global 
     const unchangedState = await cache.entries.get(stateKey).clone().json();
     assert.equal(unchangedState.retryAfter, 0, '실패 상태를 supertile별로 다시 쓰지 않는다');
     assert.equal(unchangedState.snapshot.fetchedAt, fetchedAt);
-    assert.equal(cache.entries.get(stateKey).headers.get('Cache-Control'), 'public, max-age=300');
+    assert.equal(cache.entries.get(stateKey).headers.get('Cache-Control'), 'public, max-age=1800');
     const circuit = await cache.entries.get(CCTV_CIRCUIT_KEY).clone().json();
     assert.ok(circuit.retryAfter > Date.now());
-    assert.equal(cache.entries.get(CCTV_CIRCUIT_KEY).headers.get('Cache-Control'), 'public, max-age=120');
+    assert.equal(cache.entries.get(CCTV_CIRCUIT_KEY).headers.get('Cache-Control'), 'public, max-age=60');
     assert.equal(cache.putCalls, 2, 'fixture 상태 1회 + 전역 circuit 1회');
 });
 
@@ -2512,7 +2691,7 @@ test('cctv fails closed for a missing secret, malformed schema or response over 
     assert.equal((await worker.fetch(request(path), cctvEnv(), {})).status, 503);
     assert.equal(upstreamCalls, 1);
     const failureOnly = [...failedCache.entries.values()][0];
-    assert.equal(failureOnly.headers.get('Cache-Control'), 'public, max-age=120');
+    assert.equal(failureOnly.headers.get('Cache-Control'), 'public, max-age=60');
     assert.ok((await failureOnly.clone().json()).retryAfter > Date.now());
     assert.deepEqual(failedCache.keys, [CCTV_CIRCUIT_KEY]);
 

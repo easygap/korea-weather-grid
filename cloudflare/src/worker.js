@@ -1062,9 +1062,18 @@ const CCTV = {
     MAX_UPSTREAM_ITEMS: 5000,
     MAX_DECLARED_COUNT: 100000,
     FRESH_TTL: 60,
-    STALE_TTL: 300,
-    // ITS 장애를 PoP 전체에서 2분간 공유해 요청마다 6초 timeout을 반복하지 않는다.
-    CIRCUIT_FAILURE_TTL: 120,
+    // 같은 PoP에서는 짧은 ITS 장애 동안 위치를 유지하되 오래된 영상은 재생하지 않는다.
+    STALE_TTL: 30 * 60,
+    // 무중단 배포 중 직전 버전이 만든 5분 상태도 남은 유효시간까지 읽는다.
+    LEGACY_STALE_TTL: 5 * 60,
+    // Cache API는 PoP별이므로 KV에는 위치 복구용 스냅샷을 하루만 허용한다. 공유
+    // 스냅샷은 항상 stale로 반환해 만료된 HLS 주소가 자동 재생되지 않게 한다.
+    SHARED_STALE_TTL: 24 * 3600,
+    SHARED_REFRESH_TTL: 24 * 3600,
+    SHARED_EXPIRATION_TTL: 2 * 24 * 3600,
+    SHARED_FUTURE_TOLERANCE_MS: 5 * 60 * 1000,
+    // 공개 503의 Retry-After와 맞춰 불필요한 대기 시간을 만들지 않는다.
+    CIRCUIT_FAILURE_TTL: 60,
     MAX_RESPONSE_BYTES: 2 * 1024 * 1024,
     // live ITS가 느려도 요청 전체가 오래 점유되지 않게 제한한다.
     UPSTREAM_TIMEOUT_MS: 6000,
@@ -1812,8 +1821,9 @@ function validateCachedCctvState(value, tile) {
     const snapshot = validateCachedCctvSnapshot(value.snapshot, tile);
     if (!snapshot) return null;
     const fetchedAt = Date.parse(snapshot.fetchedAt);
-    if (value.freshUntil !== fetchedAt + CCTV.FRESH_TTL * 1000
-        || value.staleUntil !== fetchedAt + CCTV.STALE_TTL * 1000) return null;
+    const validStaleUntil = value.staleUntil === fetchedAt + CCTV.STALE_TTL * 1000
+        || value.staleUntil === fetchedAt + CCTV.LEGACY_STALE_TTL * 1000;
+    if (value.freshUntil !== fetchedAt + CCTV.FRESH_TTL * 1000 || !validStaleUntil) return null;
     return {
         snapshot,
         freshUntil: value.freshUntil,
@@ -1860,6 +1870,62 @@ async function putItsCachedJson(path, value, ttl) {
 
 const cctvStateCachePath = (tile) => `/cctv/v2/${tile.latIndex}_${tile.lonIndex}/state`;
 const CCTV_CIRCUIT_CACHE_PATH = '/cctv/v2/live-circuit';
+const CCTV_SHARED_SNAPSHOT_PREFIX = 'bora:cctv:location:v1:';
+const cctvSharedSnapshotKey = (tile) =>
+    `${CCTV_SHARED_SNAPSHOT_PREFIX}${tile.latIndex}_${tile.lonIndex}`;
+
+function cctvSnapshotKv(env) {
+    const binding = env?.HAZARD_SNAPSHOTS;
+    return binding && typeof binding.get === 'function' && typeof binding.put === 'function'
+        ? binding : null;
+}
+
+async function readRawSharedCctvSnapshot(env, tile) {
+    const kv = cctvSnapshotKv(env);
+    if (!kv) return null;
+    try {
+        const value = await kv.get(cctvSharedSnapshotKey(tile), 'json');
+        const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+        return validateCachedCctvSnapshot(parsed, tile);
+    } catch {
+        // KV는 복구 계층이므로 조회 실패가 실시간 ITS 경로까지 막으면 안 된다.
+        return null;
+    }
+}
+
+async function readSharedCctvSnapshot(env, tile) {
+    const snapshot = await readRawSharedCctvSnapshot(env, tile);
+    if (!snapshot) return null;
+    const age = Date.now() - Date.parse(snapshot.fetchedAt);
+    if (age < -CCTV.SHARED_FUTURE_TOLERANCE_MS
+        || age > CCTV.SHARED_STALE_TTL * 1000) return null;
+    return snapshot;
+}
+
+async function persistSharedCctvSnapshot(env, tile, snapshot) {
+    const kv = cctvSnapshotKv(env);
+    const validated = validateCachedCctvSnapshot(snapshot, tile);
+    // 빈 타일은 장애 시 보여 줄 위치가 없고 전국 격자 전체를 순회하는 요청이 KV 쓰기
+    // 한도를 소진할 수 있으므로 공유 저장 대상에서 제외한다.
+    if (!kv || !validated || validated.cctvs.length === 0) return false;
+
+    // 위험기상 5분 Cron과 같은 Free KV를 사용한다. 기존 값이 하루 이내면 쓰지 않고,
+    // 한 요청에서도 첫 성공 타일만 이 함수에 전달해 일일 write 한도를 보호한다.
+    const existing = await readRawSharedCctvSnapshot(env, tile);
+    if (existing) {
+        const age = Date.now() - Date.parse(existing.fetchedAt);
+        if (age >= -CCTV.SHARED_FUTURE_TOLERANCE_MS
+            && age < CCTV.SHARED_REFRESH_TTL * 1000) return false;
+    }
+    try {
+        await kv.put(cctvSharedSnapshotKey(tile), JSON.stringify(validated), {
+            expirationTtl: CCTV.SHARED_EXPIRATION_TTL
+        });
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 function validateCachedCctvCircuit(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)
@@ -1929,15 +1995,22 @@ async function loadCctvSupertile(env, tile, parentSignal, deadlineAt,
     const now = Date.now();
     if (state?.snapshot && now < state.freshUntil) return { ...state.snapshot, stale: false };
 
+    const sharedFallback = async () => {
+        ensureCctvDeadline(parentSignal, deadlineAt);
+        const snapshot = await readSharedCctvSnapshot(env, tile);
+        ensureCctvDeadline(parentSignal, deadlineAt);
+        return snapshot ? { ...snapshot, stale: true } : null;
+    };
+
     // 잘못된 키 요청이 타일의 negative cache를 만들어 정상 키 요청까지 막지 않게 한다.
     if (!itsApiUrl(env, tile)) return null;
     if (state && now < state.retryAfter) {
         if (state.snapshot && now < state.staleUntil) return { ...state.snapshot, stale: true };
-        return null;
+        return await sharedFallback();
     }
     if (circuitOpen) {
         if (state?.snapshot && now < state.staleUntil) return { ...state.snapshot, stale: true };
-        return null;
+        return await sharedFallback();
     }
 
     let refreshError = null;
@@ -1946,7 +2019,7 @@ async function loadCctvSupertile(env, tile, parentSignal, deadlineAt,
         ensureCctvDeadline(parentSignal, deadlineAt);
         const snapshot = await fetchCctvSupertile(env, tile, parentSignal, deadlineAt);
         if (snapshot) {
-            markLiveSuccess();
+            markLiveSuccess(tile, snapshot);
             ensureCctvDeadline(parentSignal, deadlineAt);
             const fetchedAt = Date.parse(snapshot.fetchedAt);
             await putItsCachedJson(statePath, {
@@ -1966,7 +2039,7 @@ async function loadCctvSupertile(env, tile, parentSignal, deadlineAt,
 
         // 실패 상태는 타일마다 쓰지 않는다. 요청이 끝날 때 PoP 전역 circuit을 한 번만
         // 저장해, 14개 supertile 최악 경로도 Free 플랜 50 subrequest 안에 둔다.
-        return null;
+        return await sharedFallback();
     } catch (error) {
         if (parentSignal?.aborted || Date.now() >= deadlineAt) throw new CctvDeadlineError();
         if (error instanceof RateLimitExceededError || error instanceof WeatherUnavailableError) refreshError = error;
@@ -1975,6 +2048,8 @@ async function loadCctvSupertile(env, tile, parentSignal, deadlineAt,
 
     const staleAt = Date.now();
     if (state?.snapshot && staleAt < state.staleUntil) return { ...state.snapshot, stale: true };
+    const sharedSnapshot = await sharedFallback();
+    if (sharedSnapshot) return sharedSnapshot;
     if (refreshError) throw refreshError;
     return null;
 }
@@ -2002,7 +2077,7 @@ async function mapCctvSupertiles(tiles, mapper, controller, deadlineAt) {
     return results;
 }
 
-async function buildCctv(env, bounds, supertiles) {
+async function buildCctv(env, bounds, supertiles, ctx) {
     const hasValidApiKey = Boolean(supertiles[0] && itsApiUrl(env, supertiles[0]));
     if (!hasValidApiKey) throw new WeatherUnavailableError();
 
@@ -2015,8 +2090,14 @@ async function buildCctv(env, bounds, supertiles) {
     const circuitOpen = Boolean(circuitState && Date.now() < circuitState.retryAfter);
     let firstLiveFailureAt = 0;
     let liveSuccessCount = 0;
+    let sharedWriteCandidate = null;
     const markLiveFailure = () => { firstLiveFailureAt ||= Date.now(); };
-    const markLiveSuccess = () => { liveSuccessCount++; };
+    const markLiveSuccess = (tile, snapshot) => {
+        liveSuccessCount++;
+        if (!sharedWriteCandidate && snapshot.cctvs.length > 0) {
+            sharedWriteCandidate = { tile, snapshot };
+        }
+    };
     let tileSnapshots;
     try {
         tileSnapshots = await mapCctvSupertiles(supertiles,
@@ -2030,11 +2111,17 @@ async function buildCctv(env, bounds, supertiles) {
     } finally {
         clearTimeout(deadline);
         // 일부 supertile만 실패한 경우에는 ITS 자체가 살아 있으므로 전역 circuit을
-        // 열지 않는다. 그렇지 않으면 정상 응답 직후에도 미캐시 지역이 2분간 막힌다.
+        // 열지 않는다. 그렇지 않으면 정상 응답 직후에도 미캐시 지역이 1분간 막힌다.
         if (firstLiveFailureAt && liveSuccessCount === 0) {
             await putItsCachedJson(CCTV_CIRCUIT_CACHE_PATH, {
                 retryAfter: firstLiveFailureAt + CCTV.CIRCUIT_FAILURE_TTL * 1000
             }, CCTV.CIRCUIT_FAILURE_TTL);
+        }
+        if (sharedWriteCandidate) {
+            const operation = persistSharedCctvSnapshot(env,
+                sharedWriteCandidate.tile, sharedWriteCandidate.snapshot);
+            if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(operation);
+            else await operation;
         }
     }
     // 일부 supertile 장애가 정상 지역까지 모두 가리지 않게 한다. 각 snapshot은
@@ -2434,6 +2521,8 @@ async function serveSevereWeather(request, env, ctx, kind, minutes = null) {
     return response;
 }
 
+export { normalizeCctvPayload, validateCachedCctvSnapshot };
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -2564,7 +2653,7 @@ export default {
                     if (!supertiles) return serviceUnavailable();
                     if (!itsApiUrl(env, supertiles[0])) return serviceUnavailable();
                     await enforcePublicEnvironmentalLimit(request, env, 'traffic-cameras');
-                    const result = await buildCctv(env, bounds, supertiles);
+                    const result = await buildCctv(env, bounds, supertiles, ctx);
                     return json(result, { headers: { 'Cache-Control': 'no-store' } });
                 }
 
