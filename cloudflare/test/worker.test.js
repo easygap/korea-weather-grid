@@ -2274,17 +2274,19 @@ test('14 failed live CCTV supertiles fail closed within the Free subrequest quot
     assert.ok(cache.matchCalls + cache.putCalls + upstreamCalls <= 50);
 });
 
-test('cctv returns validated partial results when only some supertiles fail', async (t) => {
+test('cctv returns validated partial results without opening the global circuit', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;
     const cache = new MemoryCache();
     globalThis.caches = { default: cache };
     let upstreamCalls = 0;
-    globalThis.fetch = async () => {
+    globalThis.fetch = async (input) => {
         upstreamCalls++;
         if (upstreamCalls === 2) return new Response('upstream unavailable', { status: 503 });
+        const upstreamUrl = new URL(input.url ?? input);
+        const longitude = Number(upstreamUrl.searchParams.get('minX')) + 0.1;
         return jsonResponse(cctvPayload([{
-            cctvname: '서울 부분 응답 CCTV', coordy: '37.6', coordx: '126.9',
+            cctvname: '서울 부분 응답 CCTV', coordy: '37.6', coordx: String(longitude),
             cctvformat: 'HLS', cctvtype: 4,
             cctvurl: 'https://cctvsec.ktict.co.kr/live/partial.m3u8',
             roadsectionid: 'ROAD-PARTIAL'
@@ -2306,8 +2308,17 @@ test('cctv returns validated partial results when only some supertiles fail', as
     assert.equal(body.cctvs[0].name, '서울 부분 응답 CCTV');
     assert.equal(upstreamCalls, 2);
     assert.equal(cache.matchCalls, 3, '전역 circuit 1회 + supertile 2회');
-    assert.equal(cache.putCalls, 2, '정상 snapshot과 전역 circuit을 각각 한 번 저장한다');
-    assert.ok(cache.keys.includes(CCTV_CIRCUIT_KEY));
+    assert.equal(cache.putCalls, 1, '성공한 supertile snapshot만 저장한다');
+    assert.ok(!cache.keys.includes(CCTV_CIRCUIT_KEY));
+
+    const followUp = await worker.fetch(request(
+        '/api/traffic/cameras?minLat=37.5&maxLat=37.7&minLon=127.5&maxLon=127.7'),
+    cctvEnv('its-test-key'), {});
+    assert.equal(followUp.status, 200, '부분 실패가 미캐시 지역의 후속 요청을 막으면 안 된다');
+    assert.equal((await followUp.json()).cctvs.length, 1);
+    assert.equal(upstreamCalls, 3);
+    assert.equal(cache.matchCalls, 5);
+    assert.equal(cache.putCalls, 2);
 });
 
 test('cctv aborts stalled supertile requests at the six-second upstream timeout', async (t) => {

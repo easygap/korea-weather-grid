@@ -191,7 +191,8 @@
 
 | 무엇 | 출처 |
 |---|---|
-| 기상 예보 · 위험기상 | [기상청 API 허브](https://apihub.kma.go.kr/) |
+| 기상 예보 · 태풍 · 낙뢰 | [기상청 API 허브](https://apihub.kma.go.kr/) |
+| 기상특보 | [공공데이터포털 기상청_기상특보 조회서비스](https://www.data.go.kr/data/15000415/openapi.do) |
 | 대기질 | [한국환경공단 에어코리아](https://www.airkorea.or.kr/) |
 | 도로 CCTV | [국가교통정보센터 ITS](https://www.its.go.kr/opendata/) |
 | 배경지도 · 도로 | [브이월드](https://www.vworld.kr/), [OpenStreetMap 기여자](https://www.openstreetmap.org/copyright) |
@@ -223,7 +224,7 @@ WEATHER_GRID_DEMO_MODE=true ./gradlew bootRun --args='--server.port=8080'
 | 환경변수 | 쓰이는 곳 | 구분 |
 |---|---|---|
 | `KMA_API_AUTH_KEY` | 기상청 격자 예보·위험기상 | 필수 |
-| `DATA_GO_KR_SERVICE_KEY` | 에어코리아 대기질 | 필수 |
+| `DATA_GO_KR_SERVICE_KEY` | 지점예보·에어코리아 대기질·기상특보 | 필수 |
 | `ITS_API_KEY` | 도로 CCTV | 필수 |
 | `VWORLD_API_KEY` | 브이월드 배경지도·벡터 도로 | 선택 |
 

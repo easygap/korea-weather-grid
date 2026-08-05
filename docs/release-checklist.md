@@ -67,13 +67,14 @@ Secret 값은 출력하거나 파일에 적지 않고 이름만 확인한다.
 ```bash
 cd cloudflare
 npx wrangler secret list
+npx wrangler versions secret put KMA_API_AUTH_KEY
 npx wrangler versions secret put DATA_GO_KR_SERVICE_KEY
 npx wrangler versions secret put ITS_API_KEY
 npm run build
 npm run upload:rc
 ```
 
-앞의 두 필수 `versions secret put`은 키를 재발급한 경우에만 실행하며 값을 대화·명령행 인자·셸
+앞의 세 필수 `versions secret put`은 키를 재발급한 경우에만 실행하며 값을 대화·명령행 인자·셸
 히스토리에 남기지 않는다. 일반 `wrangler secret put`은 즉시 운영 배포를 만들 수 있으므로
 RC 절차에서는 사용하지 않는다. 새 RC에서 검증이 끝난 뒤 기존 키를 폐기한다.
 `DATA_GO_KR_SERVICE_KEY`와 `ITS_API_KEY`에는 `%2B` 같은 percent-encoded 문자열이 아니라
@@ -84,8 +85,8 @@ Cloudflare에는 `VWORLD_API_KEY`를 주입하지 않는다. VWorld 원점이 ed
 허용하지 않으므로 런타임 설정은 비활성 계약을 반환하고 브라우저는 즉시 OpenStreetMap을
 사용한다. Spring 배포에서 VWorld를 사용할 때만 키를 동일 출처 프록시에 주입하며 런타임
 설정·타일 응답·로그에는 포함하지 않고 공급자 도메인 제한도 함께 유지한다.
-위험기상은 별도 Secret 없이 `KMA_API_AUTH_KEY`를 사용하며, `HAZARD_SNAPSHOTS` KV
-binding과 `*/5 * * * *` Cron이 `wrangler.jsonc`에 함께 있어야 한다.
+태풍·낙뢰는 `KMA_API_AUTH_KEY`, 기상특보는 `DATA_GO_KR_SERVICE_KEY`를 사용하며,
+`HAZARD_SNAPSHOTS` KV binding과 `*/5 * * * *` Cron이 `wrangler.jsonc`에 함께 있어야 한다.
 업로드 직후 출력되는 `RC_VERSION_ID`를 기록하고,
 `wrangler deployments status`에서 직전 정상 버전 ID도 배포 전에 기록한다. RC 미리보기
 URL에서 아래 항목을 확인한다.

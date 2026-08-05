@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import worker from '../src/worker.js';
 import {
+    parseDataGoWarningStatus,
     parseLightningText,
     parseTyphoonText,
     parseWarningText,
@@ -63,6 +64,12 @@ const TYPHOON_SOURCE = `#START7777
 1,2026,5,12,24,202607210000,202607220000,28.0,128.0,NW,18,975,32,280,90,120,NE,220,NE,70,제주 남쪽 해상
 #7777END`;
 
+const CURRENT_TYPHOON_SOURCE = `#START7777
+# FT   YY  TYP  SEQ  TMD TYP_TM(UTC)  FT_TM(UTC) LAT LON DIR SP PS WS RAD15 RAD25 RAD ED15 ER15 LOC------------------------------ED25 ER25
+0,2026,13,36,0,202608050000,202608050000,25.5,138.2,W,23,950,43,450,140,0,SW,350,일본 오키나와 동쪽 약 1030 km 부근 해상,SW,110,=
+1,2026,13,0,12,202608050000,202608051200,25.7,136.0,W,18,950,43,450,140,40,SW,350,일본 오키나와 동쪽 약 810 km 부근 해상,SW,110,=
+#7777END`;
+
 const WARNING_SOURCE = `#START7777
 # REG_UP,REG_UP_KO,REG_ID,REG_KO,TM_FC,TM_EF,WRN,LVL,CMD
 L1000000,서울·인천·경기,L1010100,서울,202607211000,202607211100,R,2,6
@@ -73,6 +80,22 @@ const LIGHTNING_SOURCE = `#START7777
 20260721104500 127.1000 37.4000 8.2 C 4.5
 20260721104500 140.0000 37.4000 7.0 G 0.0
 #7777END`;
+
+const DATA_GO_WARNING_STATUS = {
+    response: {
+        header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+        body: {
+            totalCount: 1,
+            items: { item: [{
+                tmFc: '202608042200',
+                tmEf: '202608051100',
+                t6: 'o 폭염중대경보 : 서울, 경기 동부\r\no 폭염주의보 : 제주도 산지',
+                t7: 'o 없음',
+                other: 'o 없음'
+            }] }
+        }
+    }
+};
 
 test('pure parsers normalize KMA typhoon, warning, and lgt_pnt rows', () => {
     const typhoon = parseTyphoonText(TYPHOON_SOURCE);
@@ -97,6 +120,36 @@ test('pure parsers normalize KMA typhoon, warning, and lgt_pnt rows', () => {
     assert.equal(lightning.strikes[1].altitudeKm, 4.5);
 });
 
+test('current APIHub typhoon rows and data.go warning status normalize without losing fields', () => {
+    const typhoon = parseTyphoonText(CURRENT_TYPHOON_SOURCE);
+    assert.equal(typhoon.active.length, 1);
+    assert.equal(typhoon.active[0].analysisTime, '2026-08-05T00:00:00Z');
+    assert.equal(typhoon.active[0].track[0].location, '일본 오키나와 동쪽 약 1030 km 부근 해상');
+    assert.equal(typhoon.active[0].track[1].stormException.radiusKm, 110);
+
+    const status = parseDataGoWarningStatus(DATA_GO_WARNING_STATUS);
+    assert.equal(status.warnings.length, 2);
+    assert.equal(status.warnings[0].phenomenon, '폭염');
+    assert.equal(status.warnings[0].level, '중대경보');
+    assert.equal(status.warnings[0].regionName, '서울, 경기 동부');
+    assert.equal(status.warnings[0].issuedAt, '2026-08-04T22:00:00+09:00');
+    assert.equal(status.warnings[0].effectiveAt, '2026-08-05T11:00:00+09:00');
+});
+
+test('data.go warning status distinguishes an empty result from malformed payloads', () => {
+    assert.deepEqual(parseDataGoWarningStatus({
+        response: { header: { resultCode: '00' }, body: { totalCount: 0, items: null } }
+    }), { warnings: [] });
+    assert.equal(parseDataGoWarningStatus({
+        response: { header: { resultCode: '03' }, body: { totalCount: 0 } }
+    }), null);
+    assert.equal(parseDataGoWarningStatus({
+        response: { header: { resultCode: '00' }, body: {
+            totalCount: 1, items: { item: { tmFc: '202608042200', t6: '형식이 바뀐 응답' } }
+        } }
+    }), null);
+});
+
 test('malformed non-comment lightning rows are not mistaken for a valid empty result', () => {
     assert.equal(parseLightningText('#START7777\nnot-a-lightning-row\n#7777END'), null);
     assert.deepEqual(parseLightningText('#START7777\n#7777END'), { strikes: [], truncated: false });
@@ -106,8 +159,13 @@ test('scheduled refresh uses bounded deterministic KMA queries and writes indepe
     const originalFetch = globalThis.fetch;
     const urls = [];
     globalThis.fetch = async (input) => {
-        const url = new URL(input);
+        const url = new URL(input.url ?? input);
         urls.push(url);
+        if (url.pathname.endsWith('/getPwnStatus')) {
+            return new Response(JSON.stringify(DATA_GO_WARNING_STATUS), {
+                headers: { 'Content-Type': 'application/json; charset=utf-8' }
+            });
+        }
         const body = url.pathname.endsWith('/typ_now.php') ? TYPHOON_SOURCE
             : url.pathname.endsWith('/lgt_pnt.php') ? LIGHTNING_SOURCE
                 : url.pathname.endsWith('/wrn_now_data_new.php') ? WARNING_SOURCE : null;
@@ -116,7 +174,11 @@ test('scheduled refresh uses bounded deterministic KMA queries and writes indepe
     t.after(() => { globalThis.fetch = originalFetch; });
 
     const kv = new MemoryKV();
-    const env = { KMA_API_AUTH_KEY: 'secret-key', HAZARD_SNAPSHOTS: kv };
+    const env = {
+        KMA_API_AUTH_KEY: 'secret-key',
+        DATA_GO_KR_SERVICE_KEY: 'data-go-key',
+        HAZARD_SNAPSHOTS: kv
+    };
     const promises = [];
     const returned = worker.scheduled({ scheduledTime: Date.parse('2026-07-21T02:00:00Z') }, env, {
         waitUntil(promise) { promises.push(promise); }
@@ -133,8 +195,12 @@ test('scheduled refresh uses bounded deterministic KMA queries and writes indepe
     assert.equal(lightningUrl.searchParams.get('authKey'), 'secret-key');
     const typhoonUrl = urls.find((url) => url.pathname.endsWith('/typ_now.php'));
     assert.equal(typhoonUrl.searchParams.get('mode'), '1');
+    const warningUrl = urls.find((url) => url.pathname.endsWith('/getPwnStatus'));
+    assert.equal(warningUrl.searchParams.get('serviceKey'), 'data-go-key');
+    assert.equal(warningUrl.searchParams.get('pageNo'), '1');
+    assert.equal(urls.some((url) => url.pathname.endsWith('/wrn_now_data_new.php')), false);
     assert.equal(kv.putCalls, 3);
-    for (const value of kv.entries.values()) assert.doesNotMatch(String(value), /secret-key/);
+    for (const value of kv.entries.values()) assert.doesNotMatch(String(value), /secret-key|data-go-key/);
 });
 
 test('a source failure preserves its last-good KV snapshot while other sources update', async () => {

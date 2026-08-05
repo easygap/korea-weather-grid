@@ -189,12 +189,19 @@ function splitCsv(line) {
 }
 
 function splitFields(line) {
-    if (line.includes(',')) return splitCsv(line);
+    if (line.includes(',')) {
+        const values = splitCsv(line);
+        // 최신 APIHub CSV는 각 자료 행의 끝에 레코드 구분자 `=`를 붙인다.
+        if (values.at(-1) === '=') values.pop();
+        return values;
+    }
     return line.trim().split(/\s+/);
 }
 
 function normalizeHeaderSource(line) {
-    return line.replace(/strokes\s+id/ig, 'STROKES_ID')
+    return line.replace(/\((?:UTC|KST)\)/ig, '')
+        .replace(/-{3,}/g, ' ')
+        .replace(/strokes\s+id/ig, 'STROKES_ID')
         .replace(/flash\s+id/ig, 'FLASH_ID');
 }
 
@@ -533,6 +540,89 @@ export function parseWarningText(source) {
     return { warnings };
 }
 
+const DATA_GO_WARNING_LEVELS = Object.freeze([
+    Object.freeze({ suffix: '중대경보', code: '4' }),
+    Object.freeze({ suffix: '경보', code: '3' }),
+    Object.freeze({ suffix: '주의보', code: '2' }),
+    Object.freeze({ suffix: '예비특보', code: '1' })
+]);
+
+function dataGoWarningItems(payload) {
+    const response = payload?.response;
+    if (String(response?.header?.resultCode ?? '') !== '00') return null;
+    const body = response?.body;
+    const totalCount = Number(body?.totalCount);
+    if (!Number.isInteger(totalCount) || totalCount < 0 || totalCount > 100) return null;
+    const raw = body?.items?.item ?? body?.items;
+    if (totalCount === 0) {
+        const empty = raw === undefined || raw === null || raw === ''
+            || (Array.isArray(raw) && raw.length === 0)
+            || (typeof raw === 'object' && !Array.isArray(raw) && Object.keys(raw).length === 0);
+        return empty ? [] : null;
+    }
+    const items = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? [raw] : null;
+    return items && items.length > 0 && items.length <= Math.min(10, totalCount) ? items : null;
+}
+
+function dataGoWarningLines(value) {
+    if (typeof value !== 'string' || value.length === 0 || value.length > 64 * 1024) return null;
+    const lines = value.normalize('NFKC').split(/\r?\n/).map((line) => line
+        .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim())
+        .filter(Boolean).map((line) => line.replace(/^(?:o|○)\s*/i, '').trim());
+    if (!lines.length || lines.every((line) => /^없음\.?$/.test(line))) return [];
+
+    const entries = [];
+    for (const line of lines) {
+        if (/^없음\.?$/.test(line)) continue;
+        const match = line.match(/^(.{1,60}?)\s*:\s*(.+)$/);
+        if (match) entries.push({ label: match[1].trim(), regions: match[2].trim() });
+        else if (entries.length) entries.at(-1).regions += ` ${line}`;
+        else return null;
+    }
+    return entries;
+}
+
+/** 공공데이터포털 `getPwnStatus`의 최신 발효 현황을 화면 공통 계약으로 정규화한다. */
+export function parseDataGoWarningStatus(payload) {
+    const items = dataGoWarningItems(payload);
+    if (!items) return null;
+    if (!items.length) return { warnings: [] };
+    const latest = [...items].sort((left, right) =>
+        String(right?.tmFc ?? '').localeCompare(String(left?.tmFc ?? '')))[0];
+    const issuedAt = compactToIso(latest?.tmFc, 'KST');
+    const effectiveAt = compactToIso(latest?.tmEf, 'KST');
+    const entries = dataGoWarningLines(latest?.t6);
+    if (!issuedAt || entries === null) return null;
+
+    const warnings = [];
+    for (let index = 0; index < entries.length; index++) {
+        const entry = entries[index];
+        const level = DATA_GO_WARNING_LEVELS.find(({ suffix }) => entry.label.endsWith(suffix));
+        const phenomenon = cleanText(level
+            ? entry.label.slice(0, -level.suffix.length) : entry.label, 40);
+        const regionName = cleanText(entry.regions, 4000);
+        if (!phenomenon || !regionName) return null;
+        const phenomenonCode = Object.entries(WARNING_PHENOMENON)
+            .find(([, label]) => label === phenomenon)?.[0] ?? `STATUS-${index + 1}`;
+        warnings.push({
+            id: `status:${String(latest.tmFc)}:${index + 1}`,
+            regionId: `STATUS-${index + 1}`,
+            regionName,
+            parentRegionId: null,
+            parentRegionName: null,
+            phenomenonCode,
+            phenomenon,
+            levelCode: level?.code ?? '0',
+            level: level?.suffix ?? entry.label,
+            commandCode: '0',
+            command: '현황',
+            issuedAt,
+            effectiveAt
+        });
+    }
+    return { warnings };
+}
+
 function kvBinding(env) {
     const binding = env?.HAZARD_SNAPSHOTS;
     return binding && typeof binding.get === 'function' && typeof binding.put === 'function'
@@ -647,12 +737,17 @@ async function refreshLightning(env, scheduledTime, dependency) {
 }
 
 async function refreshWarnings(env, scheduledTime, dependency) {
-    const url = dependency.kmaUrl(KMA_PATH.warnings, {
-        fe: 'f', tm: compactKstWall(scheduledTime), disp: 1, help: 0,
-        authKey: env.KMA_API_AUTH_KEY
-    });
-    const source = await dependency.fetchText(url, MAX_BYTES.warnings);
-    const parsed = parseWarningText(source);
+    let parsed;
+    if (typeof dependency.fetchWarningStatus === 'function') {
+        parsed = parseDataGoWarningStatus(await dependency.fetchWarningStatus());
+    } else {
+        const url = dependency.kmaUrl(KMA_PATH.warnings, {
+            fe: 'f', tm: compactKstWall(scheduledTime), disp: 1, help: 0,
+            authKey: env.KMA_API_AUTH_KEY
+        });
+        const source = await dependency.fetchText(url, MAX_BYTES.warnings);
+        parsed = parseWarningText(source);
+    }
     if (!parsed) throw new Error('invalid_warning_payload');
     const snapshot = await makeSnapshot('warnings', parsed, scheduledTime);
     if (!(await kvWrite(env, 'warnings', snapshot))) throw new Error('warning_kv_write_failed');

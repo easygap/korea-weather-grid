@@ -316,9 +316,9 @@ async function cachedText(cacheKeyPath, upstreamUrl, validate,
 
 /**
  * 상류 텍스트를 Content-Length 선검사와 실제 스트림 바이트 수로 이중 제한한다.
- * TextDecoder의 stream 모드를 사용해 UTF-8 문자가 청크 경계에서 갈라져도 보존한다.
+ * TextDecoder의 stream 모드를 사용해 문자가 청크 경계에서 갈라져도 보존한다.
  */
-async function readTextResponseLimited(response, maxBytes, fatalUtf8 = true) {
+async function readTextResponseLimited(response, maxBytes, fatal = true, encoding = 'utf-8') {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) {
         if (response.body) await response.body.cancel('invalid response limit').catch(() => { });
         return null;
@@ -334,7 +334,14 @@ async function readTextResponseLimited(response, maxBytes, fatalUtf8 = true) {
     }
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8', { fatal: fatalUtf8 });
+    let decoder;
+    try {
+        decoder = new TextDecoder(encoding, { fatal });
+    } catch {
+        await reader.cancel('unsupported response encoding').catch(() => { });
+        reader.releaseLock();
+        return null;
+    }
     const chunks = [];
     let total = 0;
     try {
@@ -373,9 +380,12 @@ async function fetchKmaText(url, maxBytes, timeoutMs = KMA.UPSTREAM_TIMEOUT_MS) 
             if (response.body) await response.body.cancel('upstream response rejected').catch(() => { });
             return null;
         }
-        // KMA 수치모델 텍스트의 주석 헤더 일부는 CP949 바이트를 포함한다. 숫자·ASCII
-        // 메타데이터는 그대로 보존하고 잘못된 문자만 U+FFFD로 치환한다.
-        const text = await readTextResponseLimited(response, maxBytes, false);
+        // APIHub의 태풍 자료는 EUC-KR, 수치모델은 주로 UTF-8/ASCII를 사용한다.
+        // 선언된 CJK 문자셋을 지켜 지명까지 보존하고, 잘못된 바이트만 U+FFFD로 치환한다.
+        const contentType = response.headers.get('content-type') || '';
+        const encoding = /charset\s*=\s*(?:euc-?kr|ks_c_5601-1987|cp949|x-windows-949)/i.test(contentType)
+            ? 'euc-kr' : 'utf-8';
+        const text = await readTextResponseLimited(response, maxBytes, false, encoding);
         if (text === null) {
             logUpstreamFailure('kma', 'text-api', 'invalid_or_oversized_body', {
                 endpoint,
@@ -1025,6 +1035,7 @@ async function buildGridData(env, baseDateIn, baseTimeIn, element, leadHours, st
 
 const DATA_GO = {
     KMA_FORECAST_PATH: '/1360000/VilageFcstInfoService_2.0/getVilageFcst',
+    WARNING_STATUS_PATH: '/1360000/WthrWrnInfoService/getPwnStatus',
     AIR_MEASURE_PATH: '/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty',
     AIR_STATION_PATH: '/B552584/MsrstnInfoInqireSvc/getMsrstnList',
     FORECAST_TTL: 3600,
@@ -1033,6 +1044,7 @@ const DATA_GO = {
     AIR_STATION_TTL: 7 * 86400,
     AIR_FAILURE_TTL: 15 * 60,
     MAX_FORECAST_BYTES: 2 * 1024 * 1024,
+    MAX_WARNING_BYTES: 512 * 1024,
     MAX_AIR_BYTES: 4 * 1024 * 1024,
     MAX_FORECAST_ITEMS: 1000,
     MAX_AIR_STATION_ITEMS: 2000,
@@ -1068,6 +1080,7 @@ const AIR_CACHE_PREFIX = '/air/v2';
 
 function dataGoEndpointName(path) {
     if (path === DATA_GO.KMA_FORECAST_PATH) return 'kma-forecast';
+    if (path === DATA_GO.WARNING_STATUS_PATH) return 'kma-warning-status';
     if (path === DATA_GO.AIR_STATION_PATH) return 'air-stations';
     if (path === DATA_GO.AIR_MEASURE_PATH) return 'air-measurements';
     return 'unknown';
@@ -1907,7 +1920,8 @@ async function fetchCctvSupertile(env, tile, parentSignal, deadlineAt) {
     }
 }
 
-async function loadCctvSupertile(env, tile, parentSignal, deadlineAt, circuitOpen, markLiveFailure) {
+async function loadCctvSupertile(env, tile, parentSignal, deadlineAt,
+    circuitOpen, markLiveFailure, markLiveSuccess) {
     ensureCctvDeadline(parentSignal, deadlineAt);
     const statePath = cctvStateCachePath(tile);
     const state = validateCachedCctvState(await getItsCachedJson(statePath), tile);
@@ -1932,6 +1946,7 @@ async function loadCctvSupertile(env, tile, parentSignal, deadlineAt, circuitOpe
         ensureCctvDeadline(parentSignal, deadlineAt);
         const snapshot = await fetchCctvSupertile(env, tile, parentSignal, deadlineAt);
         if (snapshot) {
+            markLiveSuccess();
             ensureCctvDeadline(parentSignal, deadlineAt);
             const fetchedAt = Date.parse(snapshot.fetchedAt);
             await putItsCachedJson(statePath, {
@@ -1999,12 +2014,14 @@ async function buildCctv(env, bounds, supertiles) {
     const circuitState = validateCachedCctvCircuit(await getItsCachedJson(CCTV_CIRCUIT_CACHE_PATH));
     const circuitOpen = Boolean(circuitState && Date.now() < circuitState.retryAfter);
     let firstLiveFailureAt = 0;
+    let liveSuccessCount = 0;
     const markLiveFailure = () => { firstLiveFailureAt ||= Date.now(); };
+    const markLiveSuccess = () => { liveSuccessCount++; };
     let tileSnapshots;
     try {
         tileSnapshots = await mapCctvSupertiles(supertiles,
             (tile) => loadCctvSupertile(env, tile, controller.signal, deadlineAt,
-                circuitOpen, markLiveFailure),
+                circuitOpen, markLiveFailure, markLiveSuccess),
             controller, deadlineAt);
         ensureCctvDeadline(controller.signal, deadlineAt);
     } catch (error) {
@@ -2012,7 +2029,9 @@ async function buildCctv(env, bounds, supertiles) {
         throw error;
     } finally {
         clearTimeout(deadline);
-        if (firstLiveFailureAt) {
+        // 일부 supertile만 실패한 경우에는 ITS 자체가 살아 있으므로 전역 circuit을
+        // 열지 않는다. 그렇지 않으면 정상 응답 직후에도 미캐시 지역이 2분간 막힌다.
+        if (firstLiveFailureAt && liveSuccessCount === 0) {
             await putItsCachedJson(CCTV_CIRCUIT_CACHE_PATH, {
                 retryAfter: firstLiveFailureAt + CCTV.CIRCUIT_FAILURE_TTL * 1000
             }, CCTV.CIRCUIT_FAILURE_TTL);
@@ -2616,7 +2635,12 @@ export default {
     scheduled(controller, env, ctx) {
         const operation = refreshSevereWeather(env, controller.scheduledTime, {
             kmaUrl,
-            fetchText: fetchKmaText
+            fetchText: fetchKmaText,
+            fetchWarningStatus: () => fetchDataGoJson(env, DATA_GO.WARNING_STATUS_PATH, {
+                pageNo: 1,
+                numOfRows: 10,
+                dataType: 'JSON'
+            }, DATA_GO.MAX_WARNING_BYTES)
         }).catch((error) => {
             console.error(JSON.stringify({
                 event: 'severe_weather_schedule_failed',
