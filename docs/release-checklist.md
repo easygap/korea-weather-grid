@@ -4,7 +4,8 @@
 
 ## 1. RC 확인
 
-- `docs/publication-manifest.json`의 `releaseStatus`가 `ready`이고 차단 목록이 비어 있는지 확인
+- GitHub release를 발행할 때는 `docs/publication-manifest.json`의 `releaseStatus`가 `ready`이고
+  차단 목록이 비어 있는지 확인. 런타임 RC 반영만 진행할 때는 공개 차단 상태를 임의로 변경하지 않음
 - 독립 재구현 기록, 제3자 고지, 자산 SHA-256이 최신 변경과 일치하는지 확인
 - PR의 독립 구현 근거·입력 사양·출처·권리·보안 체크가 실제 변경과 일치하는지 확인
 - `docs/known-limitations.md`의 기능 공백·운영 검증 대기·공개 차단 내용이 현재 상태와 일치하는지 확인
@@ -16,10 +17,10 @@
 - 원격의 브랜치·태그·release·PR·fork에 승인하지 않은 이력이 없는지 다시 확인
 - Dependabot이 Actions·Gradle·세 npm workspace 설정을 읽고 있는지 확인
 - Dependabot alerts와 automated security fixes가 활성 상태인지 확인
-- public 전환 승인 직후 private vulnerability reporting과 `SECURITY.md`의 외부 비공개
-  신고 경로를 확인
-- public 전환 뒤 자동 secret scanning과 사용자 push protection이 적용되는지 확인하고,
-  저장소 수준 push protection을 사용할 수 있으면 별도로 활성화
+- private vulnerability reporting과 `SECURITY.md`의 외부 비공개 신고 경로를 확인
+- secret scanning과 push protection이 활성 상태이고 열린 Secret alert가 없는지 확인
+- `main` 보호가 두 Actions 검사를 필수로 요구하고 최신 기준·선형 이력·대화 해결을 적용하며,
+  강제 푸시와 브랜치 삭제를 금지하는지 확인
 
 이 저장소를 새로 clone하거나 worktree를 만든 뒤에는 저장소 로컬 푸시 보호 설정을 먼저
 활성화한다. `push.default=simple`은 현재 브랜치가 의도하지 않은 원격 브랜치로 확장되는

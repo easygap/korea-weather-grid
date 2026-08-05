@@ -44,12 +44,11 @@ KIM 일사 입력 지점 49개, ITS CCTV 목록과 HLS 영상을 실제 응답�
 - 태풍·낙뢰·기상특보는 실제 상류 응답의 문자 인코딩과 현재 형식을 확인했다. 배포마다
   snapshot Cron과 KV binding의 fresh/stale 전환, 발효 건수와 기준시각을 함께 확인한다.
 - 운영 전환 뒤 15분간 오류율·429·503·예외 로그와 화면 성능을 관찰한다.
-- private 요금제에서 사용할 수 없는 GitHub `main` branch protection·ruleset을 public 전환
-  승인 직후 required status checks와 force-push 금지로 설정
-- GitHub private vulnerability reporting을 public 전환 승인 직후 활성화하고
-  `SECURITY.md`의 외부 비공개 신고 경로를 확인
-- public 저장소에 자동 적용되는 secret scanning·사용자 push protection을 확인하고,
-  저장소 수준 push protection을 사용할 수 있으면 활성화
+- GitHub `main` branch protection은 `단위 테스트 · Worker 빌드`와 `브라우저 회귀`를
+  필수 검사로 지정하고 최신 기준·선형 이력·대화 해결을 요구한다. 강제 푸시와 브랜치 삭제는
+  금지하며, 저장소 관리자의 명시적 우회 권한은 유지한다.
+- GitHub private vulnerability reporting과 `SECURITY.md`의 비공개 신고 경로를 유지한다.
+- GitHub secret scanning과 push protection을 유지하고 열린 Secret alert를 배포 전에 확인한다.
 
 구체적인 확인 절차와 실패 시 롤백 순서는 `docs/release-checklist.md`에서 관리한다.
 
@@ -57,5 +56,6 @@ KIM 일사 입력 지점 49개, ITS CCTV 목록과 HLS 영상을 실제 응답�
 
 프로젝트 자체 코드의 권리 귀속에 대한 사람의 검토가 끝나지 않았으므로
 `project-license-awaits-rights-review` 차단을 유지하고 루트 `LICENSE`를 아직 발행하지 않는다.
-이 조건이 해결되기 전에는 저장소를 public으로 전환하거나 release를 만들지 않는다.
-제3자 라이선스와 고지는 이 판단과 무관하게 계속 보존한다.
+GitHub 저장소는 현재 public이지만 이를 프로젝트 라이선스 확정이나 정식 release 승인으로
+간주하지 않는다. 이 조건이 해결되기 전에는 GitHub release를 만들지 않는다. 제3자 라이선스와
+고지는 이 판단과 무관하게 계속 보존한다.

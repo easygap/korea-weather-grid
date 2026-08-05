@@ -979,3 +979,16 @@
 - 검증: 현재 태풍 응답 2개 계통과 기상특보 4개 그룹, KIM 입력 지점 49개, ITS HLS
   master·variant·H.264 1920×1080 스트림을 실제 상류에서 확인했다. Spring 172개,
   Worker·정적 셸 238개, 실제 Chromium E2E 81개가 모두 통과했다.
+
+## 2026-08-05 · public 저장소 보호 설정
+
+- 상태 확인: 저장소가 public으로 전환된 뒤 `main` 보호, secret scanning·push protection,
+  private vulnerability reporting이 비활성 상태인 것을 GitHub API로 확인했다.
+- 보호 설정: `main`에 현재 Actions의 `단위 테스트 · Worker 빌드`, `브라우저 회귀`를 필수
+  검사로 지정하고 최신 기준·선형 이력·대화 해결을 적용했다. 강제 푸시와 브랜치 삭제는
+  금지하고, 기존 관리자 직접 배포 흐름을 위해 관리자 우회 권한은 유지했다.
+- 보안 설정: secret scanning과 push protection, private vulnerability reporting을
+  활성화했다. 적용 직후 열린 Secret alert와 Dependabot alert가 모두 0건인지 확인했다.
+- 공개 경계: 이 설정은 저장소 운영 보호일 뿐 프로젝트 코드의 권리 귀속이나 라이선스 결정을
+  대신하지 않는다. 사람의 검토가 끝날 때까지 publication manifest의 공개 차단과 루트
+  `LICENSE` 미발행 상태를 유지한다.
