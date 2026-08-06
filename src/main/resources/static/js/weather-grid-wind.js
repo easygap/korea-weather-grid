@@ -149,9 +149,13 @@
         return lifecycle;
     }
 
+    function repaint() {
+        return send({ type: 'render/request', conditions: renderConditions() });
+    }
+
     function refresh() {
         map.updateSize();
-        return send({ type: 'render/request', conditions: renderConditions() });
+        return repaint();
     }
 
     function suspend() {
@@ -205,6 +209,8 @@
     window.WeatherGridWind = Object.freeze({
         present: present,
         clear: clear,
+        // 테마 전환처럼 지도 크기가 그대로인 경우에는 강제 레이아웃 없이 다시 그린다.
+        repaint: repaint,
         refresh: refresh,
         suspend: suspend,
         diagnostics: diagnostics,

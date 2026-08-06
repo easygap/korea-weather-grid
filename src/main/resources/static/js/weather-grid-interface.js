@@ -174,8 +174,13 @@
         window.WEATHER_GRID_PARTICLE_COLOR = state.theme === State.DARK
             ? 'rgb(255,255,255)' : 'rgb(51,65,85)';
         var view3d = document.getElementById('view3d');
-        if (!(view3d && view3d.classList.contains('open'))
-                && typeof window.refreshStreamlines === 'function') window.refreshStreamlines();
+        if (!(view3d && view3d.classList.contains('open'))) {
+            if (window.WeatherGridWind && typeof window.WeatherGridWind.repaint === 'function') {
+                window.WeatherGridWind.repaint();
+            } else if (typeof window.refreshStreamlines === 'function') {
+                window.refreshStreamlines();
+            }
+        }
         if (typeof window.applyMapThemeStyles === 'function') window.applyMapThemeStyles();
         if (window.WEATHER_GRID_STATION_CHARTS) window.WEATHER_GRID_STATION_CHARTS.refreshTheme();
         document.dispatchEvent(new CustomEvent('weather-grid:theme-changed', {

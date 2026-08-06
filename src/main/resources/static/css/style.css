@@ -1,5 +1,4 @@
 @charset "UTF-8";
-@import url("tokens.css?v=20260730.2");
 
 /* Spring JSP와 Cloudflare 셸이 공유한다. JS 모듈이 조회하는 ID·클래스는 두 셸에서 같아야 한다.
    색·형태·모션 토큰은 tokens.css 한 곳에서만 정의한다. */

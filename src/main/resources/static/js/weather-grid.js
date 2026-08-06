@@ -161,28 +161,27 @@ function refreshLatestForecastGlobals() {
 /** 선택 날짜에 실제로 발표된 시각만 활성화한다. 과거 날짜는 8개 발표시각을 모두 허용한다. */
 function syncAvailableBaseTimes() {
 	const latest = refreshLatestForecastGlobals();
-	const selectedDate = $('#forecast_date').val();
-	const selectedTime = $('#baseTime').val();
+	const dateControl = document.getElementById('forecast_date');
+	const timeControl = document.getElementById('baseTime');
+	const selectedDate = dateControl ? dateControl.value : '';
+	const selectedTime = timeControl ? timeControl.value : '';
 	const latestHour = Number(latest.time);
 	let lastEnabled = null;
-	$('.forecast_run_button').each(function () {
-		const hour = $(this).text().trim();
+	document.querySelectorAll('.forecast_run_button').forEach(function (button) {
+		const hour = button.textContent.trim();
 		const enabled = isValidCalendarDate(selectedDate)
 			&& selectedDate <= latest.date
 			&& (selectedDate < latest.date || Number(hour) <= latestHour);
-		this.disabled = !enabled;
-		this.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+		button.disabled = !enabled;
+		button.setAttribute('aria-disabled', enabled ? 'false' : 'true');
 		if (enabled) lastEnabled = hour;
 	});
 
 	const currentButton = Array.from(document.querySelectorAll('.forecast_run_button'))
 		.find(button => button.textContent.trim() === selectedTime);
 	if (currentButton && !currentButton.disabled) return;
-	if (!lastEnabled) return;
-	$('#baseTime').val(lastEnabled);
-	$('.forecast_run_button').removeClass('on').attr('aria-pressed', 'false').each(function () {
-		if ($(this).text().trim() === lastEnabled) $(this).addClass('on').attr('aria-pressed', 'true');
-	});
+	if (!lastEnabled || !timeControl) return;
+	selectForecastBaseTime(lastEnabled);
 }
 
 function selectForecastBaseTime(value) {
@@ -208,12 +207,18 @@ function readForecastControls() {
 	};
 }
 
+function selectedForecastMonth() {
+	const dateControl = document.getElementById('forecast_date');
+	return dateControl ? dateControl.value.split('-')[1] || '' : '';
+}
+
 		function initializeWeatherGrid() {
 			leadHourCursor = Number.parseInt(leadHours, 10);
 			selectForecastBaseTime(time);
 
 			/** 첫 조회 날짜를 최신 발표일로 맞춘다. */
-			$('#forecast_date').val(todayStr);
+			const forecastDateControl = document.getElementById('forecast_date');
+			if (forecastDateControl) forecastDateControl.value = todayStr;
 			syncAvailableBaseTimes();
 			setInterval(syncAvailableBaseTimes, 60 * 1000);
 			document.addEventListener('visibilitychange', function () {
@@ -327,7 +332,7 @@ function readForecastControls() {
 			updateSelectionSummary();
 			if (refreshData) {
 				refreshWeatherGrid();
-				syncSolarLegend($('#forecast_date').val().split('-')[1]);
+				syncSolarLegend(selectedForecastMonth());
 			}
 			return true;
 		}
@@ -422,7 +427,9 @@ function readForecastControls() {
 			const meta = weatherElementMeta(chosenElementValue);
 			const stats = document.querySelector('#weather_legend .grid_stats');
 			if (stats) stats.hidden = !!meta.categorical;
-			$('.grid_stats h3').text(meta.label + (meta.unit ? ' (' + meta.unit + ')' : ''));
+			document.querySelectorAll('.grid_stats h3').forEach(function (heading) {
+				heading.textContent = meta.label + (meta.unit ? ' (' + meta.unit + ')' : '');
+			});
 			if (window.WeatherGridLegend) window.WeatherGridLegend.render();
 		}
 
@@ -552,11 +559,14 @@ function readForecastControls() {
 			setLoading: setLoadingState
 		});
 
-			$('.latest_run_button').on('click', function () {
-				const latest = refreshLatestForecastGlobals();
-				$('#forecast_date').val(latest.date);
-				selectForecastBaseTime(latest.time);
-				syncAvailableBaseTimes();
+			document.querySelectorAll('.latest_run_button').forEach(function (button) {
+				button.addEventListener('click', function () {
+					const latest = refreshLatestForecastGlobals();
+					const dateControl = document.getElementById('forecast_date');
+					if (dateControl) dateControl.value = latest.date;
+					selectForecastBaseTime(latest.time);
+					syncAvailableBaseTimes();
+				});
 			});
 
 			document.querySelectorAll('#forecast_timeline li').forEach(function (slot) {
@@ -573,21 +583,22 @@ function readForecastControls() {
 					updateSelectionSummary();
 				});
 				forecastScrubber.addEventListener('change', function () {
-					const selectedMonth = $('#forecast_date').val().split('-')[1];
-					syncSolarLegend(selectedMonth);
+					syncSolarLegend(selectedForecastMonth());
 					refreshWeatherGrid();
 				});
 			}
 
-			$('.forecast_run_button').on('click', function () {
-				const val = $(this).text().trim();
-				const alreadySelected = $(this).hasClass('on') && $('#baseTime').val() === val;
-				if (alreadySelected) return;
-				$('.forecast_run_button').removeClass('on').attr('aria-pressed', 'false');
-				$(this).addClass('on').attr('aria-pressed', 'true');
-				$('#baseTime').val(val);
-				// 상태 반영 뒤 조회하도록 별도 이벤트를 쓴다. defer 스크립트의 리스너 등록 순서에 의존하지 않는다.
-				document.dispatchEvent(new CustomEvent('weather-grid:base-time-changed', { detail: { baseTime: val } }));
+			document.querySelectorAll('.forecast_run_button').forEach(function (button) {
+				button.addEventListener('click', function () {
+					const val = button.textContent.trim();
+					const timeControl = document.getElementById('baseTime');
+					const alreadySelected = button.classList.contains('on')
+						&& timeControl && timeControl.value === val;
+					if (alreadySelected) return;
+					selectForecastBaseTime(val);
+					// 상태 반영 뒤 조회하도록 별도 이벤트를 쓴다. defer 스크립트의 리스너 등록 순서에 의존하지 않는다.
+					document.dispatchEvent(new CustomEvent('weather-grid:base-time-changed', { detail: { baseTime: val } }));
+				});
 			});
 
 			function hideStationModal() {

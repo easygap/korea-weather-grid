@@ -1244,7 +1244,6 @@
     };
 
     updateControls();
-    var idleLoad = function () { loadWarnings(false); };
-    if ('requestIdleCallback' in window) window.requestIdleCallback(idleLoad, { timeout: 2500 });
-    else setTimeout(idleLoad, 900);
+    // 특보는 첫 화면의 안전 정보이므로 유휴 콜백까지 미루지 않는다. fetch 자체는 비동기로 진행된다.
+    loadWarnings(false);
 })();

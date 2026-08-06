@@ -1,15 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-22",
+  "generatedAt": "2026-08-06",
   "artifacts": [
-    {
-      "component": "jquery",
-      "version": "4.0.0",
-      "path": "src/main/resources/static/js/jquery-4.0.0.min.js",
-      "bytes": 78748,
-      "sha256": "39a546ea9ad97f8bfaf5d3e0e8f8556adb415e470e59007ada9759dce472adaa",
-      "upstream": "https://github.com/jquery/jquery/releases/tag/4.0.0"
-    },
     {
       "component": "openlayers-js",
       "version": "10.9.0",

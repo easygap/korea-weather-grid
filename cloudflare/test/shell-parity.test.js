@@ -17,6 +17,8 @@ const weatherGridRasterScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-raster.js', import.meta.url)), 'utf8');
 const weatherGridWindScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-wind.js', import.meta.url)), 'utf8');
+const weatherGridInterfaceScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/weather-grid-interface.js', import.meta.url)), 'utf8');
 const weatherGridLocationScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-location.js', import.meta.url)), 'utf8');
 const weatherGridPaletteScript = readFileSync(fileURLToPath(
@@ -29,6 +31,16 @@ const weatherGridMapBootstrapScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-map-bootstrap.js', import.meta.url)), 'utf8');
 const weatherGridSearchScript = readFileSync(fileURLToPath(
     new URL('../../src/main/resources/static/js/weather-grid-search.js', import.meta.url)), 'utf8');
+const appBootstrapScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/app-bootstrap.js', import.meta.url)), 'utf8');
+const weatherGridRunsScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/weather-grid-runs.js', import.meta.url)), 'utf8');
+const weatherGridSessionScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/weather-grid-session.js', import.meta.url)), 'utf8');
+const severeWeatherScript = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/js/severe-weather.js', import.meta.url)), 'utf8');
+const sharedStyle = readFileSync(fileURLToPath(
+    new URL('../../src/main/resources/static/css/style.css', import.meta.url)), 'utf8');
 
 function matches(source, pattern, label) {
     const values = [];
@@ -154,6 +166,32 @@ test('격자 조회는 순수 상태 뒤의 fetch 어댑터로 로드하고 jQue
     assert.doesNotMatch(weatherGridDataScript, /\$\.ajax\s*\(/);
     assert.doesNotMatch(weatherGridScript, /\$\.ajax\s*\(/);
     assert.match(weatherGridScript, /addEventListener\('DOMContentLoaded', initializeWeatherGrid/);
+});
+
+test('첫 화면은 jQuery와 CSS import 체인 없이 핵심 정보를 즉시 요청한다', () => {
+    [springShell, publicShell].forEach((source) => {
+        assert.doesNotMatch(source, /jquery(?:-|\.)/i);
+        ['400', '500', '600'].forEach((weight) => {
+            assert.match(source, new RegExp(`rel="preload"[^>]+plex-mono-${weight}\\.woff2`));
+        });
+        const tokensIndex = source.indexOf('/static/css/tokens.css');
+        const styleIndex = source.indexOf('/static/css/style.css');
+        assert.ok(tokensIndex >= 0 && tokensIndex < styleIndex);
+    });
+
+    const firstPartyRuntime = [appBootstrapScript, weatherGridScript,
+        weatherGridRunsScript, weatherGridSessionScript].join('\n');
+    assert.doesNotMatch(firstPartyRuntime, /\bjQuery\b|\$\s*\(/);
+    assert.doesNotMatch(sharedStyle, /@import\b/);
+    assert.doesNotMatch(severeWeatherScript, /requestIdleCallback|idleLoad/);
+    assert.match(severeWeatherScript, /updateControls\(\);\s*(?:\/\/[^\n]*\s*)?loadWarnings\(false\);/);
+});
+
+test('테마 전환은 지도 크기를 다시 측정하지 않고 풍장을 재도색한다', () => {
+    const repaint = normalizedFragment(weatherGridWindScript,
+        /function repaint\(\) \{[\s\S]*?\n    \}/, '풍장 재도색 함수');
+    assert.doesNotMatch(repaint, /updateSize\s*\(/);
+    assert.match(weatherGridInterfaceScript, /WeatherGridWind\.repaint\(\)/);
 });
 
 test('래스터 표본 상태와 OpenLayers 어댑터는 조회 어댑터보다 먼저 독립 로드된다', () => {

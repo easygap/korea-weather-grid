@@ -127,7 +127,8 @@
     });
 
     document.addEventListener('weather-grid:grid-settled', render);
-    window.jQuery(render);
+    if (document.readyState === 'complete') render();
+    else document.addEventListener('DOMContentLoaded', render, { once: true });
 
     window.WeatherGridRuns = Object.freeze({
         selected: selectedEpoch,

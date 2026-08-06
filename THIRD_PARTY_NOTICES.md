@@ -5,7 +5,6 @@ third-party CDNs. Each distribution keeps its upstream license alongside the dep
 
 | Component | Version | Purpose | License | Vendored files | Upstream |
 |---|---:|---|---|---|---|
-| jQuery | 4.0.0 | DOM and event compatibility | MIT | `static/js/jquery-4.0.0.min.js`, `static/vendor/jquery.LICENSE.txt` | <https://github.com/jquery/jquery/tree/4.0.0> |
 | OpenLayers | 10.9.0 | Web map rendering | BSD-2-Clause | `static/vendor/openlayers-10.9.0.*`, `static/vendor/openlayers.LICENSE.md` | <https://github.com/openlayers/openlayers/tree/v10.9.0> |
 | Proj4js | 2.20.9 | Coordinate transformations | MIT | `static/vendor/proj4-2.20.9.min.js`, `static/vendor/proj4.LICENSE.md` | <https://github.com/proj4js/proj4js/tree/2.20.9> |
 | hls.js | 1.6.16 light build | HLS playback fallback | Apache-2.0 | `static/vendor/hls.light.min.js`, `static/vendor/hls.LICENSE.txt` | <https://github.com/video-dev/hls.js/tree/v1.6.16> |

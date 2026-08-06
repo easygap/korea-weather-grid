@@ -187,7 +187,8 @@
         updateHash();
     }
 
-    window.jQuery(restoreInitialState);
+    if (document.readyState === 'complete') restoreInitialState();
+    else document.addEventListener('DOMContentLoaded', restoreInitialState, { once: true });
 
     var viewUpdateTimer = 0;
     MapRuntime.map.on('moveend', function () {

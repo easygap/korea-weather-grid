@@ -200,8 +200,11 @@
     window.leadHours = '001';
     window.todayStr = window.year + '-' + window.month + '-' + window.day;
 
-    $('#baseTime').val(window.time);
-    $('.forecast_run_button').removeClass('on').each(function () {
-        if ($(this).text() === window.time) $(this).addClass('on');
+    var baseTimeControl = document.getElementById('baseTime');
+    if (baseTimeControl) baseTimeControl.value = window.time;
+    document.querySelectorAll('.forecast_run_button').forEach(function (button) {
+        var selected = button.textContent.trim() === window.time;
+        button.classList.toggle('on', selected);
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
 })();

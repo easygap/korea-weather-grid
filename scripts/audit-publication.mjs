@@ -117,7 +117,6 @@ if (existsSync(localDenylistPath)) {
 }
 
 const requiredNotices = [
-    'src/main/resources/static/vendor/jquery.LICENSE.txt',
     'src/main/resources/static/vendor/three.LICENSE.txt',
     'src/main/resources/static/vendor/openlayers.LICENSE.md',
     'src/main/resources/static/vendor/proj4.LICENSE.md',
