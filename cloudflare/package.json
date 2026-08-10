@@ -10,7 +10,7 @@
         "test": "node --test test/*.test.js"
     },
     "devDependencies": {
-        "wrangler": "4.113.0"
+        "wrangler": "4.119.0"
     },
     "overrides": {
         "sharp": "0.35.3",
