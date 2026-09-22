@@ -48,4 +48,11 @@ ITS CCTV는 이날 서울 지역 조회에서 상류 응답 지연을 확인했�
 
 ## 배포 범위
 
+GitHub 업로드 검사에서 기존 개발 도구의 취약점도 확인해 `adm-zip`을 0.6.1,
+`sharp` override를 0.35.4로 올렸다. 근거는 [ZIP 메모리 할당 문제](https://github.com/advisories/GHSA-7q85-xj36-vmfc),
+[ZIP 심볼릭 링크 처리 문제](https://github.com/advisories/GHSA-vwc7-r8mq-g2x9),
+[sharp의 libheif 문제](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c)다.
+갱신 후 Cloudflare·E2E·지도 자료 도구의 npm 감사는 모두 취약점 0건이었다.
+지도 자료 생성 결과의 크기·SHA-256이 기존과 같음을 확인했고 Worker 빌드와 배포 dry-run도 통과했다.
+
 이 기록은 저장소의 소스와 화면 검증을 다룬다. 운영 Worker의 새 버전 배포나 GitHub release 발행을 뜻하지 않는다. 프로젝트 전체의 라이선스 검토 상태는 변경하지 않았으며 `--release` 감사는 기존 조건대로 차단된다.
