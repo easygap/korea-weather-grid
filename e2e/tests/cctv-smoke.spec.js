@@ -459,7 +459,8 @@ test('모바일·reduced-motion에서도 CCTV 조작부와 팝업이 화면 안�
 });
 
 test('CCTV 목록·HLS 연결은 시간 초과 후 정리되고 재시도할 수 있다', async ({ page }) => {
-  let cctvRequests = 0;
+  let requestPhase = 'timeout';
+  const requests = { timeout: 0, retry: 0, current: 0 };
   let releaseFirst;
   let releaseSecond;
   const firstGate = new Promise((resolve) => { releaseFirst = resolve; });
@@ -467,13 +468,14 @@ test('CCTV 목록·HLS 연결은 시간 초과 후 정리되고 재시도할 수
 
   await installStallingManifestStub(page);
   await page.route('**/api/traffic/cameras?**', async (route) => {
-    cctvRequests++;
-    const ordinal = cctvRequests;
-    if (ordinal === 1) await firstGate;
-    if (ordinal === 2) await secondGate;
+    // 지도 이동이 진행 중인 요청을 취소해도 각 단계의 지연 응답은 그대로 유지한다.
+    const phase = requestPhase;
+    requests[phase]++;
+    if (phase === 'timeout') await firstGate;
+    if (phase === 'retry') await secondGate;
     const item = cctvItem({
-      id: ordinal < 3 ? 'slow-cctv' : 'latest-cctv',
-      name: ordinal < 3 ? '느린 이전 CCTV' : '최신 CCTV',
+      id: phase === 'current' ? 'latest-cctv' : 'slow-cctv',
+      name: phase === 'current' ? '최신 CCTV' : '느린 이전 CCTV',
     });
     try {
       await route.fulfill({
@@ -490,17 +492,21 @@ test('CCTV 목록·HLS 연결은 시간 초과 후 정리되고 재시도할 수
   await page.waitForFunction(() => window.WEATHER_GRID_CCTV);
   await selectExploreMode(page, 'road');
   await fitMap(page, [126.978, 37.5665]);
-  await expect.poll(() => cctvRequests).toBe(1);
+  await expect.poll(() => requests.timeout).toBeGreaterThanOrEqual(1);
+  await fitMap(page, [126.987, 37.5665]);
+  await expect.poll(() => requests.timeout).toBeGreaterThanOrEqual(2);
   await expect(page.locator('#cctv_status')).toContainText('시간이 초과', { timeout: 15_000 });
   await openLayerSettings(page);
   await expect(page.locator('#cctv_retry')).toBeVisible();
   releaseFirst();
 
+  requestPhase = 'retry';
   await page.locator('#cctv_retry').click();
-  await expect.poll(() => cctvRequests).toBe(2);
+  await expect.poll(() => requests.retry).toBeGreaterThanOrEqual(1);
+  requestPhase = 'current';
   await selectExploreMode(page, 'wind');
   await selectExploreMode(page, 'road');
-  await expect.poll(() => cctvRequests).toBe(3);
+  await expect.poll(() => requests.current).toBeGreaterThanOrEqual(1);
   await expect.poll(() => page.evaluate(() => {
     const feature = window.WEATHER_GRID_CCTV.layer.getSource().getSource().getFeatures()[0];
     return feature && feature.get('cctv').name;
