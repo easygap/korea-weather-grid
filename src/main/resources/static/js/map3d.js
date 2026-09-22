@@ -442,7 +442,7 @@ function ensureRenderer() {
     // 모드 토글 (지형 | 지구본)
     const modes = document.createElement('div');
     modes.className = 'view3d_modes';
-    modes.innerHTML = '<button type="button" data-mode="terrain" class="on">지형</button>'
+    modes.innerHTML = '<button type="button" data-mode="terrain" class="on">높이로 보기</button>'
         + '<button type="button" data-mode="globe">지구본</button>';
     modes.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-mode]');
@@ -512,7 +512,7 @@ function clearControlMomentum() {
 
 function updateCanvasAccessibility() {
     if (!renderer) return;
-    const modeName = mode === 'globe' ? '지구본' : '격자 지형';
+    const modeName = mode === 'globe' ? '지구본' : '기상값 높이';
     renderer.domElement.setAttribute('aria-label',
         `3D ${modeName}. 드래그로 회전하고 휠 또는 두 손가락으로 확대합니다. `
         + '방향키로 이동하고 Shift와 방향키로 회전하며, 표면을 짧게 탭하면 좌표와 값을 확인할 수 있습니다.');
@@ -1109,7 +1109,7 @@ function buildScene(result, element, month) {
     fitTerrainCamera(group);
 
     document.getElementById('view3d_title').textContent =
-        weatherTitle(element) + ' 격자 지형 (' + weatherUnit(element) + ')';
+        weatherTitle(element) + ' · 값이 클수록 높게 (' + weatherUnit(element) + ')';
 }
 
 function showTip(text) {

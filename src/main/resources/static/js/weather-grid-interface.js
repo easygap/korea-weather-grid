@@ -21,9 +21,9 @@
     var modalClosers = Object.create(null);
     var modalInertLedger = [];
     var dockInertLedger = [];
-    var storedTheme = State.DARK;
+    var storedTheme = State.LIGHT;
 
-    try { storedTheme = localStorage.getItem('weather-grid-theme') || State.DARK; }
+    try { storedTheme = localStorage.getItem('weather-grid-theme') || State.LIGHT; }
     catch (error) { /* 저장소가 차단된 환경은 기본 테마를 사용한다. */ }
 
     var state = State.initial({
@@ -150,7 +150,7 @@
     }
 
     function themeColor(theme) {
-        return theme === State.LIGHT ? '#e7e9ec' : '#05070a';
+        return theme === State.LIGHT ? '#ffffff' : '#252b34';
     }
 
     function renderTheme() {
@@ -168,11 +168,12 @@
             if (sun) sun.style.display = state.theme === State.DARK ? 'none' : '';
             setPressed(toggle, state.theme === State.LIGHT);
             toggle.setAttribute('aria-label', state.theme === State.DARK
-                ? '라이트 테마로 전환' : '다크 테마로 전환');
+                ? '밝은 화면으로 전환' : '어두운 화면으로 전환');
         }
 
-        window.WEATHER_GRID_PARTICLE_COLOR = state.theme === State.DARK
-            ? 'rgb(255,255,255)' : 'rgb(51,65,85)';
+        window.WEATHER_GRID_PARTICLE_COLOR = 'rgb(255,255,255)';
+        window.WEATHER_GRID_PARTICLE_LOW_COLOR = state.theme === State.DARK
+            ? 'rgba(225,239,242,.75)' : 'rgba(38,77,91,.60)';
         var view3d = document.getElementById('view3d');
         if (!(view3d && view3d.classList.contains('open'))) {
             if (window.WeatherGridWind && typeof window.WeatherGridWind.repaint === 'function') {

@@ -5,14 +5,14 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const Basemap = require('../../src/main/resources/static/js/weather-grid-basemap-state.js');
 
-test('첫 배경지도 상태는 화면 폭에 따라 대표 지역 표시만 달라진다', () => {
+test('첫 배경지도는 화면 크기와 관계없이 대표 지역을 표시한다', () => {
     assert.deepEqual(Basemap.initialState(false), {
         mode: 'weather',
         regionLabels: true,
         provinceBoundaries: false,
         stationsVisible: true
     });
-    assert.equal(Basemap.initialState(true).stationsVisible, false);
+    assert.equal(Basemap.initialState(true).stationsVisible, true);
 });
 
 test('행정 경계 모드는 라벨을 켜고 도 경계를 초기화한다', () => {
@@ -58,8 +58,8 @@ test('테마 스타일 계획은 경계와 라벨 토글을 색상 효과로 변
         Basemap.toggleBoundary(Basemap.selectMode(Basemap.initialState(false), 'boundaries'), 'labels'),
         'provinces');
     const plan = Basemap.stylePlan(state, 'light');
-    assert.equal(plan.weather.fill, '#ffffff');
-    assert.equal(plan.vector.fill, '#fbfaf2');
+    assert.equal(plan.weather.fill, '#f0f1ed');
+    assert.equal(plan.vector.fill, '#e7ebe5');
     assert.equal(plan.provinces.labelField, null);
     assert.equal(plan.provinces.stroke, plan.palette.boundary);
 });
@@ -84,10 +84,10 @@ test('지도 픽셀 비율은 일반 화면 DPR을 유지하고 큰 화면은 �
 });
 
 test('초기 영역과 UI 여백은 화면 구간별 공개 상수에서 계산한다', () => {
-    assert.deepEqual(Basemap.initialGeoExtent(false), [123.9, 31.7, 132.4, 39.2]);
-    assert.deepEqual(Basemap.initialGeoExtent(true), [123.8, 31.6, 132.5, 39.2]);
-    assert.deepEqual(Basemap.initialPadding(360), [108, 12, 104, 12]);
-    assert.deepEqual(Basemap.initialPadding(640), [64, 16, 96, 16]);
-    assert.deepEqual(Basemap.initialPadding(900), [116, 20, 100, 20]);
-    assert.deepEqual(Basemap.initialPadding(1200), [84, 160, 92, 292]);
+    assert.deepEqual(Basemap.initialGeoExtent(false), [124.7, 32.4, 131.6, 38.9]);
+    assert.deepEqual(Basemap.initialGeoExtent(true), [124.7, 32.4, 131.6, 38.9]);
+    assert.deepEqual(Basemap.initialPadding(360), [120, 32, 238, 20]);
+    assert.deepEqual(Basemap.initialPadding(640), [120, 36, 238, 20]);
+    assert.deepEqual(Basemap.initialPadding(900), [120, 66, 234, 28]);
+    assert.deepEqual(Basemap.initialPadding(1200), [110, 100, 170, 278]);
 });

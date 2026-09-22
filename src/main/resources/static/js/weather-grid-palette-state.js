@@ -49,10 +49,15 @@
 
     var SOLAR_PALETTE = Object.freeze(Array.from({ length: SOLAR_COLOR_STEPS }, function (_, index) {
         var progress = index / (SOLAR_COLOR_STEPS - 1);
-        var red = Math.round(20 + 225 * progress);
-        var green = Math.round(115 + 95 * Math.sin(Math.PI * progress) - 40 * progress);
-        var blue = Math.round(170 - 120 * progress);
-        return 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.72)';
+        // 일사강도는 밝은 황색에서 짙은 적색으로, 강해질수록 어두워진다.
+        var stops = [[255, 247, 210], [250, 211, 115], [236, 147, 53], [198, 76, 34], [122, 31, 29]];
+        var position = progress * (stops.length - 1);
+        var lower = Math.min(stops.length - 2, Math.floor(position));
+        var fraction = position - lower;
+        var channels = stops[lower].map(function (channel, offset) {
+            return Math.round(channel + (stops[lower + 1][offset] - channel) * fraction);
+        });
+        return 'rgba(' + channels.join(', ') + ', 0.94)';
     }));
 
     function elementMeta(element) {
@@ -96,36 +101,36 @@
 
     function windColor(value) {
         return thresholdColor(value, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12], [
-            'rgba(44, 46, 126, 0.82)',
-            'rgba(39, 83, 155, 0.82)',
-            'rgba(31, 119, 173, 0.82)',
-            'rgba(21, 149, 173, 0.82)',
-            'rgba(30, 170, 150, 0.82)',
-            'rgba(88, 184, 108, 0.82)',
-            'rgba(145, 198, 93, 0.82)',
-            'rgba(196, 207, 98, 0.82)',
-            'rgba(236, 211, 106, 0.82)',
-            'rgba(245, 173, 91, 0.82)',
-            'rgba(239, 116, 78, 0.82)',
-            'rgba(216, 68, 112, 0.82)'
+            'rgba(221, 237, 239, 0.96)',
+            'rgba(195, 220, 226, 0.96)',
+            'rgba(166, 203, 215, 0.96)',
+            'rgba(136, 184, 203, 0.96)',
+            'rgba(106, 164, 190, 0.96)',
+            'rgba(78, 143, 176, 0.96)',
+            'rgba(55, 122, 160, 0.96)',
+            'rgba(36, 102, 143, 0.96)',
+            'rgba(27, 83, 123, 0.96)',
+            'rgba(22, 66, 103, 0.96)',
+            'rgba(19, 49, 82, 0.96)',
+            'rgba(16, 33, 59, 0.96)'
         ]);
     }
 
     function temperatureColor(value) {
         if (value <= -900) return TRANSPARENT;
         return thresholdColor(value, [-15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35], [
-            'rgba(55, 48, 163, 0.7)',
-            'rgba(29, 78, 216, 0.7)',
-            'rgba(2, 132, 199, 0.7)',
-            'rgba(6, 182, 212, 0.7)',
-            'rgba(20, 184, 166, 0.7)',
-            'rgba(34, 197, 94, 0.7)',
-            'rgba(163, 230, 53, 0.7)',
-            'rgba(250, 204, 21, 0.7)',
-            'rgba(251, 146, 60, 0.7)',
-            'rgba(248, 113, 113, 0.7)',
-            'rgba(239, 68, 68, 0.7)',
-            'rgba(190, 18, 60, 0.7)'
+            'rgba(33, 74, 117, 0.94)',
+            'rgba(56, 112, 160, 0.94)',
+            'rgba(105, 157, 191, 0.94)',
+            'rgba(169, 204, 218, 0.94)',
+            'rgba(231, 236, 218, 0.94)',
+            'rgba(244, 230, 165, 0.94)',
+            'rgba(245, 213, 115, 0.94)',
+            'rgba(241, 187, 78, 0.94)',
+            'rgba(228, 151, 61, 0.94)',
+            'rgba(209, 110, 49, 0.94)',
+            'rgba(179, 67, 42, 0.94)',
+            'rgba(138, 37, 35, 0.94)'
         ]);
     }
 

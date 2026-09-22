@@ -50,6 +50,7 @@
             metric: selectedMetric(),
             streamEnabled: streamEnabled(),
             view3dOpen: view3dOpen(),
+            documentHidden: document.hidden,
             size: map.getSize(),
             devicePixelRatio: window.devicePixelRatio || 1
         });
@@ -92,10 +93,12 @@
     function prepareCanvas(plan) {
         preparedPlan = plan;
         canvas.style.display = 'block';
-        canvas.style.width = plan.cssWidth + 'px';
-        canvas.style.height = plan.cssHeight + 'px';
-        canvas.width = plan.backingWidth;
-        canvas.height = plan.backingHeight;
+        if (canvas.style.width !== plan.cssWidth + 'px') canvas.style.width = plan.cssWidth + 'px';
+        if (canvas.style.height !== plan.cssHeight + 'px') canvas.style.height = plan.cssHeight + 'px';
+        // Assigning width/height clears the entire backing store, even at the same size.
+        if (canvas.width !== plan.backingWidth) canvas.width = plan.backingWidth;
+        if (canvas.height !== plan.backingHeight) canvas.height = plan.backingHeight;
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     }
 
     function startRenderer() {
@@ -129,7 +132,7 @@
             if (effect.type === 'renderer/replace') replaceRenderer();
             else if (effect.type === 'renderer/stop') stopRenderer();
             else if (effect.type === 'renderer/destroy') destroyRenderer();
-            else if (effect.type === 'render/request') refresh();
+            else if (effect.type === 'render/request') repaint();
             else if (effect.type === 'render/schedule') scheduleRefresh(effect.delay);
             else if (effect.type === 'render/cancel') cancelRefresh();
             else if (effect.type === 'map/resize') map.updateSize();
@@ -194,6 +197,14 @@
     map.on('movestart', function () { send({ type: 'view/start' }); });
     map.on('moveend', function () { send({ type: 'view/end' }); });
     window.addEventListener('resize', function () { send({ type: 'viewport/resize' }); });
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) suspend();
+        else repaint();
+    });
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function () {
+        // Keep the scalar map and stop particles when motion is reduced.
+        repaint();
+    });
     window.addEventListener('pagehide', function () {
         cancelRefresh();
         send({ type: 'page/hide' });

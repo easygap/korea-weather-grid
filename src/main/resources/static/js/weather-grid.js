@@ -357,7 +357,7 @@ function selectedForecastMonth() {
 			const selectedElement = document.getElementById('element').value;
 			const heightText = document.getElementById('height').value;
 			const fallbackContent = {
-				wdws: { metric: '바람 · 지상 ' + heightText, hint: '색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)' },
+				wdws: { metric: '풍향·풍속 · 지상 ' + heightText.replace('m', ' m'), hint: '색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)' },
 				tmp: { metric: '기온', hint: '색은 기온 · 등치선은 같은 기온' },
 				pcp: { metric: '1시간 예상 강수량', hint: '색은 해당 시각까지 1시간 동안의 예상 강수량' },
 				pty: { metric: '예상 강수형태', hint: '색은 비·비/눈·눈·소나기 구분' },
@@ -411,9 +411,13 @@ function selectedForecastMonth() {
 			}
 
 			const selectedTime = document.querySelector('#forecast_timeline li.on span');
-			const timeText = selectedTime && selectedTime.textContent.trim()
+			let timeText = selectedTime && selectedTime.textContent.trim()
 				? selectedTime.textContent.trim() + ' 예보'
 				: '예보 시각 확인 중…';
+			if (source && source.timeAdjusted && source.validTime) {
+				const actualTime = new Date(source.validTime);
+				if (!Number.isNaN(actualTime.getTime())) timeText = compactTimelineLabel(actualTime) + ' 자료';
+			}
 			ensurePart('info_metric', 'strong').textContent = content.metric;
 			ensurePart('info_time').textContent = timeText;
 			ensurePart('info_hint').textContent = sourceHint;

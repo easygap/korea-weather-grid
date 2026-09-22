@@ -12,8 +12,10 @@ third-party CDNs. Each distribution keeps its upstream license alongside the dep
 | earth | source approach credited, no vendored runtime | Historical inspiration for the particle-flow rendering approach | MIT | `static/js/windy.js`, `static/vendor/cambecc-earth.LICENSE.md` | <https://github.com/cambecc/earth> |
 | IBM Plex Mono | Google Fonts v20 Latin subset | Readout typeface for values, timestamps, and coordinates | OFL-1.1 | `static/font/plex-mono-{400,500,600}.woff2`, `static/font/OFL.txt` | <https://github.com/IBM/plex> |
 
-Only the Latin subset of IBM Plex Mono is vendored (about 45 KB total for three weights). Hangul is
-rendered by the platform UI stack declared in `--font-ui`; no Korean webfont is downloaded.
+SUIT Variable is used for the Korean interface and numeric readouts. The unmodified font is bundled
+from [sun-typeface/SUIT](https://github.com/sun-typeface/SUIT/tree/55118d981336d8fce005eb62888c12c0568ef7b0)
+under OFL-1.1, with its copyright and license in `static/font/SUIT-OFL.txt`.
+The existing IBM Plex Mono Latin files are retained. No font service is contacted at runtime.
 
 ## Charts
 

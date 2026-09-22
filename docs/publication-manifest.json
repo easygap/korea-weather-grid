@@ -13,8 +13,8 @@
   "assets": [
     {
       "path": "src/main/resources/static/favicon.svg",
-      "bytes": 437,
-      "sha256": "639ece4e26441ccc30cadb4346ffc63273ca7e1692d16e111f391438cae98418",
+      "bytes": 377,
+      "sha256": "0f1d2f00ba6de8e6d3171f35362e4f0f4cc0fd7afcb9ddee8679d4bd87b2be90",
       "origin": "repository-authored",
       "license": "project-license-pending"
     },

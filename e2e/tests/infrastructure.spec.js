@@ -64,20 +64,21 @@ test.describe('주요 지점 인프라 레이어', () => {
       };
     })).toEqual({ projection: 'EPSG:3857', visible: true, count: 12, reprojected: true });
 
-    const darkColor = await page.evaluate(() => {
+    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    const initialColor = await page.evaluate(() => {
       const layer = WeatherGridInfrastructure.layer('bridge');
       return layer.getStyle()(layer.getSource().getFeatures()[0], 100).at(-1).getImage().getFill().getColor();
     });
     await page.locator('#theme_toggle').click();
-    const lightTheme = await page.evaluate(() => {
+    const changedTheme = await page.evaluate(() => {
       const layer = WeatherGridInfrastructure.layer('bridge');
       return {
         theme: document.documentElement.dataset.theme,
         color: layer.getStyle()(layer.getSource().getFeatures()[0], 100).at(-1).getImage().getFill().getColor()
       };
     });
-    expect(lightTheme.theme).toBe('light');
-    expect(lightTheme.color).not.toBe(darkColor);
+    expect(changedTheme.theme).toBe(initialTheme === 'light' ? 'dark' : 'light');
+    expect(changedTheme.color).not.toBe(initialColor);
 
     await page.locator('#dock_collapse').click();
     await page.locator('#map').focus();

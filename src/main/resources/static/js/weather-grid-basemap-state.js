@@ -10,8 +10,8 @@
 
     var MODES = Object.freeze(['weather', 'boundaries', 'streets']);
     var GEO_LIMIT = Object.freeze([116, 29, 140, 46]);
-    var INITIAL_GEO = Object.freeze([123.9, 31.7, 132.4, 39.2]);
-    var COMPACT_INITIAL_GEO = Object.freeze([123.8, 31.6, 132.5, 39.2]);
+    var INITIAL_GEO = Object.freeze([124.7, 32.4, 131.6, 38.9]);
+    var COMPACT_INITIAL_GEO = Object.freeze([124.7, 32.4, 131.6, 38.9]);
     var MAX_RENDER_PIXELS = 12000000;
 
     function frozenState(input) {
@@ -28,7 +28,7 @@
             mode: 'weather',
             regionLabels: true,
             provinceBoundaries: false,
-            stationsVisible: !compact
+            stationsVisible: true
         });
     }
 
@@ -73,21 +73,20 @@
 
     function themePalette(theme) {
         return Object.freeze(theme === 'light' ? {
-            land: '#ffffff',
-            vectorLand: '#fbfaf2',
-            coast: 'rgba(30, 100, 180, 0.55)',
-            boundary: 'rgba(71, 85, 105, 0.45)',
-            label: '#334155',
+            land: '#f0f1ed',
+            vectorLand: '#e7ebe5',
+            coast: 'rgba(46, 63, 58, 0.42)',
+            boundary: 'rgba(46, 63, 58, 0.25)',
+            label: '#253c35',
             halo: 'rgba(255, 255, 255, 0.92)'
         } : {
-            // 배경지도는 데이터가 아니므로 무채색으로 둔다. 예전 시안 해안선은
-            // 풍속 3~4 m/s(전체 격자의 약 40%) 색과 겹쳐 데이터와 배경이 섞였다.
-            land: '#171B21',
-            vectorLand: '#1C2128',
-            coast: 'rgba(196, 206, 218, 0.34)',
-            boundary: 'rgba(178, 188, 202, 0.26)',
-            label: '#C3CAD3',
-            halo: 'rgba(5, 7, 10, 0.90)'
+            // 중성 배경은 기상자료 색상표와 독립적이다.
+            land: '#303d3f',
+            vectorLand: '#384749',
+            coast: 'rgba(208, 220, 232, 0.50)',
+            boundary: 'rgba(184, 199, 214, 0.28)',
+            label: '#d2dbe5',
+            halo: 'rgba(27, 32, 39, 0.92)'
         });
     }
 
@@ -130,10 +129,10 @@
 
     function initialPadding(viewportWidth) {
         var width = positiveNumber(viewportWidth, 1);
-        if (width <= 360) return [108, 12, 104, 12];
-        if (width <= 640) return [64, 16, 96, 16];
-        if (width <= 900) return [116, 20, 100, 20];
-        return [84, 160, 92, 292];
+        if (width <= 360) return [120, 32, 238, 20];
+        if (width <= 640) return [120, 36, 238, 20];
+        if (width <= 900) return [120, 66, 234, 28];
+        return [110, 100, 170, 278];
     }
 
     return Object.freeze({

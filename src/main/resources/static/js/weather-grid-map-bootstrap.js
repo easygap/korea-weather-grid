@@ -65,11 +65,17 @@
         var safeTop = margin;
         var safeBottom = containerRect.height - margin;
 
-        [document.querySelector('.topbar'), document.getElementById('mobile_primary_controls')]
+        [document.querySelector('.topbar'), document.querySelector('.map_status_panel'),
+            document.getElementById('warning_banner'), document.getElementById('workspace_data_notice'),
+            document.getElementById('mobile_primary_controls')]
             .forEach(function (element) {
                 var rect = renderedRect(element);
                 if (!rect || rect.bottom <= containerRect.top || rect.top >= containerRect.bottom) return;
-                safeTop = Math.max(safeTop, rect.bottom - containerRect.top + margin);
+                if (rect.top - containerRect.top > containerRect.height / 2) {
+                    safeBottom = Math.min(safeBottom, rect.top - containerRect.top - margin);
+                } else {
+                    safeTop = Math.max(safeTop, rect.bottom - containerRect.top + margin);
+                }
             });
 
         var timelineRect = renderedRect(document.querySelector('.timeline'));
@@ -137,8 +143,19 @@
     });
     var rasterLayer = new ol.layer.Image({
         title: 'img',
-        opacity: 0.7
+        opacity: 0.94
     });
+    var coastlineLayer = new ol.layer.Vector({
+        title: 'coastline',
+        source: landLayer.getSource(),
+        zIndex: 74,
+        style: [
+            new ol.style.Style({ stroke: new ol.style.Stroke({ color: 'rgba(255,255,255,.65)', width: 1.7 }) }),
+            new ol.style.Style({ stroke: new ol.style.Stroke({ color: 'rgba(38,64,66,.7)', width: .65 }) })
+        ]
+    });
+    map.addLayer(coastlineLayer);
+    landLayer.on('change:source', function () { coastlineLayer.setSource(landLayer.getSource()); });
     var countryLayer = createVectorLayer('vector', 25);
     var provinceLayer = createVectorLayer('province', 30);
     var stationSource = new ol.source.Vector();
@@ -240,6 +257,28 @@
         return style;
     }
 
+    // A few named reference points help locate weather without hover. Closer
+    // zooms show the full list, with label collisions handled by OpenLayers.
+    var overviewStations = ['서울특별시', '대전광역시', '부산광역시', '광주광역시', '제주특별자치도', '강원특별자치도'];
+    function overviewStationLabel(name) {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        var key = 'overview:' + light + ':' + name;
+        if (labelStyles.has(key)) return labelStyles.get(key);
+        var style = new ol.style.Style({
+            text: new ol.style.Text({
+                text: name.replace(/특별자치시|특별자치도|특별시|광역시/g, ''),
+                font: '650 13px SUIT, system-ui, sans-serif',
+                offsetY: -14,
+                padding: [3, 5, 3, 5],
+                fill: new ol.style.Fill({ color: light ? '#203248' : '#f1f5f9' }),
+                stroke: new ol.style.Stroke({ color: light ? 'rgba(255,255,255,.92)' : 'rgba(27,32,39,.9)', width: 3 })
+            }),
+            zIndex: 5
+        });
+        labelStyles.set(key, style);
+        return style;
+    }
+
     var stationLayer = new ol.layer.Vector({
         source: stationSource,
         title: 'forecast-stations',
@@ -255,7 +294,9 @@
                     hoverStyles, 'hover', zoom, compactQuery.matches, true)
                     .concat(labelStyle(name, false));
             }
-            return cachedNodeStyles(dotStyles, 'dot', zoom, compactQuery.matches, false);
+            var dots = cachedNodeStyles(dotStyles, 'dot', zoom, compactQuery.matches, false);
+            return zoom >= 7.5 || (zoom >= 6 && overviewStations.indexOf(name) >= 0)
+                ? dots.concat(overviewStationLabel(name)) : dots;
         }
     });
     map.addLayer(stationLayer);
@@ -385,6 +426,7 @@
 
     function applyThemeStyles() {
         var plan = State.stylePlan(basemapState, currentTheme());
+        if (stationLayer) stationLayer.changed();
         if (basemapState.mode === 'boundaries') {
             setLayerStyle(
                 countryLayer, plan.vector.fill, plan.vector.stroke, null, plan.palette);
@@ -463,6 +505,7 @@
         var visibility = State.layerVisibility(basemapState.mode);
         if (!visibility) return false;
         landLayer.setVisible(visibility.weather);
+        coastlineLayer.setVisible(visibility.weather);
         countryLayer.setVisible(visibility.boundaries);
         provinceLayer.setVisible(visibility.boundaries);
         applyRoadProvider(visibility.streets);

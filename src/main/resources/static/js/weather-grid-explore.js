@@ -209,6 +209,7 @@
         }
         var layerSettings = document.getElementById('layer_settings');
         if (layerSettings && view.domain !== 'weather') layerSettings.open = true;
+        document.dispatchEvent(new CustomEvent('weather-grid:explore-changed'));
         return view;
     }
 

@@ -1,24 +1,23 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="dark">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="한국의 기상 예보, 미세먼지 관측, 실시간 도로 CCTV를 시간·공간 기준으로 탐색하는 기상 격자지도 BORA">
-<meta name="theme-color" content="#05070a">
+<meta name="description" content="전국 날씨를 지도에서 보고, 지역별 48시간 예보를 확인하세요. 기상청 풍향·풍속, 기온, 강수량과 미세먼지, 도로 CCTV를 제공하는 BORA 기상지도입니다.">
+<meta name="theme-color" content="#ffffff">
 <title>BORA · 한국 기상 격자지도</title>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
 
-<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/plex-mono-600.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/plex-mono-500.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/plex-mono-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/font/SUIT-Variable.woff2">
 
-<link rel="stylesheet" type="text/css" href="/static/css/tokens.css?v=20260806.1">
+<link rel="stylesheet" type="text/css" href="/static/css/tokens.css?v=20260922.3">
 <link rel="stylesheet" type="text/css" href="/static/css/reset.css?v=20260730.2">
 <link rel="stylesheet" type="text/css" href="/static/vendor/openlayers-10.9.0.css">
 
 <link rel="stylesheet" type="text/css" href="/static/css/style.css?v=20260806.1">
+<link rel="stylesheet" type="text/css" href="/static/css/forecast-workspace.css?v=20260922.3">
 
 <script defer src="/static/vendor/openlayers-10.9.0.min.js"></script>
 <script defer src="/static/vendor/proj4-2.20.9.min.js"></script>
@@ -26,7 +25,7 @@
 <body>
 <a class="skip-link" href="#map">지도 본문으로 건너뛰기</a>
 
-<div class="app" data-context-path="" data-data-domain="weather">
+<div class="app forecast-app" data-context-path="" data-data-domain="weather" data-explore-mode="wind">
 
     <!-- Primary navigation and search surface -->
     <header class="topbar">
@@ -39,32 +38,16 @@
         <div class="brand" title="BORA · Korea Weather Grid">
             <h1 class="sr-only">BORA 한국 기상 격자지도</h1>
 
-            <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
-                <line x1="12" y1="8" x2="12" y2="56" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".45"/>
-                <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="currentColor"/>
-            </svg>
             <div class="brand_txt">
                 <strong>BORA</strong>
-                <span>KOREA WEATHER GRID</span>
+                <span>기상지도</span>
             </div>
         </div>
 
-        <nav class="data_domain_nav" id="data_domain_nav" aria-label="데이터 영역">
-            <button type="button" data-data-domain="weather" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-weather"></use></svg><span>기상</span></button>
-            <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
-            <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
-        </nav>
 
-        <div class="explore_modes" id="explore_modes" role="group" aria-label="기상 요소">
-            <button type="button" data-explore-mode="wind" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-wind"></use></svg><strong>바람</strong></button>
-            <button type="button" data-explore-mode="temperature" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-temperature"></use></svg><strong>기온</strong></button>
-            <button type="button" data-explore-mode="precipitation" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-precipitation"></use></svg><strong>강수·눈</strong></button>
-            <button type="button" data-explore-mode="solar" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-solar"></use></svg><strong>일사</strong></button>
-            <button type="button" data-explore-mode="hazards" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-hazards"></use></svg><strong>위험기상</strong></button>
-        </div>
-        <div class="explore_mode_summary" id="explore_mode_summary" data-kind="예보" role="status" aria-live="polite">
-            <strong>바람 흐름</strong><span>풍속 색상과 흐름선을 함께 표시합니다.</span>
-        </div>
+
+
+
 
         <!-- 지점 검색 -->
         <div class="search-container">
@@ -89,11 +72,15 @@
         </div>
 
         <div class="top-actions">
+            <button type="button" class="icon-btn" id="workspace_map_only" title="지도만 보기 (F)" aria-label="지도만 보기" aria-pressed="false" aria-keyshortcuts="f">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg>
+                <span class="lbl">지도만</span>
+            </button>
             <button type="button" class="icon-btn" id="btn_share" title="현재 지도 공유" aria-label="현재 지도 링크 공유">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg>
                 <span class="lbl">공유</span>
             </button>
-            <button type="button" class="icon-btn" id="btn_3d" title="3D 지형 뷰" aria-label="3D 지형 뷰 열기" aria-controls="view3d" aria-haspopup="dialog" aria-expanded="false">
+            <button type="button" class="icon-btn" id="btn_3d" title="3D 보기" aria-label="3D 보기 열기" aria-controls="view3d" aria-haspopup="dialog" aria-expanded="false">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
                 <span class="lbl">3D</span>
             </button>
@@ -109,13 +96,72 @@
     <main class="map_workspace" aria-labelledby="map_workspace_title">
         <h2 class="sr-only" id="map_workspace_title">한국 기상 격자 지도</h2>
 
+        <aside class="workspace_sidebar" aria-label="자료 선택과 지도 표시">
+        <nav class="data_domain_nav" id="data_domain_nav" aria-label="데이터 영역">
+            <button type="button" data-data-domain="weather" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-weather"></use></svg><span>기상</span></button>
+            <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
+            <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
+        </nav>
+            <h2 class="workspace_section_label">기상요소</h2>
+        <div class="explore_modes" id="explore_modes" role="group" aria-label="기상 요소">
+            <button type="button" data-explore-mode="wind" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-wind"></use></svg><strong>풍향·풍속</strong></button>
+            <button type="button" data-explore-mode="temperature" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-temperature"></use></svg><strong>기온</strong></button>
+            <button type="button" data-explore-mode="precipitation" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-precipitation"></use></svg><strong>강수·적설</strong></button>
+            <button type="button" data-explore-mode="solar" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-solar"></use></svg><strong>일사강도</strong></button>
+            <button type="button" data-explore-mode="hazards" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="/static/image/bora-navigation-icons.svg?v=20260724.1#mode-hazards"></use></svg><strong>위험기상</strong></button>
+        </div>
+        <div class="explore_mode_summary" id="explore_mode_summary" data-kind="예보" role="status" aria-live="polite">
+            <strong>풍향·풍속</strong><span>지상 10 m 바람. 색상은 풍속, 바람선은 이동 방향입니다.</span>
+        </div>
+            <div class="workspace_display" id="workspace_display">
+                <h3>지도 표시</h3>
+                <div class="workspace_layer_controls" role="group" aria-label="빠른 지도 표시 설정">
+                    <button type="button" data-workspace-layer="heat" aria-pressed="true">색상</button>
+                    <button type="button" data-workspace-layer="stream" aria-pressed="true">바람선</button>
+                    <button type="button" data-workspace-layer="iso" aria-pressed="false">등치선</button>
+                </div>
+                <button type="button" class="workspace_settings_link" id="workspace_details">다른 기상요소 보기 <span aria-hidden="true">›</span></button>
+            </div>
+            <section class="workspace_source" aria-labelledby="workspace_source_title">
+                <h3 id="workspace_source_title">자료 정보</h3>
+                <p id="workspace_source_name">자료 확인 중</p>
+                <dl>
+                    <div><dt id="workspace_base_label">발표시각</dt><dd id="workspace_base">—</dd></div>
+                    <div><dt id="workspace_valid_label">예측시각</dt><dd id="workspace_valid">—</dd></div>
+                    <div><dt>시간대</dt><dd>KST (UTC+9)</dd></div>
+                </dl>
+                <p class="workspace_source_note" id="workspace_source_note"></p>
+                <button type="button" class="workspace_settings_link" id="workspace_run_settings">발표시각 변경 <span aria-hidden="true">›</span></button>
+            </section>
+            <nav class="workspace_places" id="workspace_places" aria-label="지역 바로가기">
+                <h3>지역 이동</h3>
+                <div>
+                    <button type="button" data-workspace-region="korea">전국</button>
+                    <button type="button" data-workspace-region="capital">수도권</button>
+                    <button type="button" data-workspace-region="south">남해</button>
+                    <button type="button" data-workspace-region="jeju">제주</button>
+                </div>
+            </nav>
+        </aside>
+        <div class="workspace_map_note"><span id="workspace_map_center">한반도</span><span>지도를 누르면 그 지역의 48시간 예보를 볼 수 있어요.</span></div>
+        <button type="button" class="map_color_key" id="map_color_key" aria-controls="weather_legend" aria-expanded="false">
+            <span class="map_color_key_header"><strong id="map_color_key_title">풍속 m/s</strong><span>범례 자세히</span></span>
+            <span class="map_color_strip" id="map_color_strip" aria-hidden="true"></span>
+            <span class="map_color_ticks" id="map_color_ticks" aria-hidden="true"></span>
+        </button>
+        <section class="workspace_data_notice" id="workspace_data_notice" role="status" hidden>
+            <p id="workspace_data_notice_text"></p>
+            <button type="button" id="workspace_data_retry" hidden>다시 불러오기</button>
+        </section>
+
         <div class="map_status_panel" role="status" aria-label="현재 지도 정보" aria-live="polite">
-            <strong class="info_metric">바람 · 지상 10m</strong>
+            <strong class="info_metric">풍향·풍속 · 지상 10 m</strong>
             <span class="info_time">최신 예보 시각을 확인 중입니다.</span>
             <span class="info_hint">색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)</span>
         </div>
         <div id="map" class="map map-weather" role="region" tabindex="0" aria-labelledby="map_workspace_title" aria-describedby="map_keyboard_help distance_measure_help road_basemap_status" aria-keyshortcuts="Enter Shift+Enter Backspace Escape"></div>
         <p class="sr-only" id="road_basemap_status" role="status" aria-live="polite">도로 배경지도를 선택할 수 있습니다.</p>
+        <p class="sr-only" id="workspace_status" role="status" aria-live="polite"></p>
         <div class="measure_crosshair" aria-hidden="true"></div>
         <div class="map_utility_stack" id="map_utility_stack">
             <section class="distance_measure_panel" id="distance_measure_panel" aria-labelledby="distance_measure_title" hidden>
@@ -346,6 +392,11 @@
                 </div>
                 <button type="button" class="dock_collapse" id="dock_collapse" title="설정 닫기" aria-label="표시 설정 닫기">×</button>
             </div>
+            <div class="workspace_mobile_tools" role="group" aria-label="지도 도구">
+                <button type="button" data-workspace-action="btn_share">지도 공유</button>
+                <button type="button" data-workspace-action="btn_3d">3D 보기</button>
+                <button type="button" data-workspace-action="theme_toggle">화면 밝기</button>
+            </div>
 
             <!-- 화면 세그먼트와 동기화되는 네이티브 상태 컨트롤 -->
             <div class="native-hooks" aria-hidden="true" inert style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);">
@@ -376,11 +427,11 @@
                         <div class="seg metric_segment" id="seg_element">
                             <button type="button" data-val="wdws" class="on" aria-pressed="true"><strong>바람</strong><small>m/s</small></button>
                             <button type="button" data-val="tmp" aria-pressed="false"><strong>기온</strong><small>°C</small></button>
-                            <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·눈</strong><small>비 · 눈</small></button>
+                            <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·적설</strong><small>비 · 눈</small></button>
                             <button type="button" data-val="swdn" aria-pressed="false"><strong>일사강도</strong><small>W/㎡</small></button>
                         </div>
                         <fieldset class="metric_context" id="precipitation_elements" hidden>
-                            <legend class="flabel" id="precipitation_element_label">강수·눈 보기</legend>
+                            <legend class="flabel" id="precipitation_element_label">강수·적설 보기</legend>
                             <div class="seg seg-3 metric_context_segment" id="seg_precipitation">
                                 <button type="button" data-val="pcp" class="on" aria-pressed="true"><strong>강수량</strong><small>1시간 · mm</small></button>
                                 <button type="button" data-val="pty" aria-pressed="false"><strong>형태</strong><small>비 · 눈</small></button>
@@ -574,6 +625,7 @@
 <!-- Forecast time navigation -->
     <section class="timeline" aria-labelledby="timeline_title">
         <h2 class="sr-only" id="timeline_title">예보 시간 탐색</h2>
+        <div class="workspace_clock" aria-hidden="true"><span id="workspace_date">예측시각</span><div><strong id="workspace_hour">—</strong><span>KST</span></div></div>
         <div class="forecast_run_list">
             <button type="button" id="btn_play" title="3시간 간격 자동 재생 (Space)" aria-label="예보 3시간 간격 자동 재생" aria-pressed="false">
                 <svg class="ic-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
@@ -595,6 +647,7 @@
         <div class="timeline_content">
             <div class="timeline_caption"><strong id="timeline_scope">기상 예보</strong><span id="timeline_range">향후 48시간</span></div>
             <div class="forecast_timeline" id="forecast_timeline">
+                <span class="workspace_lead" id="workspace_lead" aria-hidden="true">+1시간 예보</span>
                 <input type="range" class="forecast_scrubber" id="forecast_scrubber" name="forecast_hour" min="1" max="48" step="1" value="1" aria-label="예보 시간 선택" aria-valuetext="+1시간 예보">
                 <ul aria-hidden="true"></ul>
                 <div class="forecast_timeline_ticks" id="forecast_timeline_ticks" aria-hidden="true"><span>+1h</span><span>+12h</span><span>+24h</span><span>+36h</span><span>+48h</span></div>
@@ -645,7 +698,7 @@
     <!-- Optional three-dimensional data view -->
     <section id="view3d" role="dialog" aria-modal="true" aria-labelledby="view3d_dialog_title" aria-hidden="true">
         <h2 class="sr-only" id="view3d_dialog_title">3D 기상 지도</h2>
-        <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">풍속 격자 지형</span></div>
+        <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">기상값을 높이로 보기</span></div>
         <button type="button" class="view3d_close" id="view3d_close" title="닫기 (Esc)" aria-label="3D 지도 닫기">✕</button>
         <div class="view3d_tip" id="view3d_tip"></div>
         <div class="view3d_scale" id="view3d_scale" role="group" aria-label="3D 데이터 색상 범례">
@@ -663,39 +716,39 @@
 <script defer src="/static/js/app-bootstrap.js?v=20260806.1"></script>
 <script defer src="/static/js/geodata-loader.js?v=20260715.1"></script>
 <script defer src="/static/js/infra.js?v=20260723.1"></script>
-<script defer src="/static/js/station-charts.js?v=20260730.1"></script>
+<script defer src="/static/js/station-charts.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-dfs-projection.js?v=20260724.1"></script>
 <script defer src="/static/js/wind-grid.js?v=20260724.1"></script>
-<script defer src="/static/js/windy.js?v=20260720.1"></script>
-<script defer src="/static/js/weather-grid-palette-state.js?v=20260723.1"></script>
-<script defer src="/static/js/weather-grid-basemap-state.js?v=20260723.1"></script>
+<script defer src="/static/js/windy.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid-palette-state.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid-basemap-state.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-vworld-state.js?v=20260724.1"></script>
 <script defer src="/static/js/weather-grid-vworld.js?v=20260724.1"></script>
-<script defer src="/static/js/weather-grid-map-bootstrap.js?v=20260803.1"></script>
-<script defer src="/static/js/weather-grid.js?v=20260806.1"></script>
+<script defer src="/static/js/weather-grid-map-bootstrap.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-isoline-state.js?v=20260724.3"></script>
 <script defer src="/static/js/isoline.js?v=20260724.4"></script>
 <script defer src="/static/js/station-forecast.js?v=20260730.1"></script>
 <script defer src="/static/js/map-overlay-router.js?v=20260804.1"></script>
-<script defer src="/static/js/map-measure.js?v=20260721.1"></script>
+<script defer src="/static/js/map-measure.js?v=20260922.3"></script>
 <script defer src="/static/js/severe-weather.js?v=20260806.1"></script>
 <script defer src="/static/js/air-quality.js?v=20260803.1"></script>
 <script defer src="/static/js/cctv.js?v=20260804.1"></script>
 <script defer src="/static/js/weather-grid-interface-state.js?v=20260722.1"></script>
-<script defer src="/static/js/weather-grid-interface.js?v=20260806.1"></script>
+<script defer src="/static/js/weather-grid-interface.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-control-state.js?v=20260722.2"></script>
-<script defer src="/static/js/weather-grid-controls.js?v=20260722.2"></script>
+<script defer src="/static/js/weather-grid-controls.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-legend-model.js?v=20260722.3"></script>
-<script defer src="/static/js/weather-grid-legend.js?v=20260722.3"></script>
+<script defer src="/static/js/weather-grid-legend.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-navigation-state.js?v=20260730.1"></script>
 <script defer src="/static/js/weather-grid-navigation.js?v=20260730.1"></script>
 <script defer src="/static/js/weather-grid-map-state.js?v=20260722.4"></script>
 <script defer src="/static/js/weather-grid-projection.js?v=20260722.4"></script>
 <script defer src="/static/js/weather-grid-readout.js?v=20260722.4"></script>
 <script defer src="/static/js/weather-grid-raster-state.js?v=20260727.1"></script>
-<script defer src="/static/js/weather-grid-raster.js?v=20260723.1"></script>
-<script defer src="/static/js/weather-grid-wind-state.js?v=20260723.1"></script>
-<script defer src="/static/js/weather-grid-wind.js?v=20260806.1"></script>
+<script defer src="/static/js/weather-grid-raster.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid-wind-state.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid-wind.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-location-state.js?v=20260723.1"></script>
 <script defer src="/static/js/weather-grid-location.js?v=20260803.1"></script>
 <script defer src="/static/js/weather-grid-search-state.js?v=20260804.1"></script>
@@ -706,12 +759,13 @@
 <script defer src="/static/js/weather-grid-runs.js?v=20260806.1"></script>
 <script defer src="/static/js/weather-grid-data-state.js?v=20260723.4"></script>
 <script defer src="/static/js/weather-grid-data.js?v=20260723.4"></script>
-<script defer src="/static/js/weather-grid-explore-state.js?v=20260723.3"></script>
-<script defer src="/static/js/weather-grid-explore.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-explore-state.js?v=20260922.3"></script>
+<script defer src="/static/js/weather-grid-explore.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-view3d-state.js?v=20260723.2"></script>
-<script defer src="/static/js/weather-grid-view3d.js?v=20260723.3"></script>
+<script defer src="/static/js/weather-grid-view3d.js?v=20260922.3"></script>
 <script defer src="/static/js/weather-grid-infrastructure-state.js?v=20260723.1"></script>
 <script defer src="/static/js/weather-grid-infrastructure.js?v=20260723.1"></script>
 <script defer src="/static/js/weather-grid-session.js?v=20260806.1"></script>
+<script defer src="/static/js/weather-grid-workspace.js?v=20260922.3"></script>
 </body>
 </html>

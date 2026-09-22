@@ -154,6 +154,7 @@
 
     function setPanelVisible(visible) {
         panel.hidden = !visible;
+        mapArea.classList.toggle('measure-open', !!visible);
         toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
     }
 

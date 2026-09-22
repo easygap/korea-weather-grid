@@ -41,6 +41,7 @@ test('풍장 표시 조건은 요소·레이어·3D·지도 크기를 각각 구
     assert.equal(windState.renderDecision({ ...ready, metric: 'tmp' }).reason, 'metric');
     assert.equal(windState.renderDecision({ ...ready, streamEnabled: false }).reason, 'layer');
     assert.equal(windState.renderDecision({ ...ready, view3dOpen: true }).reason, 'view3d');
+    assert.equal(windState.renderDecision({ ...ready, documentHidden: true }).reason, 'hidden');
     assert.equal(windState.renderDecision({ ...ready, fieldAvailable: false }).reason, 'no-field');
 });
 

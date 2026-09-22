@@ -11,14 +11,14 @@
     'use strict';
 
     var MODE_COPY = Object.freeze({
-        wind: Object.freeze({ title: '바람 흐름', kind: '예보', body: '풍속 색상과 흐름선을 함께 표시합니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
-        temperature: Object.freeze({ title: '기온 분포', kind: '예보', body: '전국의 기온 차이를 색상으로 비교합니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
+        wind: Object.freeze({ title: '풍향·풍속', kind: '예보', body: '지상 10 m 바람. 색상은 풍속, 바람선은 이동 방향입니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
+        temperature: Object.freeze({ title: '기온', kind: '예보', body: '선택 시각의 지상 기온입니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
         precipitation: Object.freeze({ title: '1시간 강수량', kind: '예보', body: '해당 시각까지 1시간 동안의 예상 강수량을 표시합니다.', timeline: '강수 예보', timelineDetail: '향후 48시간' }),
-        solar: Object.freeze({ title: '일사 강도', kind: '예보', body: '지면에 도달하는 하향단파복사 강도를 비교합니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
+        solar: Object.freeze({ title: '일사강도', kind: '예보', body: '지표면 하향단파복사입니다. 단위는 W/㎡입니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' }),
         hazards: Object.freeze({ title: '위험기상', kind: '최근 관측·발표', body: '태풍 분석·예측 경로와 최근 낙뢰, 발효 특보를 확인합니다.', timeline: '위험기상', timelineDetail: '최근 관측·발표' }),
         air: Object.freeze({ title: '초미세먼지', kind: '최신 관측', body: 'PM2.5 관측과 선택 시각의 바람 흐름을 함께 봅니다.', timeline: '바람 예보 시간', timelineDetail: '미세먼지 최신 관측' }),
         road: Object.freeze({ title: '도로 CCTV', kind: '실시간', body: '지역을 확대해 CCTV 위치와 실시간 영상을 확인합니다.', timeline: '도로 CCTV', timelineDetail: '실시간' }),
-        custom: Object.freeze({ title: '직접 조정한 보기', kind: '설정', body: '선택한 레이어 조합을 표시하고 있습니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' })
+        custom: Object.freeze({ title: '기상요소', kind: '설정', body: '선택한 기상요소와 지도 표시 설정입니다.', timeline: '기상 예보', timelineDetail: '향후 48시간' })
     });
     var METRIC_COPY = Object.freeze({
         pcp: Object.freeze({ title: '1시간 강수량', kind: '예보', body: '해당 시각 직전 1시간의 예상 강수량입니다.', timeline: '강수·적설 예보', timelineDetail: '향후 48시간' }),
@@ -59,7 +59,7 @@
     function dockContext(mode, metric, metricGroup) {
         if (mode === 'wind') return '기상 · 바람';
         if (mode === 'temperature') return '기상 · 기온';
-        if (mode === 'precipitation') return '기상 · 강수·눈';
+        if (mode === 'precipitation') return '기상 · 강수·적설';
         if (mode === 'solar') return '기상 · 일사';
         if (mode === 'hazards') return '기상 · 위험기상';
         if (mode === 'air') return '대기질 · 미세먼지';
@@ -103,7 +103,7 @@
         var compact = Boolean(options.compact);
         var metric = null;
         var layers = freezeLayers({ heat: true, stream: false, iso: false });
-        var stations = !compact;
+        var stations = true;
         var basemap = 'weather';
         var air = 'off';
         var cctv = false;

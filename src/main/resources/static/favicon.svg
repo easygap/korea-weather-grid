@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="BORA">
-  <title>BORA - Korea Weather Grid</title>
-  <style>.mast{stroke:#23262b}@media(prefers-color-scheme:dark){.mast{stroke:#e8eaf0}}</style>
-  <line class="mast" x1="12" y1="8" x2="12" y2="56" stroke-width="7.5" stroke-linecap="round"/>
-  <path d="M15 9.5C31 5 46.5 11 58 21.5C44 27.5 29.5 35 15 42.5Z" fill="#978ff9"/>
+  <title>BORA 기상지도</title>
+  <rect width="64" height="64" rx="12" fill="#263b37"/>
+  <path d="M18 13h17c10 0 15 4 15 11 0 4-2 7-6 9 5 1 8 4 8 9 0 7-6 11-16 11H18V13Zm11 9v8h6c3 0 5-1 5-4s-2-4-5-4h-6Zm0 16v7h7c4 0 6-1 6-4s-2-3-6-3h-7Z" fill="#fff"/>
 </svg>

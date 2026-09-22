@@ -233,7 +233,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 740 }
     await expect(page.locator('#air_popup')).not.toHaveAttribute('hidden', '');
     await expect.poll(() => page.locator('#air_popup').evaluate((popup) => {
       const popupRect = popup.getBoundingClientRect();
-      const navigationRect = document.getElementById('mobile_primary_controls').getBoundingClientRect();
+      const navigationRect = document.querySelector('.map_status_panel').getBoundingClientRect();
       return popupRect.top >= navigationRect.bottom + 7;
     })).toBe(true);
 
@@ -241,7 +241,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 740 }
       const popupRect = popup.getBoundingClientRect();
       const close = document.getElementById('air_popup_close');
       const closeRect = close.getBoundingClientRect();
-      const navigationRect = document.getElementById('mobile_primary_controls').getBoundingClientRect();
+      const navigationRect = document.querySelector('.map_status_panel').getBoundingClientRect();
       const timelineRect = document.querySelector('.timeline').getBoundingClientRect();
       const hitTarget = document.elementFromPoint(
         closeRect.left + closeRect.width / 2,

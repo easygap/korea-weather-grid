@@ -52,7 +52,7 @@ test('작은 화면과 직접 조정 모드는 지점·레이어 제약을 보�
         metricMeta: { isoline: false }
     });
 
-    assert.equal(compactWind.stations, false);
+    assert.equal(compactWind.stations, true);
     assert.equal(custom.metric, 'wav');
     assert.deepEqual(custom.layers, { heat: true, stream: false, iso: false });
 });

@@ -38,11 +38,11 @@ test('표시 문자열은 범주 레이블과 단위를 동일 계약에서 만�
 });
 
 test('풍속과 기온 팔레트는 모든 임계 경계에서 결정적이다', () => {
-    assert.equal(Palette.windColor(1), 'rgba(44, 46, 126, 0.82)');
-    assert.equal(Palette.windColor(1.01), 'rgba(39, 83, 155, 0.82)');
-    assert.equal(Palette.windColor(20), 'rgba(216, 68, 112, 0.82)');
-    assert.equal(Palette.temperatureColor(-15), 'rgba(55, 48, 163, 0.7)');
-    assert.equal(Palette.temperatureColor(36), 'rgba(190, 18, 60, 0.7)');
+    assert.equal(Palette.windColor(1), 'rgba(221, 237, 239, 0.96)');
+    assert.equal(Palette.windColor(1.01), 'rgba(195, 220, 226, 0.96)');
+    assert.equal(Palette.windColor(20), 'rgba(16, 33, 59, 0.96)');
+    assert.equal(Palette.temperatureColor(-15), 'rgba(33, 74, 117, 0.94)');
+    assert.equal(Palette.temperatureColor(36), 'rgba(138, 37, 35, 0.94)');
 });
 
 test('강수·적설·습도·파고는 결측과 음수를 투명하게 처리한다', () => {

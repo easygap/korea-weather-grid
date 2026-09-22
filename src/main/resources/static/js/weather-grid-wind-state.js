@@ -57,6 +57,7 @@
     function renderDecision(input) {
         input = input || {};
         if (!input.fieldAvailable) return Object.freeze({ render: false, reason: 'no-field', plan: null });
+        if (input.documentHidden) return Object.freeze({ render: false, reason: 'hidden', plan: null });
         if (input.metric !== 'wdws') return Object.freeze({ render: false, reason: 'metric', plan: null });
         if (input.view3dOpen) return Object.freeze({ render: false, reason: 'view3d', plan: null });
         if (!input.streamEnabled) return Object.freeze({ render: false, reason: 'layer', plan: null });

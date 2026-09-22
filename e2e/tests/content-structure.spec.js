@@ -46,12 +46,12 @@ test.describe('콘텐츠 구조와 모바일 설정', () => {
 
     const modes = page.locator('#explore_modes [data-explore-mode]');
     await expect(modes).toHaveCount(5);
-    expect(await modes.allTextContents()).toEqual(['바람', '기온', '강수·눈', '일사', '위험기상']);
+    expect(await modes.allTextContents()).toEqual(['풍향·풍속', '기온', '강수·적설', '일사강도', '위험기상']);
     expect(await page.locator('#data_domain_nav [data-data-domain]').allTextContents()).toEqual(['기상', '대기질', '교통']);
 
     const summary = page.locator('#explore_mode_summary');
     await expect(summary).toHaveAttribute('data-kind', '예보');
-    await expect(summary.locator('strong')).toHaveText('바람 흐름');
+    await expect(summary.locator('strong')).toHaveText('풍향·풍속');
     await expect(page.locator('#timeline_scope')).toHaveText('기상 예보');
     await expect(page.locator('#timeline_range')).toHaveText('향후 48시간');
 
@@ -81,7 +81,7 @@ test.describe('콘텐츠 구조와 모바일 설정', () => {
     await expect(page.locator('#element')).toHaveValue('pcp');
     await expect(page.locator('button[data-explore-mode="precipitation"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#explore_mode_summary strong')).toHaveText('1시간 강수량');
-    await expect(page.locator('#dock_context')).toHaveText('기상 · 강수·눈');
+    await expect(page.locator('#dock_context')).toHaveText('기상 · 강수·적설');
     await expect(page.locator('#timeline_scope')).toHaveText('강수·적설 예보');
   });
 
@@ -242,7 +242,8 @@ test.describe('콘텐츠 구조와 모바일 설정', () => {
     });
     const dockBox = await dock.boundingBox();
     expect(dockBox.width).toBeGreaterThanOrEqual(390);
-    expect(dockBox.y).toBeGreaterThan(150);
+    const headerBox = await page.locator('.topbar').boundingBox();
+    expect(dockBox.y).toBeGreaterThan(headerBox.y + headerBox.height);
     expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(page.viewportSize().height + 1);
 
     await page.locator('#seg_element button[data-val="tmp"]').click();

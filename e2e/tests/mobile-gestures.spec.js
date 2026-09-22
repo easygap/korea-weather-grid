@@ -152,7 +152,8 @@ test.describe('모바일 지도 제스처', () => {
           zoomLeft: zoom.left
         };
       });
-      expect(layout.stackBottom).toBeLessThanOrEqual(layout.timelineTop);
+      await expect(page.locator('.timeline')).toBeHidden();
+      expect(layout.stackBottom).toBeLessThanOrEqual(659 - 56);
       expect(layout.stackRight).toBeLessThanOrEqual(layout.zoomLeft);
 
       const before = await page.evaluate(() => ({

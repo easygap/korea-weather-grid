@@ -15,14 +15,15 @@ async function waitForWeather(page) {
 
 async function viewportMetrics(page) {
   return page.evaluate(() => {
-    const result = window.lastGridResult;
+    // 시작 화면은 한국 육지와 제주를 맞춘다. 원자료의 바깥 해역까지 맞추지 않는다.
+    const extent = window.WEATHER_GRID_INITIAL_GEO_EXTENT;
     const view = weatherMap.getView();
     const projection = view.getProjection();
     const corners = [
-      [result.swLon, result.swLat],
-      [result.swLon, result.neLat],
-      [result.neLon, result.swLat],
-      [result.neLon, result.neLat]
+      [extent[0], extent[1]],
+      [extent[0], extent[3]],
+      [extent[2], extent[1]],
+      [extent[2], extent[3]]
     ].map((coordinate) => weatherMap.getPixelFromCoordinate(
       ol.proj.transform(coordinate, 'EPSG:4326', projection)
     ));

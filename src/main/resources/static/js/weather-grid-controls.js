@@ -173,6 +173,10 @@
     }
 
     if (playButton) playButton.addEventListener('click', togglePlayback);
+    // Do not advance forecast requests while nobody can see the map.
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stopPlayback();
+    });
 
     document.addEventListener('weather-grid:grid-settled', function (event) {
         send({

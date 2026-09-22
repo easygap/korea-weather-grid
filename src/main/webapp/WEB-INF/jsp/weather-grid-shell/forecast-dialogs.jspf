@@ -2,6 +2,7 @@
     <!-- Forecast time navigation -->
     <section class="timeline" aria-labelledby="timeline_title">
         <h2 class="sr-only" id="timeline_title">예보 시간 탐색</h2>
+        <div class="workspace_clock" aria-hidden="true"><span id="workspace_date">예측시각</span><div><strong id="workspace_hour">—</strong><span>KST</span></div></div>
         <div class="forecast_run_list">
             <button type="button" id="btn_play" title="3시간 간격 자동 재생 (Space)" aria-label="예보 3시간 간격 자동 재생" aria-pressed="false">
                 <svg class="ic-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
@@ -23,6 +24,7 @@
         <div class="timeline_content">
             <div class="timeline_caption"><strong id="timeline_scope">기상 예보</strong><span id="timeline_range">향후 48시간</span></div>
             <div class="forecast_timeline" id="forecast_timeline">
+                <span class="workspace_lead" id="workspace_lead" aria-hidden="true">+1시간 예보</span>
                 <input type="range" class="forecast_scrubber" id="forecast_scrubber" name="forecast_hour" min="1" max="48" step="1" value="1" aria-label="예보 시간 선택" aria-valuetext="+1시간 예보">
                 <ul aria-hidden="true"></ul>
                 <div class="forecast_timeline_ticks" id="forecast_timeline_ticks" aria-hidden="true"><span>+1h</span><span>+12h</span><span>+24h</span><span>+36h</span><span>+48h</span></div>
@@ -73,7 +75,7 @@
     <!-- Optional three-dimensional data view -->
     <section id="view3d" role="dialog" aria-modal="true" aria-labelledby="view3d_dialog_title" aria-hidden="true">
         <h2 class="sr-only" id="view3d_dialog_title">3D 기상 지도</h2>
-        <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">풍속 격자 지형</span></div>
+        <div class="view3d_hud"><strong>3D</strong><span id="view3d_title">기상값을 높이로 보기</span></div>
         <button type="button" class="view3d_close" id="view3d_close" title="닫기 (Esc)" aria-label="3D 지도 닫기">✕</button>
         <div class="view3d_tip" id="view3d_tip"></div>
         <div class="view3d_scale" id="view3d_scale" role="group" aria-label="3D 데이터 색상 범례">

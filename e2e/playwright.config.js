@@ -7,6 +7,7 @@ module.exports = defineConfig({
   use: {
     baseURL: process.env.WEATHER_GRID_BASE || 'http://localhost:8090',
     headless: true,
+    channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
     screenshot: 'on',
     trace: 'retain-on-failure',
   },

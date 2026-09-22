@@ -55,7 +55,7 @@
             }
         });
         if (mainButton) {
-            mainButton.setAttribute('aria-label', view.busy ? '3D 지도 불러오는 중' : '3D 지형 뷰 열기');
+            mainButton.setAttribute('aria-label', view.busy ? '3D 지도 불러오는 중' : '3D 보기 열기');
         }
         if (mainLabel) mainLabel.textContent = view.busy ? '로딩' : '3D';
         if (dockLabel) dockLabel.textContent = view.busy ? '불러오는 중' : '모바일';
@@ -93,7 +93,7 @@
             var app = document.querySelector('.app');
             var contextPath = app ? (app.dataset.contextPath || '') : '';
             var attempt = loadAttempt++;
-            var moduleUrl = contextPath + '/static/js/map3d.js?v=20260723.2'
+            var moduleUrl = contextPath + '/static/js/map3d.js?v=20260922.3'
                 + (attempt ? '&retry=' + attempt : '');
             var request = import(moduleUrl).then(function (module) {
                 var api = module && module.default;

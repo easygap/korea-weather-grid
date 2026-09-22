@@ -171,9 +171,8 @@ test('격자 조회는 순수 상태 뒤의 fetch 어댑터로 로드하고 jQue
 test('첫 화면은 jQuery와 CSS import 체인 없이 핵심 정보를 즉시 요청한다', () => {
     [springShell, publicShell].forEach((source) => {
         assert.doesNotMatch(source, /jquery(?:-|\.)/i);
-        ['400', '500', '600'].forEach((weight) => {
-            assert.match(source, new RegExp(`rel="preload"[^>]+plex-mono-${weight}\\.woff2`));
-        });
+        assert.match(source, /rel="preload"[^>]+SUIT-Variable\.woff2/);
+        assert.equal((source.match(/rel="preload" as="font"/g) || []).length, 1);
         const tokensIndex = source.indexOf('/static/css/tokens.css');
         const styleIndex = source.indexOf('/static/css/style.css');
         assert.ok(tokensIndex >= 0 && tokensIndex < styleIndex);

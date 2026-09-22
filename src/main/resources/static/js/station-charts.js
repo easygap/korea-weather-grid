@@ -27,6 +27,13 @@
         categoryMuted: '#64748b'
     };
     var FORECAST_CHART_ELEMENTS = new Set(['pcp', 'pty', 'sno', 'reh', 'sky', 'wav']);
+    var DARK_PALETTE = Object.assign({}, PALETTE);
+    var LIGHT_PALETTE = {
+        wind: '#24668f', windSoft: '#a6cbd7', direction: '#405d64',
+        temperature: '#b3432a', temperatureSoft: '#f4dca0', solar: '#b96120', solarHot: '#7a1f1d',
+        precipitation: '#286b9c', precipitationSoft: '#a6cbd7', probability: '#526765',
+        snow: '#427b9a', humidity: '#277769', wave: '#277e8b', categoryMuted: '#64716d'
+    };
 
     /** SVG 렌더러는 이 파일에 포함되므로 네트워크 의존성 없이 즉시 준비된다. */
     function ensureReady() {
@@ -368,7 +375,7 @@
             : '48시간 예보 풍향 자료 없음');
         var label = document.createElement('span');
         label.className = 'station_metric_label';
-        label.textContent = calm ? '첫 예보 바람' : (!hasDirection ? '풍향 예보' : '첫 유효 풍향');
+        label.textContent = calm ? '바람' : '풍향';
         var content = document.createElement('div');
         content.className = 'station_compass_content';
         var dial = document.createElement('div');
@@ -456,9 +463,9 @@
             var speeds = speedEntries.map(function (item) { return item.speed; });
             var firstSpeed = speedEntries[0];
             var firstDirection = directionEntries.length ? directionEntries[0] : null;
-            fragment.appendChild(createMetricCard(firstSpeed.index === 0 ? '첫 예보 풍속' : '첫 유효 풍속',
+            fragment.appendChild(createMetricCard('풍속',
                 formatNumber(firstSpeed.speed), 'm/s', '+' + forecastHour(firstSpeed.index) + '시간 예보', 'wind'));
-            fragment.appendChild(createMetricCard('48시간 범위',
+            fragment.appendChild(createMetricCard('48시간 최저·최고',
                 formatNumber(Math.min.apply(null, speeds)) + ' – ' + formatNumber(Math.max.apply(null, speeds)),
                 'm/s', '평균 ' + formatNumber(average(speeds)) + ' m/s', 'range'));
             var compassEntry = firstDirection || firstSpeed;
@@ -978,7 +985,7 @@
                 var y = bands[0].top + tick * bands[0].height / 4;
                 var value = ranges[0].max - tick * (ranges[0].max - ranges[0].min) / 4;
                 grid.appendChild(svgNode('line', { x1: left, y1: y, x2: left + plotWidth, y2: y, stroke: gridColor, 'stroke-dasharray': '3 4' }));
-                grid.appendChild(svgNode('text', { x: left - 7, y: y + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'end' }, formatNumber(value, Math.abs(value) < 10 ? 1 : 0)));
+                grid.appendChild(svgNode('text', { x: left - 7, y: y + 4, fill: textColor, 'font-size': 11, 'text-anchor': 'end' }, formatNumber(value, Math.abs(value) < 10 ? 1 : 0)));
             }
         }
         // 별도 레인이 있으면 값 영역과 표식 영역의 경계를 얇은 선으로 알려 준다.
@@ -992,7 +999,7 @@
             for (var rightTick = 0; rightTick <= 4; rightTick += 1) {
                 var rightY = bands[1].top + rightTick * bands[1].height / 4;
                 var rightValue = ranges[1].max - rightTick * (ranges[1].max - ranges[1].min) / 4;
-                grid.appendChild(svgNode('text', { x: left + plotWidth + 7, y: rightY + 4, fill: textColor, 'font-size': 10, 'text-anchor': 'start' },
+                grid.appendChild(svgNode('text', { x: left + plotWidth + 7, y: rightY + 4, fill: textColor, 'font-size': 11, 'text-anchor': 'start' },
                     formatNumber(rightValue, Math.abs(rightValue) < 10 ? 1 : 0)));
             }
         }
@@ -1007,7 +1014,7 @@
             var date = new Date(start + index * HOUR);
             var label = pad(date.getUTCHours()) + ':00 ' + pad(date.getUTCMonth() + 1) + '.' + pad(date.getUTCDate());
             grid.appendChild(svgNode('line', { x1: xFor(index), y1: top + plotHeight, x2: xFor(index), y2: top + plotHeight + 5, stroke: gridColor }));
-            grid.appendChild(svgNode('text', { x: xFor(index), y: height - 18, fill: textColor, 'font-size': 9, 'text-anchor': 'middle' }, label));
+            grid.appendChild(svgNode('text', { x: xFor(index), y: height - 18, fill: textColor, 'font-size': 11, 'text-anchor': 'middle' }, label));
         });
         svg.appendChild(grid);
         var marks = svgNode('g', { class: 'station-chart-marks', 'clip-path': 'url(#' + clipId + ')' });
@@ -1482,6 +1489,7 @@
     }
 
     function render(element, data, date) {
+        PALETTE = document.documentElement.dataset.theme === 'light' ? LIGHT_PALETTE : DARK_PALETTE;
         if (element === 'pcp') {
             var precipitationSlots = normalizePrecipitation(data, date);
             if (!precipitationSlots.length) return false;

@@ -1,25 +1,24 @@
 <%@ page pageEncoding="UTF-8" %>
 <!DOCTYPE html>
-<html lang="ko" data-theme="dark">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="한국의 기상 예보, 미세먼지 관측, 실시간 도로 CCTV를 시간·공간 기준으로 탐색하는 기상 격자지도 BORA">
-<meta name="theme-color" content="#05070a">
+<meta name="description" content="전국 날씨를 지도에서 보고, 지역별 48시간 예보를 확인하세요. 기상청 풍향·풍속, 기온, 강수량과 미세먼지, 도로 CCTV를 제공하는 BORA 기상지도입니다.">
+<meta name="theme-color" content="#ffffff">
 <title>BORA · 한국 기상 격자지도</title>
 
 <link rel="icon" type="image/svg+xml" href="${pageContext.request.contextPath}/favicon.svg">
 
-<%-- 판독부 서체는 첫 화면의 수치를 그리므로 스타일시트보다 먼저 요청한다 --%>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/plex-mono-600.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/plex-mono-500.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/plex-mono-400.woff2">
+<%-- 한글과 숫자를 하나의 로컬 가변 글꼴로 표시한다. --%>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="${pageContext.request.contextPath}/static/font/SUIT-Variable.woff2">
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/tokens.css?v=20260806.1">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/tokens.css?v=20260922.3">
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/reset.css?v=20260730.2">
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.css">
 
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/style.css?v=20260806.1">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/static/css/forecast-workspace.css?v=20260922.3">
 
 <script defer src="${pageContext.request.contextPath}/static/vendor/openlayers-10.9.0.min.js"></script>
 <script defer src="${pageContext.request.contextPath}/static/vendor/proj4-2.20.9.min.js"></script>

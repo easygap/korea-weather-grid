@@ -3,13 +3,72 @@
     <main class="map_workspace" aria-labelledby="map_workspace_title">
         <h2 class="sr-only" id="map_workspace_title">한국 기상 격자 지도</h2>
 
+        <aside class="workspace_sidebar" aria-label="자료 선택과 지도 표시">
+        <nav class="data_domain_nav" id="data_domain_nav" aria-label="데이터 영역">
+            <button type="button" data-data-domain="weather" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-weather"></use></svg><span>기상</span></button>
+            <button type="button" data-data-domain="air" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-air"></use></svg><span>대기질</span></button>
+            <button type="button" data-data-domain="traffic" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#domain-traffic"></use></svg><span>교통</span></button>
+        </nav>
+            <h2 class="workspace_section_label">기상요소</h2>
+        <div class="explore_modes" id="explore_modes" role="group" aria-label="기상 요소">
+            <button type="button" data-explore-mode="wind" class="on" aria-pressed="true"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-wind"></use></svg><strong>풍향·풍속</strong></button>
+            <button type="button" data-explore-mode="temperature" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-temperature"></use></svg><strong>기온</strong></button>
+            <button type="button" data-explore-mode="precipitation" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-precipitation"></use></svg><strong>강수·적설</strong></button>
+            <button type="button" data-explore-mode="solar" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-solar"></use></svg><strong>일사강도</strong></button>
+            <button type="button" data-explore-mode="hazards" aria-pressed="false"><svg class="nav_icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/static/image/bora-navigation-icons.svg?v=20260724.1#mode-hazards"></use></svg><strong>위험기상</strong></button>
+        </div>
+        <div class="explore_mode_summary" id="explore_mode_summary" data-kind="예보" role="status" aria-live="polite">
+            <strong>풍향·풍속</strong><span>지상 10 m 바람. 색상은 풍속, 바람선은 이동 방향입니다.</span>
+        </div>
+            <div class="workspace_display" id="workspace_display">
+                <h3>지도 표시</h3>
+                <div class="workspace_layer_controls" role="group" aria-label="빠른 지도 표시 설정">
+                    <button type="button" data-workspace-layer="heat" aria-pressed="true">색상</button>
+                    <button type="button" data-workspace-layer="stream" aria-pressed="true">바람선</button>
+                    <button type="button" data-workspace-layer="iso" aria-pressed="false">등치선</button>
+                </div>
+                <button type="button" class="workspace_settings_link" id="workspace_details">다른 기상요소 보기 <span aria-hidden="true">›</span></button>
+            </div>
+            <section class="workspace_source" aria-labelledby="workspace_source_title">
+                <h3 id="workspace_source_title">자료 정보</h3>
+                <p id="workspace_source_name">자료 확인 중</p>
+                <dl>
+                    <div><dt id="workspace_base_label">발표시각</dt><dd id="workspace_base">—</dd></div>
+                    <div><dt id="workspace_valid_label">예측시각</dt><dd id="workspace_valid">—</dd></div>
+                    <div><dt>시간대</dt><dd>KST (UTC+9)</dd></div>
+                </dl>
+                <p class="workspace_source_note" id="workspace_source_note"></p>
+                <button type="button" class="workspace_settings_link" id="workspace_run_settings">발표시각 변경 <span aria-hidden="true">›</span></button>
+            </section>
+            <nav class="workspace_places" id="workspace_places" aria-label="지역 바로가기">
+                <h3>지역 이동</h3>
+                <div>
+                    <button type="button" data-workspace-region="korea">전국</button>
+                    <button type="button" data-workspace-region="capital">수도권</button>
+                    <button type="button" data-workspace-region="south">남해</button>
+                    <button type="button" data-workspace-region="jeju">제주</button>
+                </div>
+            </nav>
+        </aside>
+        <div class="workspace_map_note"><span id="workspace_map_center">한반도</span><span>지도를 누르면 그 지역의 48시간 예보를 볼 수 있어요.</span></div>
+        <button type="button" class="map_color_key" id="map_color_key" aria-controls="weather_legend" aria-expanded="false">
+            <span class="map_color_key_header"><strong id="map_color_key_title">풍속 m/s</strong><span>범례 자세히</span></span>
+            <span class="map_color_strip" id="map_color_strip" aria-hidden="true"></span>
+            <span class="map_color_ticks" id="map_color_ticks" aria-hidden="true"></span>
+        </button>
+        <section class="workspace_data_notice" id="workspace_data_notice" role="status" hidden>
+            <p id="workspace_data_notice_text"></p>
+            <button type="button" id="workspace_data_retry" hidden>다시 불러오기</button>
+        </section>
+
         <div class="map_status_panel" role="status" aria-label="현재 지도 정보" aria-live="polite">
-            <strong class="info_metric">바람 · 지상 10m</strong>
+            <strong class="info_metric">풍향·풍속 · 지상 10 m</strong>
             <span class="info_time">최신 예보 시각을 확인 중입니다.</span>
             <span class="info_hint">색은 풍속 · 선은 이동 방향(재생 속도는 시각화용)</span>
         </div>
         <div id="map" class="map map-weather" role="region" tabindex="0" aria-labelledby="map_workspace_title" aria-describedby="map_keyboard_help distance_measure_help road_basemap_status" aria-keyshortcuts="Enter Shift+Enter Backspace Escape"></div>
         <p class="sr-only" id="road_basemap_status" role="status" aria-live="polite">도로 배경지도를 선택할 수 있습니다.</p>
+        <p class="sr-only" id="workspace_status" role="status" aria-live="polite"></p>
         <div class="measure_crosshair" aria-hidden="true"></div>
         <div class="map_utility_stack" id="map_utility_stack">
             <section class="distance_measure_panel" id="distance_measure_panel" aria-labelledby="distance_measure_title" hidden>

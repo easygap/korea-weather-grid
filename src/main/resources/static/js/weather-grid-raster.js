@@ -15,6 +15,7 @@
     var lookupCache = null;
     var lookupHits = 0;
     var lookupMisses = 0;
+    var colorEvaluations = 0;
 
     function currentTheme() {
         var explicitTheme = document.documentElement.getAttribute('data-theme');
@@ -50,6 +51,7 @@
         return Object.freeze({
             hits: lookupHits,
             misses: lookupMisses,
+            colorEvaluations: colorEvaluations,
             sampleCount: lookupCache ? lookupCache.dataIndices.length : 0
         });
     }
@@ -144,6 +146,10 @@
         var viewProjectionCode = window.WEATHER_GRID_VIEW_PROJ
             || MapRuntime.map.getView().getProjection().getCode();
         var readColor = colorReader(element, selectedMonth);
+        // Color each visible grid cell at most once per canvas frame. Keep reading
+        // current values on source.changed(), including in-place data corrections.
+        var gridColors = new Uint8ClampedArray(data.length * 4);
+        var coloredCells = new Uint8Array(data.length);
         var layer = MapRuntime.weatherLayer();
         writeSummary(element, data);
 
@@ -173,15 +179,22 @@
                 lookupHits += 1;
             }
 
+            coloredCells.fill(0);
+            colorEvaluations = 0;
             for (var index = 0; index < lookup.dataIndices.length; index += 1) {
                 var dataIndex = lookup.dataIndices[index];
                 if (dataIndex < 0) continue;
-                var color = readColor(data[dataIndex]);
+                var colorIndex = dataIndex * 4;
+                if (!coloredCells[dataIndex]) {
+                    gridColors.set(readColor(data[dataIndex]), colorIndex);
+                    coloredCells[dataIndex] = 1;
+                    colorEvaluations += 1;
+                }
                 var offset = index * 4;
-                pixels.data[offset] = color[0];
-                pixels.data[offset + 1] = color[1];
-                pixels.data[offset + 2] = color[2];
-                pixels.data[offset + 3] = Math.round(color[3] * lookup.edgeAlpha[index] / 255);
+                pixels.data[offset] = gridColors[colorIndex];
+                pixels.data[offset + 1] = gridColors[colorIndex + 1];
+                pixels.data[offset + 2] = gridColors[colorIndex + 2];
+                pixels.data[offset + 3] = Math.round(gridColors[colorIndex + 3] * lookup.edgeAlpha[index] / 255);
             }
             sampleContext.putImageData(pixels, 0, 0);
             context.imageSmoothingEnabled = false;

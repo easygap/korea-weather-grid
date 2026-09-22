@@ -10,7 +10,8 @@
     var legend = document.getElementById('weather_legend');
     var toggle = legend ? legend.querySelector('.legend_toggle') : null;
     var compactQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
-    var collapsed = model.initialCollapsed(Boolean(compactQuery && compactQuery.matches));
+    var collapsed = true;
+    var compactKey = document.getElementById('map_color_key');
 
     function selectedElement() {
         var select = document.getElementById('element');
@@ -132,6 +133,42 @@
         toggle.setAttribute('aria-label', legendModel.title + (collapsed ? ' 펼치기' : ' 접기'));
     }
 
+    function renderCompact(legendModel) {
+        if (!compactKey) return;
+        var metadata = window.WEATHER_GRID_WEATHER_ELEMENTS[legendModel.element] || {};
+        var title = (legendModel.element === 'wdws' ? '풍속' : metadata.label || legendModel.title)
+            + (metadata.unit ? ' ' + metadata.unit : '');
+        document.getElementById('map_color_key_title').textContent = title;
+        var colors;
+        var labels;
+        if (legendModel.kind === 'solar') {
+            colors = legendModel.solar.gradientColors.slice().reverse();
+            labels = legendModel.solar.ticks.slice().reverse();
+        } else {
+            var rows = legendModel.rows.slice().reverse();
+            colors = rows.map(function (row) { return row.color; });
+            labels = rows.filter(function (_, index) {
+                return index === 0 || index === rows.length - 1
+                    || index === Math.round((rows.length - 1) / 3)
+                    || index === Math.round((rows.length - 1) * 2 / 3);
+            }).map(function (row) { return row.label; });
+        }
+        var strip = document.getElementById('map_color_strip');
+        var ticks = document.getElementById('map_color_ticks');
+        strip.replaceChildren();
+        ticks.replaceChildren();
+        colors.forEach(function (color) {
+            var swatch = document.createElement('i');
+            swatch.style.backgroundColor = color;
+            strip.appendChild(swatch);
+        });
+        labels.forEach(function (label) {
+            var tick = document.createElement('span');
+            tick.textContent = label;
+            ticks.appendChild(tick);
+        });
+    }
+
     function render(result, requestedElement) {
         var box = getScaleBox();
         if (!box) return null;
@@ -160,6 +197,7 @@
         if (legendModel.kind === 'solar') renderSolar(box, legendModel);
         else renderRows(box, legendModel);
         appendUnit(box, legendModel.unitText);
+        renderCompact(legendModel);
         return legendModel;
     }
 
@@ -169,6 +207,7 @@
         legend.classList.toggle('legend-collapsed', collapsed);
         legend.classList.add('legend-ready');
         toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (compactKey) compactKey.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         syncHeading({ title: (window.WEATHER_GRID_WEATHER_ELEMENTS[selectedElement()] || {}).legend || '기상 분포' });
     }
 
@@ -178,6 +217,9 @@
         });
         applyCollapsed(collapsed);
     }
+    if (compactKey) compactKey.addEventListener('click', function () {
+        applyCollapsed(!collapsed);
+    });
     if (compactQuery) {
         compactQuery.addEventListener('change', function (event) {
             applyCollapsed(model.reduceCollapsed(collapsed, { type: 'viewport', compact: event.matches }));

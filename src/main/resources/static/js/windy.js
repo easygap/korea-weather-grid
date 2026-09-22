@@ -236,8 +236,12 @@
     Windy.prototype.start = function (options) {
         if (this.destroyed) throw new Error('Cannot start a destroyed Windy renderer.');
         const config = options || {};
-        const width = Math.max(1, Math.round(finitePositive(config.width, this.canvas.clientWidth || this.canvas.width)));
-        const height = Math.max(1, Math.round(finitePositive(config.height, this.canvas.clientHeight || this.canvas.height)));
+        // Only read layout for standalone callers that omit dimensions. Evaluating
+        // the fallback argument eagerly used to force layout on every forecast frame.
+        const width = Math.max(1, Math.round(finitePositive(config.width, 0)
+            || this.canvas.clientWidth || this.canvas.width || 1));
+        const height = Math.max(1, Math.round(finitePositive(config.height, 0)
+            || this.canvas.clientHeight || this.canvas.height || 1));
         const projectionCode = config.projectionCode || 'KMA_GRID_LCC';
         const screenProjection = createScreenProjection(width, height, config.viewProjectionExtent, projectionCode);
 
@@ -402,6 +406,10 @@
         const first = [0, 0, 0, 0];
         const midpoint = [0, 0, 0, 0];
         const destination = [0, 0, 0, 0];
+        if (!this.lowWindSegments || this.lowWindSegments.length < particles.x.length * 4) {
+            this.lowWindSegments = new Float32Array(particles.x.length * 4);
+        }
+        let lowCount = 0;
         for (let index = 0; index < particles.x.length; index += 1) {
             const x = particles.x[index];
             const y = particles.y[index];
@@ -428,12 +436,27 @@
                 continue;
             }
 
-            context.moveTo(x, y);
-            context.lineTo(nextX, nextY);
+            if (first[2] < 4) {
+                this.lowWindSegments[lowCount++] = x;
+                this.lowWindSegments[lowCount++] = y;
+                this.lowWindSegments[lowCount++] = nextX;
+                this.lowWindSegments[lowCount++] = nextY;
+            } else {
+                context.moveTo(x, y);
+                context.lineTo(nextX, nextY);
+            }
             particles.x[index] = nextX;
             particles.y[index] = nextY;
             particles.age[index] = age;
         }
+        context.stroke();
+        // 밝은 저풍속 영역과 짙은 고풍속 영역에 각각 대비되는 선을 쓴다.
+        context.beginPath();
+        for (let offset = 0; offset < lowCount; offset += 4) {
+            context.moveTo(this.lowWindSegments[offset], this.lowWindSegments[offset + 1]);
+            context.lineTo(this.lowWindSegments[offset + 2], this.lowWindSegments[offset + 3]);
+        }
+        context.strokeStyle = root.WEATHER_GRID_PARTICLE_LOW_COLOR || 'rgba(38,77,91,.60)';
         context.stroke();
         context.globalAlpha = 1;
         context.setTransform(1, 0, 0, 1, 0, 0);
@@ -454,6 +477,7 @@
         if (this.screenField) this.screenField.release();
         this.screenField = null;
         this.particles = null;
+        this.lowWindSegments = null;
         this.lastFrameAt = 0;
         this.frameAccumulator = 0;
         this.diagnostics.fieldSamples = 0;

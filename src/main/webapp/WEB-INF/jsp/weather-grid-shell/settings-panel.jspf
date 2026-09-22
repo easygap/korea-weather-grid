@@ -18,6 +18,11 @@
                 </div>
                 <button type="button" class="dock_collapse" id="dock_collapse" title="설정 닫기" aria-label="표시 설정 닫기">×</button>
             </div>
+            <div class="workspace_mobile_tools" role="group" aria-label="지도 도구">
+                <button type="button" data-workspace-action="btn_share">지도 공유</button>
+                <button type="button" data-workspace-action="btn_3d">3D 보기</button>
+                <button type="button" data-workspace-action="theme_toggle">화면 밝기</button>
+            </div>
 
             <!-- 화면 세그먼트와 동기화되는 네이티브 상태 컨트롤 -->
             <div class="native-hooks" aria-hidden="true" inert style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);">
@@ -48,11 +53,11 @@
                         <div class="seg metric_segment" id="seg_element">
                             <button type="button" data-val="wdws" class="on" aria-pressed="true"><strong>바람</strong><small>m/s</small></button>
                             <button type="button" data-val="tmp" aria-pressed="false"><strong>기온</strong><small>°C</small></button>
-                            <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·눈</strong><small>비 · 눈</small></button>
+                            <button type="button" data-val="pcp" data-metric-family="precipitation" aria-pressed="false"><strong>강수·적설</strong><small>비 · 눈</small></button>
                             <button type="button" data-val="swdn" aria-pressed="false"><strong>일사강도</strong><small>W/㎡</small></button>
                         </div>
                         <fieldset class="metric_context" id="precipitation_elements" hidden>
-                            <legend class="flabel" id="precipitation_element_label">강수·눈 보기</legend>
+                            <legend class="flabel" id="precipitation_element_label">강수·적설 보기</legend>
                             <div class="seg seg-3 metric_context_segment" id="seg_precipitation">
                                 <button type="button" data-val="pcp" class="on" aria-pressed="true"><strong>강수량</strong><small>1시간 · mm</small></button>
                                 <button type="button" data-val="pty" aria-pressed="false"><strong>형태</strong><small>비 · 눈</small></button>
