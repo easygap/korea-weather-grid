@@ -105,6 +105,22 @@ Cloudflare에는 `VWORLD_API_KEY`를 주입하지 않는다. VWorld 원점이 ed
 `wrangler deployments status`에서 직전 정상 버전 ID도 배포 전에 기록한다. RC 미리보기
 URL에서 아래 항목을 확인한다.
 
+미리보기 주소에서만 외부 API 연결이 실패하면, 동일한 요청을 기존 버전의 미리보기 주소와
+운영 주소에서도 비교한다. 2026-09-22 점검에서는 두 버전의 미리보기 요청에 국내 배치가
+적용되지 않았고 운영 주소는 `cf-placement: remote-ICN`으로 정상 응답했다.
+이 경우 [Cloudflare의 버전 지정 검사](https://developers.cloudflare.com/workers/versions-and-deployments/version-overrides/)를
+사용해 아래 항목을 운영 경로에서 확인할 수 있다. 일반 방문자의 요청은 기존 버전에 100% 유지한다.
+
+```bash
+npx wrangler versions deploy <기존-버전-UUID>@100% <RC-버전-UUID>@0% --yes
+```
+
+검사 클라이언트에만 `Cloudflare-Workers-Version-Overrides: bora-weather="<RC-버전-UUID>"`
+헤더를 붙인다. 브라우저 검사에서는 문서·정적 자산·API가 모두 같은 RC를 쓰게 한다.
+새 화면 제목과 자산 버전, Worker 로그의 `scriptVersion.id`로 적용 여부를 확인한다.
+API 검증을 생략하는 절차가 아니며, 검사가 끝나면 아래의 100% 배포 스크립트로 전환하고
+검사 헤더를 제거한 상태에서 다시 확인한다.
+
 - 첫 화면과 모바일 화면이 정상 표시되는지
 - Cloudflare 도로 배경지도가 지연 없이 OpenStreetMap으로 표시되고 지도 이동·확대·도법
   전환 뒤 기상 오버레이가 유지되는지, `/api/runtime/map-config`와 브라우저 요청에

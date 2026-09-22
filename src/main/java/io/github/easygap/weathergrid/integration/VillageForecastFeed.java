@@ -22,6 +22,8 @@ import java.util.Set;
 public final class VillageForecastFeed {
 
     private static final int PAGE_CAPACITY = 1_000;
+    // 17시 발표분은 예보 기간이 길어 한 페이지를 넘을 수 있다.
+    private static final int MAX_ITEMS = 2_000;
     private static final Set<String> RELEASE_TIMES = Set.of(
             "0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300");
     private static final DateTimeFormatter DAY = DateTimeFormatter
@@ -47,17 +49,7 @@ public final class VillageForecastFeed {
         query.put("pageNo", 1);
         query.put("numOfRows", PAGE_CAPACITY);
 
-        JsonNode response = gateway.request(PublicDataGateway.Dataset.VILLAGE_FORECAST, query)
-                .path("response");
-        if (!"00".equals(response.path("header").path("resultCode").asString(""))) {
-            throw new UpstreamUnavailableException();
-        }
-        JsonNode body = response.path("body");
-        int expected = body.path("totalCount").asInt(-1);
-        List<JsonNode> rawItems = items(body.path("items"));
-        if (expected <= 0 || expected > PAGE_CAPACITY || rawItems.size() != expected) {
-            throw new UpstreamUnavailableException();
-        }
+        List<JsonNode> rawItems = loadItems(query);
 
         List<Value> result = new ArrayList<>();
         for (JsonNode item : rawItems) {
@@ -74,6 +66,33 @@ public final class VillageForecastFeed {
         }
         if (result.isEmpty()) throw new UpstreamUnavailableException();
         return List.copyOf(result);
+    }
+
+    private List<JsonNode> loadItems(Map<String, Object> query) {
+        List<JsonNode> collected = new ArrayList<>();
+        int expected = -1;
+        for (int page = 1; page <= MAX_ITEMS / PAGE_CAPACITY; page++) {
+            Map<String, Object> pageQuery = new LinkedHashMap<>(query);
+            pageQuery.put("pageNo", page);
+            JsonNode response = gateway.request(PublicDataGateway.Dataset.VILLAGE_FORECAST, pageQuery)
+                    .path("response");
+            if (!"00".equals(response.path("header").path("resultCode").asString(""))) {
+                throw new UpstreamUnavailableException();
+            }
+            JsonNode body = response.path("body");
+            int total = body.path("totalCount").asInt(-1);
+            if (total <= 0 || total > MAX_ITEMS || (expected != -1 && total != expected)) {
+                throw new UpstreamUnavailableException();
+            }
+            expected = total;
+            List<JsonNode> batch = items(body.path("items"));
+            if (batch.size() != Math.min(PAGE_CAPACITY, expected - collected.size())) {
+                throw new UpstreamUnavailableException();
+            }
+            collected.addAll(batch);
+            if (collected.size() == expected) return collected;
+        }
+        throw new UpstreamUnavailableException();
     }
 
     private static void validateQuery(String date, String time, int gridX, int gridY) {

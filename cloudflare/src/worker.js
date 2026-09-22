@@ -1046,7 +1046,9 @@ const DATA_GO = {
     MAX_FORECAST_BYTES: 2 * 1024 * 1024,
     MAX_WARNING_BYTES: 512 * 1024,
     MAX_AIR_BYTES: 4 * 1024 * 1024,
-    MAX_FORECAST_ITEMS: 1000,
+    // 17시 발표분은 예보 기간이 길어 1,000행을 넘을 수 있다.
+    // 1,000행씩 나눠 읽고 총량은 별도로 제한한다.
+    MAX_FORECAST_ITEMS: 2000,
     MAX_AIR_STATION_ITEMS: 2000,
     MAX_AIR_MEASURE_ITEMS: 1000,
     UPSTREAM_TIMEOUT_MS: 15000
@@ -1205,7 +1207,12 @@ async function fetchAllDataGoItems(env, path, baseParams, maxBytes, maxItems) {
         if (declaredTotal !== undefined && declaredTotal !== null && declaredTotal !== '') {
             const rawTotal = Number(declaredTotal);
             if (!Number.isInteger(rawTotal) || rawTotal < 0 || rawTotal > maxItems
-                || (totalCount !== null && totalCount !== rawTotal)) return null;
+                || (totalCount !== null && totalCount !== rawTotal)) {
+                logDataGoFailure(path, 'invalid_total_count', {
+                    pageNo, declaredTotal: Number.isFinite(rawTotal) ? rawTotal : null, maxItems
+                });
+                return null;
+            }
             totalCount = rawTotal;
         } else if (totalCount === null) {
             // 일부 샌드박스 응답은 totalCount를 생략한다. 이때는 단일 페이지로만 인정한다.

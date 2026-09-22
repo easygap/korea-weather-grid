@@ -1635,6 +1635,40 @@ test('data.go pagination is server-controlled and all declared forecast items ar
     ]);
 });
 
+test('17:00 forecasts larger than one page retain the complete hourly forecast', async (t) => {
+    const originalFetch = globalThis.fetch;
+    const originalCaches = globalThis.caches;
+    const baseDate = yesterday();
+    globalThis.caches = { default: new MemoryCache() };
+    const items = Array.from({ length: 1052 }, () => ({
+        fcstDate: baseDate, fcstTime: '1800', category: 'TMP', fcstValue: '18'
+    }));
+    items[1051] = { fcstDate: baseDate, fcstTime: '1800', category: 'REH', fcstValue: '62' };
+    const pages = [];
+    globalThis.fetch = async (url) => {
+        const query = new URL(String(url)).searchParams;
+        const pageNo = Number(query.get('pageNo'));
+        pages.push(pageNo);
+        assert.equal(query.get('numOfRows'), '1000');
+        return jsonResponse(apiPayload(items.slice((pageNo - 1) * 1000, pageNo * 1000), items.length));
+    };
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+        globalThis.caches = originalCaches;
+    });
+
+    const path = `/api/weather/point-forecast?latitude=37.5&longitude=127&baseDate=${baseDate}&baseTime=1700`;
+    const response = await worker.fetch(request(path), dataGoEnv(), {});
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.items.length, 49);
+    assert.equal(body.items[1].temperature, 18);
+    assert.equal(body.items[1].humidity, 62);
+    assert.deepEqual(pages, [1, 2]);
+    assert.equal((await worker.fetch(request(path), dataGoEnv(), {})).status, 200);
+    assert.deepEqual(pages, [1, 2], 'the second request reuses both cached pages');
+});
+
 test('data.go rejects a declared item count above the endpoint memory budget', async (t) => {
     const originalFetch = globalThis.fetch;
     const originalCaches = globalThis.caches;
@@ -1642,7 +1676,7 @@ test('data.go rejects a declared item count above the endpoint memory budget', a
     let upstreamCalls = 0;
     globalThis.fetch = async () => {
         upstreamCalls++;
-        return jsonResponse(apiPayload([], 1001));
+        return jsonResponse(apiPayload([], 2001));
     };
     t.after(() => {
         globalThis.fetch = originalFetch;

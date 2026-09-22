@@ -6,6 +6,8 @@ import org.mockito.ArgumentCaptor;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,6 +16,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +55,60 @@ class VillageForecastFeedContractTest {
         assertEquals(Map.of(
                 "dataType", "JSON", "base_date", "20260722", "base_time", "0200",
                 "nx", 60, "ny", 127, "pageNo", 1, "numOfRows", 1_000), query.getValue());
+    }
+
+    @Test
+    void readsAll1052RowsFromAnEveningForecast() {
+        PublicDataGateway gateway = mock(PublicDataGateway.class);
+        List<Map<String, Object>> queries = new ArrayList<>();
+        when(gateway.request(eq(PublicDataGateway.Dataset.VILLAGE_FORECAST), anyMap()))
+                .thenAnswer(invocation -> {
+                    Map<String, Object> query = invocation.getArgument(1);
+                    queries.add(Map.copyOf(query));
+                    int page = (int) query.get("pageNo");
+                    var rows = new ArrayList<Map<String, String>>();
+                    for (int i = 0; i < (page == 1 ? 1_000 : 52); i++) {
+                        rows.add(Map.of("category", page == 1 ? "TMP" : "REH",
+                                "fcstDate", "20260922", "fcstTime", "1800",
+                                "fcstValue", page == 1 ? "18" : "62"));
+                    }
+                    return JSON.valueToTree(Map.of("response", Map.of(
+                            "header", Map.of("resultCode", "00"),
+                            "body", Map.of("totalCount", 1_052, "items", Map.of("item", rows)))));
+                });
+
+        var values = new VillageForecastFeed(gateway).fetch("20260922", "1700", 98, 76);
+
+        assertEquals(1_052, values.size());
+        assertEquals(VillageForecastFeed.Category.HUMIDITY, values.get(1_051).category());
+        assertEquals("62", values.get(1_051).rawValue());
+        assertEquals(List.of(1, 2), queries.stream().map(query -> query.get("pageNo")).toList());
+        assertEquals(List.of(1_000, 1_000), queries.stream().map(query -> query.get("numOfRows")).toList());
+    }
+
+    @Test
+    void rejectsOversizedAndInconsistentPagination() {
+        PublicDataGateway gateway = mock(PublicDataGateway.class);
+        when(gateway.request(eq(PublicDataGateway.Dataset.VILLAGE_FORECAST), anyMap()))
+                .thenReturn(JSON.valueToTree(Map.of("response", Map.of(
+                        "header", Map.of("resultCode", "00"),
+                        "body", Map.of("totalCount", 2_001, "items", List.of())))));
+        var feed = new VillageForecastFeed(gateway);
+        assertThrows(UpstreamUnavailableException.class, () -> feed.fetch("20260922", "1700", 98, 76));
+        verify(gateway, times(1)).request(eq(PublicDataGateway.Dataset.VILLAGE_FORECAST), anyMap());
+
+        when(gateway.request(eq(PublicDataGateway.Dataset.VILLAGE_FORECAST), anyMap()))
+                .thenAnswer(invocation -> {
+                    Map<String, Object> query = invocation.getArgument(1);
+                    int page = (int) query.get("pageNo");
+                    var row = Map.of("category", "TMP", "fcstDate", "20260922",
+                            "fcstTime", "1800", "fcstValue", "18");
+                    return JSON.valueToTree(Map.of("response", Map.of(
+                            "header", Map.of("resultCode", "00"),
+                            "body", Map.of("totalCount", page == 1 ? 1_052 : 1_053,
+                                    "items", java.util.Collections.nCopies(page == 1 ? 1_000 : 52, row)))));
+                });
+        assertThrows(UpstreamUnavailableException.class, () -> feed.fetch("20260922", "1700", 98, 76));
     }
 
     @Test
