@@ -298,13 +298,9 @@
         var popup = document.querySelector('.coordinate_popup');
         if (!popup || !Array.isArray(pixel)
                 || typeof MapRuntime.positionOverlayPopup !== 'function') return;
-        popup.style.left = '8px';
-        popup.style.top = '8px';
         popup.style.maxHeight = '';
         popup.style.display = 'block';
-        window.requestAnimationFrame(function () {
-            if (popup.style.display !== 'none') MapRuntime.positionOverlayPopup(popup, pixel);
-        });
+        MapRuntime.positionOverlayPopup(popup, pixel);
     }
 
     function inspectMapPoint(coordinate, pixel) {

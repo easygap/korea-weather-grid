@@ -672,12 +672,8 @@
         var runtime = window.WeatherGridMapRuntime;
         if (!runtime || typeof runtime.positionOverlayPopup !== 'function') return;
         popup.hidden = false;
-        popup.style.left = '8px';
-        popup.style.top = '8px';
         popup.style.maxHeight = '';
-        requestAnimationFrame(function () {
-            if (!popup.hidden) runtime.positionOverlayPopup(popup, pixel);
-        });
+        runtime.positionOverlayPopup(popup, pixel);
     }
 
     function openPopup(station, pixel) {

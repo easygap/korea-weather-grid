@@ -575,15 +575,8 @@
         var runtime = window.WeatherGridMapRuntime;
         if (!runtime || typeof runtime.positionOverlayPopup !== 'function') return;
         popup.hidden = false;
-        popup.style.visibility = 'hidden';
-        popup.style.left = '0px';
-        popup.style.top = '0px';
         popup.style.maxHeight = '';
-        requestAnimationFrame(function () {
-            if (popup.hidden) return;
-            runtime.positionOverlayPopup(popup, pixel);
-            popup.style.visibility = '';
-        });
+        runtime.positionOverlayPopup(popup, pixel);
     }
 
     function closePopup(restoreMapFocus) {

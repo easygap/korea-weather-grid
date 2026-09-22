@@ -431,6 +431,16 @@ test('모바일·reduced-motion에서도 CCTV 조작부와 팝업이 화면 안�
   await fitMap(page, [126.978, 37.5665], 0.08, 0.08);
   await expect.poll(() => page.evaluate(() =>
     window.WEATHER_GRID_CCTV.layer.getSource().getSource().getFeatures().length)).toBe(1);
+  await page.evaluate(() => {
+    const popup = document.getElementById('cctv_popup');
+    const observer = new MutationObserver(() => {
+      if (popup.hidden) return;
+      // 다음 애니메이션 프레임 전에, 처음 열리는 순간의 위치도 확인한다.
+      window.__cctvFirstOpenBounds = popup.getBoundingClientRect().toJSON();
+      observer.disconnect();
+    });
+    observer.observe(popup, { attributes: true, attributeFilter: ['hidden'] });
+  });
   await page.locator('#map').focus();
   await page.locator('#map').press('Enter');
   const box = await page.locator('#cctv_popup').boundingBox();
@@ -439,6 +449,8 @@ test('모바일·reduced-motion에서도 CCTV 조작부와 팝업이 화면 안�
   expect(mobileNavigation).not.toBeNull();
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y).toBeGreaterThanOrEqual(mobileNavigation.y + mobileNavigation.height + 7);
+  const firstOpen = await page.evaluate(() => window.__cctvFirstOpenBounds);
+  expect(firstOpen.y).toBeGreaterThanOrEqual(mobileNavigation.y + mobileNavigation.height + 7);
   expect(box.x + box.width).toBeLessThanOrEqual(390);
   const bottomNavigation = await page.locator('#mobile_primary_controls').boundingBox();
   expect(box.y + box.height).toBeLessThanOrEqual(bottomNavigation.y - 7);

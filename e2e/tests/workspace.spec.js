@@ -216,7 +216,9 @@ for (const [width, height] of [[320, 740], [390, 844], [768, 1024], [1024, 768],
             for (const action of ['btn_share', 'btn_3d', 'theme_toggle']) {
                 const button = page.locator(`[data-workspace-action="${action}"]`);
                 await expect(button).toBeVisible();
-                expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(44);
+                // 패널 이동 중 DOMRect의 부동소수점 오차(44 → 43.99998)만 정리한다.
+                const height = Math.round((await button.boundingBox()).height * 100) / 100;
+                expect(height).toBeGreaterThanOrEqual(44);
             }
             await page.keyboard.press('Escape');
         }
