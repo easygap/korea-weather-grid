@@ -56,9 +56,9 @@
 화면 아래에서 기상요소와 시간을 바꾸고, 위에서 지역을 검색합니다. 세부 설정·공유·3D·화면 테마는 오른쪽 위 설정 버튼에 모았습니다.
 
 <p align="center">
-  <img src="docs/media/mobile-map.webp" width="32%" alt="휴대폰에서 보는 기상지도와 하단 시간·자료 선택">
+  <img src="docs/media/mobile-map.webp" width="320" alt="휴대폰에서 보는 기상지도와 하단 시간·자료 선택">
   &nbsp;&nbsp;
-  <img src="docs/media/mobile-sheet.webp" width="32%" alt="휴대폰 설정 창. 공유와 화면 테마, 기상요소 선택">
+  <img src="docs/media/mobile-sheet.webp" width="320" alt="휴대폰 설정 창. 공유와 화면 테마, 기상요소 선택">
 </p>
 
 ## 미세먼지와 도로 상황도 함께
