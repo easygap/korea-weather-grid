@@ -48,6 +48,28 @@ async function mockGrid(page) {
 }
 
 test.describe('위험기상 시각화', () => {
+  test('특보 조회 중 창을 열거나 화면으로 돌아와도 진행 중인 요청을 재사용한다', async ({ page }) => {
+    let requestCount = 0;
+    let release;
+    const pending = new Promise((resolve) => { release = resolve; });
+    await mockGrid(page);
+    await page.route('**/api/hazards/warnings', async (route) => {
+      requestCount++;
+      await pending;
+      try { await route.fulfill({ json: warningPayload }); } catch (_) { /* 취소된 요청 */ }
+    });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => requestCount).toBe(1);
+    await page.locator('#dock_toggle').click();
+    await page.locator('#warning_open').click();
+    await expect(page.locator('#warning_panel')).toBeVisible();
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    release();
+    await expect(page.locator('.warning_item strong')).toHaveText('폭염');
+    expect(requestCount).toBe(1);
+  });
+
   test('빠른 보기에서만 태풍·낙뢰를 요청하고 서태평양 경로와 도법 전환을 유지한다', async ({ page }) => {
     const requests = { warnings: 0, typhoon: 0, lightning: 0 };
     await mockGrid(page);

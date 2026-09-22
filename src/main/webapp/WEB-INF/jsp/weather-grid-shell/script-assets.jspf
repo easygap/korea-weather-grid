@@ -17,7 +17,7 @@
 <script defer src="${pageContext.request.contextPath}/static/js/station-forecast.js?v=20260730.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/map-overlay-router.js?v=20260804.1"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/map-measure.js?v=20260922.3"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/severe-weather.js?v=20260922.4"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/severe-weather.js?v=20260922.5"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/air-quality.js?v=20260922.4"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/cctv.js?v=20260922.4"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-interface-state.js?v=20260722.1"></script>
@@ -32,7 +32,7 @@
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-projection.js?v=20260722.4"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-readout.js?v=20260722.4"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-raster-state.js?v=20260727.1"></script>
-<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-raster.js?v=20260922.3"></script>
+<script defer src="${pageContext.request.contextPath}/static/js/weather-grid-raster.js?v=20260922.5"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-wind-state.js?v=20260922.3"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-wind.js?v=20260922.3"></script>
 <script defer src="${pageContext.request.contextPath}/static/js/weather-grid-location-state.js?v=20260723.1"></script>

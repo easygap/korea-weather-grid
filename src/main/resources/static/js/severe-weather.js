@@ -1,6 +1,6 @@
 /**
  * 기상특보·태풍·낙뢰를 예보 격자와 독립적으로 관리한다.
- * 특보만 유휴 시간에 확인하고, 지도 레이어 자료는 사용자가 켠 뒤에 요청한다.
+ * 특보는 첫 화면에서 확인하고, 지도 레이어 자료는 사용자가 켠 뒤에 요청한다.
  */
 (function () {
     'use strict';
@@ -992,6 +992,7 @@
     }
 
     async function loadWarnings(force) {
+        if (!force && requests.warnings.controller) return;
         if (!force && state.warningsLoaded && Date.now() - state.warningFetchedAt < WARNING_REFRESH_MS) return;
         var loadId = ++loadSequence.warnings;
         try {
@@ -1051,7 +1052,7 @@
         warningPanel.hidden = false;
         warningBanner.setAttribute('aria-expanded', 'true');
         warningOpen.setAttribute('aria-expanded', 'true');
-        if (!state.warningsLoaded || state.warningStatus === 'error') loadWarnings(true);
+        if (!state.warningsLoaded || state.warningStatus === 'error') loadWarnings(false);
         if (focusPanel) warningPanel.focus({ preventScroll: true });
     }
 

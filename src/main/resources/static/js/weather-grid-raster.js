@@ -8,7 +8,8 @@
     var State = window.WeatherGridRasterState;
     var MapRuntime = window.WeatherGridMapRuntime;
     var WindGrid = window.WeatherGridWindGrid;
-    if (!State || !MapRuntime || !WindGrid || !window.ol) {
+    var DfsProjection = window.WeatherGridDfsProjection;
+    if (!State || !MapRuntime || !WindGrid || !DfsProjection || !window.ol) {
         throw new Error('Raster state, map runtime, wind grid and OpenLayers must load before weather-grid-raster');
     }
 
@@ -98,7 +99,7 @@
         };
     }
 
-    function createLookup(key, extent, plan, grid, toLonLat) {
+    function createLookup(key, extent, plan, grid, toGrid) {
         var dataIndices = new Int32Array(plan.sampleCount);
         var edgeAlpha = new Uint8Array(plan.sampleCount);
         dataIndices.fill(-1);
@@ -110,8 +111,7 @@
             for (var x = 0; x < plan.sampleWidth; x += 1) {
                 var sampleIndex = y * plan.sampleWidth + x;
                 var mapX = extent[0] + ((x + 0.5) / plan.sampleWidth) * spanX;
-                var lonLat = toLonLat([mapX, mapY]);
-                var fractional = MapRuntime.gridCoordinate(lonLat[1], lonLat[0]);
+                var fractional = toGrid(mapX, mapY);
                 var gridX = (fractional[0] - grid.nxMin) / grid.step;
                 var gridSouthY = (fractional[1] - grid.nyMin) / grid.step;
                 var dataIndex = State.cellIndex(gridX, gridSouthY, grid.nx, grid.ny);
@@ -145,6 +145,14 @@
         });
         var viewProjectionCode = window.WEATHER_GRID_VIEW_PROJ
             || MapRuntime.map.getView().getProjection().getCode();
+        // 기본 지도는 이미 DFS의 미터 좌표다. 모든 픽셀을 위경도로 되돌렸다가
+        // 같은 DFS 격자로 다시 바꾸지 않고, 공개된 5 km 격자 간격을 바로 적용한다.
+        var toGrid = viewProjectionCode === DfsProjection.code
+            ? DfsProjection.projectedToGrid
+            : function (mapX, mapY) {
+                var lonLat = MapRuntime.toGeographic([mapX, mapY], viewProjectionCode);
+                return MapRuntime.gridCoordinate(lonLat[1], lonLat[0]);
+            };
         var readColor = colorReader(element, selectedMonth);
         // Color each visible grid cell at most once per canvas frame. Keep reading
         // current values on source.changed(), including in-place data corrections.
@@ -170,9 +178,7 @@
                 plan.sampleWidth, plan.sampleHeight);
             var lookup = lookupCache;
             if (!lookup || lookup.key !== key) {
-                lookup = createLookup(key, extent, plan, grid, function (coordinate) {
-                    return MapRuntime.toGeographic(coordinate, viewProjectionCode);
-                });
+                lookup = createLookup(key, extent, plan, grid, toGrid);
                 lookupCache = lookup;
                 lookupMisses += 1;
             } else {
